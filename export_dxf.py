@@ -67,6 +67,13 @@ class DXFExporter:
                     f"{obj.name} NOT exported : Couldn't be converted to a mesh.")
                 self.not_exported_objects += 1
             return False
+    
+    def get_export_obj(self, obj, apply_modifiers, context):
+        if apply_modifiers or obj.type == 'META':
+            depsgraph = context.evaluated_depsgraph_get()
+            return obj.evaluated_get(depsgraph)
+        else:
+            return obj
 
     def write_object(
             self,
@@ -76,14 +83,10 @@ class DXFExporter:
             layer='0',
             apply_modifiers=True):
 
-
         if not self.is_object_supported(obj):
             return
 
-        export_obj = obj
-        if apply_modifiers or obj.type == 'META':
-            depsgraph = context.evaluated_depsgraph_get()
-            export_obj = obj.evaluated_get(depsgraph)
+        export_obj = self.get_export_obj(apply_modifiers, context)
 
         coll_colors = context.preferences.themes[0].collection_color
         dxfattribs = {
