@@ -86,7 +86,7 @@ class DXFExporter:
         if not self.is_object_supported(obj):
             return
 
-        export_obj = self.get_export_obj(apply_modifiers, context)
+        export_obj = self.get_export_obj(obj, apply_modifiers, context)
 
         coll_colors = context.preferences.themes[0].collection_color
         dxfattribs = {
