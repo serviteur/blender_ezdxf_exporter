@@ -41,7 +41,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportSomeData.bl_idname,
+    self.layout.operator(DXFExporter_OT_Export.bl_idname,
                          text="Drawing Interchange File (.dxf)")
 
 
