@@ -1,17 +1,16 @@
 import ezdxf
 import bpy
 from .shared_properties import (
-    dxf_mesh_type,
     entity_layer,
 )
-
+from .modelspace import create_mesh
 
 class DXFExporter:
     supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
 
     def __init__(self, debug_mode=False):
-        self.doc = ezdxf.new(dxfversion="R2010")
-        self.msp = self.doc.modelspace()
+        self.doc = ezdxf.new(dxfversion="R2010") # Create new document
+        self.msp = self.doc.modelspace() # Access to dxf Modelspace
         self.debug_mode = debug_mode
         self.log = []
         self.exported_objects = 0
@@ -103,59 +102,14 @@ class DXFExporter:
 
     def export_mesh(self, obj, dxfattribs, mesh_as):    
         obj_matrix_world = obj.matrix_world
-        mesh = obj.to_mesh()   
+        mesh = obj.to_mesh()
+
         # Support for multiple mesh export type later on in development.
         # For example, user wants to export Points AND Faces
-        mesh_creation_methods = []
-
-        if mesh_as == dxf_mesh_type.FACES3D.value:  # 3D Faces
-            mesh_creation_methods.append(self.create_mesh_3dfaces)
-        if mesh_as == dxf_mesh_type.POLYFACE.value:  # Polyfaces
-            mesh_creation_methods.append(self.create_mesh_polyface)
-        if mesh_as == dxf_mesh_type.POLYLINES.value:  # Polylines
-            mesh_creation_methods.append(self.create_mesh_polylines)
-        if mesh_as == dxf_mesh_type.POLYLINES.value:  # Lines
-            mesh_creation_methods.append(self.create_mesh_lines)
-        elif mesh_as == dxf_mesh_type.POINTS.value:  # Points
-            mesh_creation_methods.append(self.create_mesh_points)
-        
-        for mesh_creation_method in mesh_creation_methods:
+        for mesh_creation_method in [create_mesh(mesh_as), ]:
+            if mesh_creation_method is None:
+                continue
             mesh_creation_method(mesh, obj_matrix_world, dxfattribs)
-
-    def create_mesh_points(self, mesh, matrix, dxfattribs):
-        for v in mesh.vertices:
-            self.msp.add_point(
-                matrix @ v.co,
-                dxfattribs=dxfattribs)
-
-    def create_mesh_lines(self, mesh, matrix, dxfattribs):
-        for e in mesh.edges:
-            self.msp.add_line(
-                matrix @ mesh.vertices[e.vertices[0]].co,
-                matrix @ mesh.vertices[e.vertices[1]].co,
-                dxfattribs=dxfattribs)
-
-    def create_mesh_polylines(self, mesh, matrix, dxfattribs):
-        for e in mesh.edges:
-            self.msp.add_polyline3d(
-                (
-                    matrix @ mesh.vertices[e.vertices[0]].co,
-                    matrix @ mesh.vertices[e.vertices[1]].co,
-                ),
-                dxfattribs=dxfattribs)
-
-    def create_mesh_polyface(self, mesh, matrix, dxfattribs):        
-        polyface = self.msp.add_polyface(dxfattribs=dxfattribs)
-        polyface.append_faces(
-            [[matrix @ mesh.vertices[v].co for v in f.vertices] for f in mesh.polygons],
-            dxfattribs=dxfattribs)
-        polyface.optimize()
-
-    def create_mesh_3dfaces(self, mesh, matrix, dxfattribs):           
-        for f in mesh.polygons:
-            self.msp.add_3dface(
-                [matrix @ mesh.vertices[v].co for v in f.vertices],
-                dxfattribs=dxfattribs)
 
     def export_file(self, path):
         self.doc.entitydb.purge()
