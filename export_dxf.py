@@ -67,13 +67,24 @@ class DXFExporter:
         dxfattribs = {
             'layer': collection.name
         }
+
+        if mesh_as == mesh_as_items[3][0]:  # Polylines
+            print(dir(self.msp))
+            # return
+            for e in mesh.edges:
+                self.msp.add_polyline3d(
+                    (
+                        obj_matrix_world @ mesh.vertices[e.vertices[0]].co,
+                        obj_matrix_world @ mesh.vertices[e.vertices[1]].co,
+                    ),
+                    dxfattribs=dxfattribs)
         if mesh_as == mesh_as_items[4][0]:  # Lines
             for e in mesh.edges:
                 self.msp.add_line(
                     obj_matrix_world @ mesh.vertices[e.vertices[0]].co,
                     obj_matrix_world @ mesh.vertices[e.vertices[1]].co,
                     dxfattribs=dxfattribs)
-        elif mesh_as == mesh_as_items[5][0]: # PAoints
+        elif mesh_as == mesh_as_items[5][0]:  # Points
             for v in mesh.vertices:
                 self.msp.add_point(
                     obj_matrix_world @ v.co,
