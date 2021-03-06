@@ -6,9 +6,8 @@ from bpy.types import Operator
 
 from .export_dxf import DXFExporter
 from .shared_properties import (
-    mesh_as_items,
-    mesh_types,
-    entity_layer_from_items,
+    dxf_mesh_type,
+    entity_layer,
 )
 
 
@@ -31,15 +30,15 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
     mesh_as: EnumProperty( 
         name="Export Mesh As", 
-        default=str(mesh_types.FACES3D),
+        default=dxf_mesh_type.FACES3D.value,
         description="Select representation of a mesh",
-        items=mesh_as_items)
+        items=[(m_t.value,)*3 for m_t in dxf_mesh_type])
 
     entitylayer_from: EnumProperty(
         name="Object Layer", 
-        default=entity_layer_from_items[1][0],
+        default=entity_layer.COLLECTION.value,
         description="Entity LAYER assigned to?",
-        items=entity_layer_from_items)
+        items=[(e_l.value,)*3 for e_l in entity_layer])
 
     verbose: BoolProperty(
         name="Verbose", 

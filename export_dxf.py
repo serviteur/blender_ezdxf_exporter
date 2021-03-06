@@ -1,6 +1,9 @@
 import ezdxf
 import bpy
-from .shared_properties import mesh_types
+from .shared_properties import (
+    dxf_mesh_type,
+    entity_layer,
+)
 
 
 class DXFExporter:
@@ -48,13 +51,13 @@ class DXFExporter:
         return coll.name
 
     def get_layer_name(self, coll_colors, obj, layer) -> str:
-        if layer == 'collection':            
+        if layer == entity_layer.COLLECTION.value:            
             return self.get_collection_layer_name(obj.users_collection[0], coll_colors)
-        elif layer == 'data':
+        elif layer == entity_layer.COLLECTION.DATA_NAME:
             return obj.data.name
-        elif layer == 'name':
+        elif layer == entity_layer.COLLECTION.OBJECT_NAME:
             return obj.name
-        elif layer == 'material' and obj.data.materials:
+        elif layer == entity_layer.COLLECTION.MATERIAL and obj.data.materials:
             return obj.data.materials[0].name
         return '0'
     
@@ -105,15 +108,15 @@ class DXFExporter:
         # For example, user wants to export Points AND Faces
         mesh_creation_methods = []
 
-        if mesh_as == mesh_types.FACES3D:  # 3D Faces
+        if mesh_as == dxf_mesh_type.FACES3D.value:  # 3D Faces
             mesh_creation_methods.append(self.create_mesh_3dfaces)
-        if mesh_as == mesh_types.POLYFACE:  # Polyfaces
+        if mesh_as == dxf_mesh_type.POLYFACE.value:  # Polyfaces
             mesh_creation_methods.append(self.create_mesh_polyface)
-        if mesh_as == mesh_types.POLYLINES:  # Polylines
+        if mesh_as == dxf_mesh_type.POLYLINES.value:  # Polylines
             mesh_creation_methods.append(self.create_mesh_polylines)
-        if mesh_as == mesh_types.POLYLINES:  # Lines
+        if mesh_as == dxf_mesh_type.POLYLINES.value:  # Lines
             mesh_creation_methods.append(self.create_mesh_lines)
-        elif mesh_as == mesh_types.POINTS:  # Points
+        elif mesh_as == dxf_mesh_type.POINTS.value:  # Points
             mesh_creation_methods.append(self.create_mesh_points)
         
         for mesh_creation_method in mesh_creation_methods:
