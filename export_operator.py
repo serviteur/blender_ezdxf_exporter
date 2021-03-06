@@ -5,7 +5,10 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
 from .export_dxf import DXFExporter
-from .shared_properties import mesh_as_items
+from .shared_properties import (
+    mesh_as_items,
+    entity_layer_from_items,
+)
 
 
 class DXFExporter_OT_Export(Operator, ExportHelper):
@@ -31,11 +34,16 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         description="Select representation of a mesh",
         items=mesh_as_items)
 
+    entitylayer_from: EnumProperty(
+        name="Object Layer", 
+        default=entity_layer_from_items[1][0],
+        description="Entity LAYER assigned to?",
+        items=entity_layer_from_items)
+
     verbose: BoolProperty(
         name="Verbose", 
         default=False,
         description="Run the exporter in debug mode.  Check the console for output")
-
 
     filter_glob: StringProperty(
         default="*.dxf",
@@ -59,7 +67,8 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
             apply_modifiers=self.apply_modifiers,
-            mesh_as=self.mesh_as)
+            mesh_as=self.mesh_as,
+            layer=self.entitylayer_from)
         exporter.export_file(self.filepath)
         if self.verbose:
             for line in exporter.log:

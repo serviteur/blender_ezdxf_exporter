@@ -41,14 +41,29 @@ class DXFExporter:
             self.log.append(
                 f"NOT Exported : {self.not_exported_objects} Objects")
 
+    def get_layer_name(self, coll_colors, obj, layer):
+        if layer == 'collection':
+            coll = obj.users_collection[0]
+            if coll.name not in self.doc.layers:                
+                new_layer = self.doc.layers.new(coll.name)
+
+                color_tag = coll.color_tag
+                if color_tag != 'NONE':
+                    col = [int(channel * 256)
+                        for channel in coll_colors[int(color_tag[-2:])-1].color]
+                    new_layer.rgb = col
+            return coll.name
+        return '0'
     def write_object(
             self,
             obj,
             context,
             mesh_as,
+            layer='0',
             apply_modifiers=True):
-        collection = obj.users_collection[0]
         supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
+
+        base_obj = obj
 
         if obj.type not in supported_types:
             if self.debug_mode:
@@ -64,8 +79,10 @@ class DXFExporter:
         obj_matrix_world = obj.matrix_world
 
         mesh = obj.to_mesh()
+        coll_colors = context.preferences.themes[0].collection_color
+
         dxfattribs = {
-            'layer': collection.name
+            'layer': self.get_layer_name(coll_colors, base_obj, layer)
         }
         if mesh_as == mesh_as_items[1][0]:  # 3D Faces            
             for f in mesh.polygons:
