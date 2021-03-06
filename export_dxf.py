@@ -18,20 +18,36 @@ class DXFExporter:
                     for channel in collection_colors[int(color_tag[-2:])-1].color]
                 new_layer.rgb = col
 
-    def write_objects(self, objects):
-        [self.write_object(obj) for obj in objects]
+    def write_objects(
+            self, 
+            objects, 
+            context, 
+            apply_modifiers=True):
+        [self.write_object(
+            obj, 
+            context, 
+            apply_modifiers) 
+            for obj in objects]
 
-    def write_object(self, obj):
-        mesh = obj.data
+    def write_object(
+            self, 
+            obj, 
+            context, 
+            apply_modifiers=True):
+        collection = obj.users_collection[0]
+        depsgraph = context.evaluated_depsgraph_get()
+        if apply_modifiers:
+            obj = obj.evaluated_get(depsgraph)
 
         obj_matrix_world = obj.matrix_world
+        mesh = obj.data
 
         for e in mesh.edges:
             self.msp.add_line(
                 obj_matrix_world @ mesh.vertices[e.vertices[0]].co,
                 obj_matrix_world @ mesh.vertices[e.vertices[1]].co,
                 dxfattribs={
-                    'layer': obj.users_collection[0].name
+                    'layer': collection.name
                 })
     
         # Add entities to a layout by factory methods: layout.add_...()

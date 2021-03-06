@@ -19,6 +19,11 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=True,
         description="What object will be exported? Only selected / All objects")
 
+    apply_modifiers: BoolProperty(
+        name="Apply Modifiers", 
+        default=True,
+        description="Export the objects with all modifiers and shapekeys applied")
+
     filter_glob: StringProperty(
         default="*.dxf",
         options={'HIDDEN'},
@@ -35,7 +40,10 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
     def execute(self, context):
         exporter = DXFExporter()
         exporter.create_layers(context)
-        exporter.write_objects(context.selected_objects if self.only_selected else context.scene.objects)
+        exporter.write_objects(
+            objects=context.selected_objects if self.only_selected else context.scene.objects,
+            context=context,
+            apply_modifiers=self.apply_modifiers)
         exporter.export_file(self.filepath)
         return {'FINISHED'}
 
