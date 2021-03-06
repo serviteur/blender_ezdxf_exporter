@@ -5,6 +5,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
 from .export_dxf import DXFExporter
+from .shared_properties import mesh_as_items
 
 
 class DXFExporter_OT_Export(Operator, ExportHelper):
@@ -23,6 +24,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         name="Apply Modifiers", 
         default=True,
         description="Export the objects with all modifiers and shapekeys applied")
+
+    mesh_as: EnumProperty( 
+        name="Export Mesh As", 
+        default=mesh_as_items[1][0],
+        description="Select representation of a mesh",
+        items=mesh_as_items)
 
     verbose: BoolProperty(
         name="Verbose", 
@@ -51,7 +58,8 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
-            apply_modifiers=self.apply_modifiers)
+            apply_modifiers=self.apply_modifiers,
+            mesh_as=self.mesh_as)
         exporter.export_file(self.filepath)
         if self.verbose:
             for line in exporter.log:
