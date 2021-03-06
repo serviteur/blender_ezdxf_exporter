@@ -35,12 +35,13 @@ class DXFExporter:
             context, 
             apply_modifiers=True):
         collection = obj.users_collection[0]
-        depsgraph = context.evaluated_depsgraph_get()
         if apply_modifiers:
+            depsgraph = context.evaluated_depsgraph_get()
             obj = obj.evaluated_get(depsgraph)
 
         obj_matrix_world = obj.matrix_world
-        mesh = obj.data
+        
+        mesh = obj.to_mesh()
 
         for e in mesh.edges:
             self.msp.add_line(
