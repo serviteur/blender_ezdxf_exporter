@@ -4,6 +4,8 @@ from .shared_properties import mesh_as_items
 
 
 class DXFExporter:
+    supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
+
     def __init__(self, debug_mode=False):
         self.doc = ezdxf.new(dxfversion="R2010")
         self.msp = self.doc.modelspace()
@@ -12,28 +14,19 @@ class DXFExporter:
         self.exported_objects = 0
         self.not_exported_objects = 0
 
-    def create_layers(self, context):
-        collection_colors = context.preferences.themes[0].collection_color
-        for coll in bpy.data.collections:
-            new_layer = self.doc.layers.new(coll.name)
-
-            color_tag = coll.color_tag
-            if color_tag != 'NONE':
-                col = [int(channel * 256)
-                       for channel in collection_colors[int(color_tag[-2:])-1].color]
-                new_layer.rgb = col
-
     def write_objects(
             self,
             objects,
             context,
             mesh_as,
+            layer,
             apply_modifiers=True):
         [self.write_object(
             obj=obj,
             context=context,
             apply_modifiers=apply_modifiers,
             mesh_as=mesh_as,
+            layer=layer,
         )
             for obj in objects]
         if self.debug_mode:
@@ -41,19 +34,30 @@ class DXFExporter:
             self.log.append(
                 f"NOT Exported : {self.not_exported_objects} Objects")
 
-    def get_layer_name(self, coll_colors, obj, layer):
-        if layer == 'collection':
-            coll = obj.users_collection[0]
-            if coll.name not in self.doc.layers:                
-                new_layer = self.doc.layers.new(coll.name)
-
+    def get_collection_layer_name(self, coll: bpy.types.Collection, coll_colors=None) -> str:         
+        if coll.name not in self.doc.layers:                
+            new_layer = self.doc.layers.new(coll.name)
+            
+            if coll_colors is not None:
                 color_tag = coll.color_tag
                 if color_tag != 'NONE':
                     col = [int(channel * 256)
                         for channel in coll_colors[int(color_tag[-2:])-1].color]
                     new_layer.rgb = col
-            return coll.name
+        
+        return coll.name
+
+    def get_layer_name(self, coll_colors, obj, layer) -> str:
+        if layer == 'collection':            
+            return self.get_collection_layer_name(obj.users_collection[0], coll_colors)
+        elif layer == 'data':
+            return obj.data.name
+        elif layer == 'name':
+            return obj.name
+        elif layer == 'material' and obj.data.materials:
+            return obj.data.materials[0].name
         return '0'
+
     def write_object(
             self,
             obj,
@@ -61,11 +65,10 @@ class DXFExporter:
             mesh_as,
             layer='0',
             apply_modifiers=True):
-        supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
 
-        base_obj = obj
+        export_obj = obj
 
-        if obj.type not in supported_types:
+        if obj.type not in self.supported_types:
             if self.debug_mode:
                 self.log.append(
                     f"{obj.name} NOT exported : Couldn't be converted to a mesh.")
@@ -74,57 +77,75 @@ class DXFExporter:
 
         if apply_modifiers or obj.type == 'META':
             depsgraph = context.evaluated_depsgraph_get()
-            obj = obj.evaluated_get(depsgraph)
+            export_obj = obj.evaluated_get(depsgraph)
 
-        obj_matrix_world = obj.matrix_world
 
-        mesh = obj.to_mesh()
         coll_colors = context.preferences.themes[0].collection_color
-
         dxfattribs = {
-            'layer': self.get_layer_name(coll_colors, base_obj, layer)
+            'layer': self.get_layer_name(coll_colors, obj, layer)
         }
-        if mesh_as == mesh_as_items[1][0]:  # 3D Faces            
-            for f in mesh.polygons:
-                self.msp.add_3dface(
-                    [obj_matrix_world @ mesh.vertices[v].co for v in f.vertices],
-                    dxfattribs=dxfattribs)
-        if mesh_as == mesh_as_items[2][0]:  # Polyfaces
-            polyface = self.msp.add_polyface(dxfattribs=dxfattribs)
-            polyface.append_faces(
-                [[obj_matrix_world @ mesh.vertices[v].co for v in f.vertices] for f in mesh.polygons],
-                dxfattribs=dxfattribs)
-            polyface.optimize()
-        if mesh_as == mesh_as_items[3][0]:  # Polylines
-            for e in mesh.edges:
-                self.msp.add_polyline3d(
-                    (
-                        obj_matrix_world @ mesh.vertices[e.vertices[0]].co,
-                        obj_matrix_world @ mesh.vertices[e.vertices[1]].co,
-                    ),
-                    dxfattribs=dxfattribs)
-        if mesh_as == mesh_as_items[4][0]:  # Lines
-            for e in mesh.edges:
-                self.msp.add_line(
-                    obj_matrix_world @ mesh.vertices[e.vertices[0]].co,
-                    obj_matrix_world @ mesh.vertices[e.vertices[1]].co,
-                    dxfattribs=dxfattribs)
-        elif mesh_as == mesh_as_items[5][0]:  # Points
-            for v in mesh.vertices:
-                self.msp.add_point(
-                    obj_matrix_world @ v.co,
-                    dxfattribs=dxfattribs)
 
+        self.export_mesh(export_obj, dxfattribs, mesh_as)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-        # Add entities to a layout by factory methods: layout.add_...()
-        # msp.add_text(
-        #    'Test',
-        #    dxfattribs={
-        #        'layer': 'TEXTLAYER'
-        #    }).set_pos((0, 0.2), align='CENTER')
+    def export_mesh(self, obj, dxfattribs, mesh_as):    
+        obj_matrix_world = obj.matrix_world
+        mesh = obj.to_mesh()   
+        # Support for multiple mesh export type.
+        # For example, user wants to export Points AND faces :
+        mesh_creation_methods = []
+
+        if mesh_as == mesh_as_items[1][0]:  # 3D Faces
+            mesh_creation_methods.append(self.create_mesh_3dfaces)
+        if mesh_as == mesh_as_items[2][0]:  # Polyfaces
+            mesh_creation_methods.append(self.create_mesh_polyface)
+        if mesh_as == mesh_as_items[3][0]:  # Polylines
+            mesh_creation_methods.append(self.create_mesh_polylines)
+        if mesh_as == mesh_as_items[4][0]:  # Lines
+            mesh_creation_methods.append(self.create_mesh_lines)
+        elif mesh_as == mesh_as_items[5][0]:  # Points
+            mesh_creation_methods.append(self.create_mesh_points)
+        
+        for mesh_creation_method in mesh_creation_methods:
+            mesh_creation_method(mesh, obj_matrix_world, dxfattribs)
+
+    def create_mesh_points(self, mesh, matrix, dxfattribs):
+        for v in mesh.vertices:
+            self.msp.add_point(
+                matrix @ v.co,
+                dxfattribs=dxfattribs)
+
+    def create_mesh_lines(self, mesh, matrix, dxfattribs):
+        for e in mesh.edges:
+            self.msp.add_line(
+                matrix @ mesh.vertices[e.vertices[0]].co,
+                matrix @ mesh.vertices[e.vertices[1]].co,
+                dxfattribs=dxfattribs)
+
+    def create_mesh_polylines(self, mesh, matrix, dxfattribs):
+        for e in mesh.edges:
+            self.msp.add_polyline3d(
+                (
+                    matrix @ mesh.vertices[e.vertices[0]].co,
+                    matrix @ mesh.vertices[e.vertices[1]].co,
+                ),
+                dxfattribs=dxfattribs)
+
+    def create_mesh_polyface(self, mesh, matrix, dxfattribs):        
+        polyface = self.msp.add_polyface(dxfattribs=dxfattribs)
+        polyface.append_faces(
+            [[matrix @ mesh.vertices[v].co for v in f.vertices] for f in mesh.polygons],
+            dxfattribs=dxfattribs)
+        polyface.optimize()
+
+    def create_mesh_3dfaces(self, mesh, matrix, dxfattribs):           
+        for f in mesh.polygons:
+            self.msp.add_3dface(
+                [matrix @ mesh.vertices[v].co for v in f.vertices],
+                dxfattribs=dxfattribs)
 
     def export_file(self, path):
+        self.doc.entitydb.purge()
         self.doc.saveas(path)

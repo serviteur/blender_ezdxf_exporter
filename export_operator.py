@@ -62,7 +62,6 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         exporter = DXFExporter(
             debug_mode=self.verbose,
         )
-        exporter.create_layers(context)
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
