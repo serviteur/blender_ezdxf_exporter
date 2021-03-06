@@ -7,8 +7,8 @@ from bpy.types import Operator
 from .export_dxf import DXFExporter
 
 
-class ExportSomeData(Operator, ExportHelper):
-    """This appears in the tooltip of the operator and in the generated docs"""
+class DXFExporter_OT_Export(Operator, ExportHelper):
+    """File selection operator to export objects in DXF file"""
     bl_idname = "dxf_exporter.export"
     bl_label = "Export As DXF"
 
