@@ -24,6 +24,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=True,
         description="Export the objects with all modifiers and shapekeys applied")
 
+    verbose: BoolProperty(
+        name="Verbose", 
+        default=False,
+        description="Run the exporter in debug mode.  Check the console for output")
+
+
     filter_glob: StringProperty(
         default="*.dxf",
         options={'HIDDEN'},
@@ -38,13 +44,18 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
                              subtype='NONE')
 
     def execute(self, context):
-        exporter = DXFExporter()
+        exporter = DXFExporter(
+            debug_mode=self.verbose,
+        )
         exporter.create_layers(context)
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
             apply_modifiers=self.apply_modifiers)
         exporter.export_file(self.filepath)
+        if self.verbose:
+            for line in exporter.log:
+                print(line)
         return {'FINISHED'}
 
 

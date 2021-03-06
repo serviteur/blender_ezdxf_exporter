@@ -3,9 +3,13 @@ import bpy
 
 
 class DXFExporter:
-    def __init__(self):
+    def __init__(self, debug_mode=False):
         self.doc = ezdxf.new(dxfversion="R2010")
         self.msp = self.doc.modelspace()
+        self.debug_mode = debug_mode
+        self.log = []
+        self.exported_objects = 0
+        self.not_exported_objects = 0
 
     def create_layers(self, context):
         collection_colors = context.preferences.themes[0].collection_color
@@ -28,6 +32,9 @@ class DXFExporter:
             context, 
             apply_modifiers) 
             for obj in objects]
+        if self.debug_mode:
+            self.log.append(f"Exported : {self.exported_objects} Objects")
+            self.log.append(f"NOT Exported : {self.not_exported_objects} Objects")
 
     def write_object(
             self, 
@@ -38,6 +45,9 @@ class DXFExporter:
         supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
 
         if obj.type not in supported_types:
+            if self.debug_mode:
+                self.log.append(f"{obj.name} NOT exported : Couldn't be converted to a mesh.")
+                self.not_exported_objects += 1
             return
 
         if apply_modifiers or obj.type == 'META':
@@ -55,6 +65,10 @@ class DXFExporter:
                 dxfattribs={
                     'layer': collection.name
                 })
+        
+        if self.debug_mode:
+            self.log.append(f"{obj.name} WAS exported.")
+            self.exported_objects += 1
     
         # Add entities to a layout by factory methods: layout.add_...()
         # msp.add_text(
