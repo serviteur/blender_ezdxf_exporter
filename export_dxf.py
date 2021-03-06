@@ -1,6 +1,6 @@
 import ezdxf
 import bpy
-from .shared_properties import mesh_as_items
+from .shared_properties import mesh_types
 
 
 class DXFExporter:
@@ -101,19 +101,19 @@ class DXFExporter:
     def export_mesh(self, obj, dxfattribs, mesh_as):    
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()   
-        # Support for multiple mesh export type.
-        # For example, user wants to export Points AND faces :
+        # Support for multiple mesh export type later on in development.
+        # For example, user wants to export Points AND Faces
         mesh_creation_methods = []
 
-        if mesh_as == mesh_as_items[1][0]:  # 3D Faces
+        if mesh_as == mesh_types.FACES3D:  # 3D Faces
             mesh_creation_methods.append(self.create_mesh_3dfaces)
-        if mesh_as == mesh_as_items[2][0]:  # Polyfaces
+        if mesh_as == mesh_types.POLYFACE:  # Polyfaces
             mesh_creation_methods.append(self.create_mesh_polyface)
-        if mesh_as == mesh_as_items[3][0]:  # Polylines
+        if mesh_as == mesh_types.POLYLINES:  # Polylines
             mesh_creation_methods.append(self.create_mesh_polylines)
-        if mesh_as == mesh_as_items[4][0]:  # Lines
+        if mesh_as == mesh_types.POLYLINES:  # Lines
             mesh_creation_methods.append(self.create_mesh_lines)
-        elif mesh_as == mesh_as_items[5][0]:  # Points
+        elif mesh_as == mesh_types.POINTS:  # Points
             mesh_creation_methods.append(self.create_mesh_points)
         
         for mesh_creation_method in mesh_creation_methods:

@@ -7,6 +7,7 @@ from bpy.types import Operator
 from .export_dxf import DXFExporter
 from .shared_properties import (
     mesh_as_items,
+    mesh_types,
     entity_layer_from_items,
 )
 
@@ -30,7 +31,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
     mesh_as: EnumProperty( 
         name="Export Mesh As", 
-        default=mesh_as_items[1][0],
+        default=str(mesh_types.FACES3D),
         description="Select representation of a mesh",
         items=mesh_as_items)
 
