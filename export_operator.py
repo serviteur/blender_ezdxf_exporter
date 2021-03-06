@@ -4,7 +4,7 @@ from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
-from . import export_dxf
+from .export_dxf import DXFExporter
 
 
 class ExportSomeData(Operator, ExportHelper):
@@ -12,31 +12,17 @@ class ExportSomeData(Operator, ExportHelper):
     bl_idname = "dxf_exporter.export"
     bl_label = "Export As DXF"
 
-    # ExportHelper mixin class uses this
     filename_ext = ".dxf"
+
+    only_selected: BoolProperty(
+        name="Only Selected", 
+        default=True,
+        description="What object will be exported? Only selected / All objects")
 
     filter_glob: StringProperty(
         default="*.dxf",
         options={'HIDDEN'},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
-    )
-
-    # List of operator properties, the attributes will be assigned
-    # to the class instance from the operator settings before calling.
-    use_setting: BoolProperty(
-        name="Example Boolean",
-        description="Example Tooltip",
-        default=True,
-    )
-
-    type: EnumProperty(
-        name="Example Enum",
-        description="Choose between two items",
-        items=(
-            ('OPT_A', "First Option", "Description one"),
-            ('OPT_B', "Second Option", "Description two"),
-        ),
-        default='OPT_A',
     )
 
     filepath: StringProperty(name="File Name",
@@ -47,7 +33,10 @@ class ExportSomeData(Operator, ExportHelper):
                              subtype='NONE')
 
     def execute(self, context):
-        export_dxf.export_file(self.filepath)
+        exporter = DXFExporter()
+        exporter.create_layers(context)
+        exporter.write_objects(context.selected_objects if self.only_selected else context.scene.objects)
+        exporter.export_file(self.filepath)
         return {'FINISHED'}
 
 
