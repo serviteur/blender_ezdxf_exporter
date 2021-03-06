@@ -21,16 +21,15 @@ class DXFExporter:
     def write_objects(self, objects):
         [self.write_object(obj) for obj in objects]
 
-    def write_object(self, object):
-        obj = bpy.context.object
+    def write_object(self, obj):
         mesh = obj.data
 
-        obj_pos = obj.location
+        obj_matrix_world = obj.matrix_world
 
         for e in mesh.edges:
             self.msp.add_line(
-                mesh.vertices[e.vertices[0]].co + obj_pos,
-                mesh.vertices[e.vertices[1]].co + obj_pos,
+                obj_matrix_world @ mesh.vertices[e.vertices[0]].co,
+                obj_matrix_world @ mesh.vertices[e.vertices[1]].co,
                 dxfattribs={
                     'layer': obj.users_collection[0].name
                 })
