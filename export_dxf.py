@@ -35,7 +35,12 @@ class DXFExporter:
             context, 
             apply_modifiers=True):
         collection = obj.users_collection[0]
-        if apply_modifiers or obj.type=='META':
+        supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
+
+        if obj.type not in supported_types:
+            return
+
+        if apply_modifiers or obj.type == 'META':
             depsgraph = context.evaluated_depsgraph_get()
             obj = obj.evaluated_get(depsgraph)
 
