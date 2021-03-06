@@ -74,10 +74,9 @@ class DXFExporter:
                     dxfattribs=dxfattribs)
         if mesh_as == mesh_as_items[2][0]:  # Polyfaces
             polyface = self.msp.add_polyface(dxfattribs=dxfattribs)
-            for f in mesh.polygons:
-                polyface.append_face(
-                    [obj_matrix_world @ mesh.vertices[v].co for v in f.vertices],
-                    dxfattribs=dxfattribs)
+            polyface.append_faces(
+                [[obj_matrix_world @ mesh.vertices[v].co for v in f.vertices] for f in mesh.polygons],
+                dxfattribs=dxfattribs)
             polyface.optimize()
         if mesh_as == mesh_as_items[3][0]:  # Polylines
             for e in mesh.edges:
