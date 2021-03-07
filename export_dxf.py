@@ -55,9 +55,9 @@ class DXFExporter:
                     continue
                 if len(objs) == 1:
                     self.write_object(obj=objs[0],
-                                       layout=self.msp,
-                                       context=context,
-                                       settings=settings)
+                                      layout=self.msp,
+                                      context=context,
+                                      settings=settings)
                 else:
                     block = self.doc.blocks.new(name=data.name)
                     self.write_object(obj=objs[0],
@@ -69,7 +69,7 @@ class DXFExporter:
                                             context=context,
                                             settings=settings,
                                             obj=obj)
-                                            for obj in objs]
+                     for obj in objs]
         else:
             [self.write_object(obj=obj,
                                layout=self.msp,
@@ -81,19 +81,28 @@ class DXFExporter:
                 f"NOT Exported : {self.not_exported_objects} Objects")
 
     def instantiate_block(self, block, context, settings, obj):
-        # FIXME : Matrix fails if object is rotated along local X or Y axis.
         matrix = obj.matrix_world
         scale = matrix.to_scale()
+        euler = matrix.to_euler()
+        # FIXME : Matrix fails if object is rotated along local X or Y axis.
+        if euler[0] != 0 or euler[1] != 0:
+            self.write_object(obj=obj,
+                              layout=self.msp,
+                              context=context,
+                              settings=settings)
+            if self.debug_mode:
+                self.log.append(f"Object {obj.name} should be inserted as a block but it as a local X or Y rotation. Insert as a regular Mesh instead")
         dxfattribs = {
             'layer': get_layer_name(self.doc.layers, context, obj, settings.entity_layer_to),
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),
             'xscale': scale[0],
             'yscale': scale[1],
             'zscale': scale[2],
-            'rotation': degrees(matrix.to_euler()[2])
+            'rotation': degrees(euler[2])
         }
-        
-        self.msp.add_blockref(block.name, matrix.to_translation(), dxfattribs=dxfattribs)
+
+        self.msp.add_blockref(
+            block.name, matrix.to_translation(), dxfattribs=dxfattribs)
 
     def is_object_supported(self, obj):
         if obj.type in self.supported_types:
@@ -157,9 +166,9 @@ class DXFExporter:
             if settings.entity_layer_separate:
                 if i == 0:
                     dxfattribs['layer'] = layer + "_LINES"
-                if i == 1:
+                elif i == 1:
                     dxfattribs['layer'] = layer + "_POINTS"
-                if i == 2:
+                elif i == 2:
                     dxfattribs['layer'] = layer + "_FACES"
             mesh_creation_method(
                 layout, mesh, matrix, settings.delta_xyz, dxfattribs.copy())
