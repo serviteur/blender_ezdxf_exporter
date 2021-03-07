@@ -1,4 +1,4 @@
-from mathutils import Matrix
+from mathutils import Matrix, Vector
 from math import degrees
 import ezdxf
 import bmesh
@@ -21,6 +21,7 @@ class DXFExporter:
         self.doc = ezdxf.new(dxfversion="R2010")  # Create new document
         self.msp = self.doc.modelspace()  # Access to dxf Modelspace
         self.debug_mode = debug_mode
+        # TODO : Log export times
         self.log = []
         self.exported_objects = 0
         self.not_exported_objects = 0
@@ -41,11 +42,9 @@ class DXFExporter:
         objects = [o for o in objects if self.is_object_supported(o)]
 
         if settings.use_blocks:
-            obj_data_dict = {}
             data_obj_dict = {}
             for obj in objects:
                 data = obj.data
-                obj_data_dict[obj] = obj.data
                 if data in data_obj_dict:
                     data_obj_dict[data].append(obj)
                 else:
@@ -91,7 +90,8 @@ class DXFExporter:
                               context=context,
                               settings=settings)
             if self.debug_mode:
-                self.log.append(f"Object {obj.name} should be inserted as a block but it as a local X or Y rotation. Insert as a regular Mesh instead")
+                self.log.append(f"Object {obj.name} should be inserted as a block but it has a local X or Y rotation. Insert as a regular Mesh instead")
+            return
         dxfattribs = {
             'layer': get_layer_name(self.doc.layers, context, obj, settings.entity_layer_to),
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),
@@ -102,7 +102,9 @@ class DXFExporter:
         }
 
         self.msp.add_blockref(
-            block.name, matrix.to_translation(), dxfattribs=dxfattribs)
+            block.name, matrix.to_translation() + settings.delta_xyz, dxfattribs=dxfattribs)
+        if self.debug_mode:
+            self.log.append(f"Object {obj.name} was added as a Block")
 
     def is_object_supported(self, obj):
         if obj.type in self.supported_types:
@@ -141,14 +143,14 @@ class DXFExporter:
         self.export_mesh(
             layout,
             export_obj,
-            obj.matrix_world if use_matrix else Matrix(),
+            use_matrix,
             dxfattribs,
             settings)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-    def export_mesh(self, layout, obj, matrix, dxfattribs, settings):
+    def export_mesh(self, layout, obj, use_matrix, dxfattribs, settings):
         mesh = obj.to_mesh()
 
         layer = dxfattribs['layer']
@@ -171,7 +173,11 @@ class DXFExporter:
                 elif i == 2:
                     dxfattribs['layer'] = layer + "_FACES"
             mesh_creation_method(
-                layout, mesh, matrix, settings.delta_xyz, dxfattribs.copy())
+                layout, 
+                mesh, 
+                obj.matrix_world if use_matrix else Matrix(), 
+                settings.delta_xyz if use_matrix else Vector((0, 0, 0)), 
+                dxfattribs.copy())
 
     def export_file(self, path):
         self.doc.entitydb.purge()
