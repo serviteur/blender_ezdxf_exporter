@@ -9,7 +9,9 @@ from .shared_properties import (
     rgb_to_hex,
     float_to_hex,
 )
-from .modelspace import create_mesh
+from .modelspace import (
+    MSPInterfaceMesh,
+)
 
 
 class DXFExporter:
@@ -147,19 +149,11 @@ class DXFExporter:
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()
 
-        # Make sure there is no N-Gon (not supported in DXF Faces)
-        if obj.type == 'MESH' and mesh_as in (
-                dxf_mesh_type.FACES3D.value, 
-                dxf_mesh_type.POLYFACE.value):
-            bm = bmesh.new()
-            bm.from_mesh(mesh)
-            bmesh.ops.triangulate(bm, faces=bm.faces[:])
-            bm.to_mesh(mesh)
-            bm.free()
+        MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, mesh_as)
 
         # Support for multiple mesh export type later on in development.
         # For example, user wants to export Points AND Faces
-        for mesh_creation_method in [create_mesh(mesh_as), ]:
+        for mesh_creation_method in [MSPInterfaceMesh.create_mesh(mesh_as), ]:
             if mesh_creation_method is None:
                 continue
             mesh_creation_method(self.msp, mesh, obj_matrix_world, dxfattribs)
