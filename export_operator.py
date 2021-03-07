@@ -53,8 +53,8 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         items=[(e_l.value,)*3 for e_l in entity_layer])
 
     entity_layer_separate: BoolProperty(
-        name="Separate Entity Types",
-        description="Check for faces, lines and points to be drawn on separate layers",
+        name="Face, Edge and Vertex Sub-Layers",
+        description="Faces, lines and points are drawn on separate sub-layers",
         # TODO : Add customization in addonprefs
         default=False,
     )
@@ -103,13 +103,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
-            faces_as=self.faces_export,
-            lines_as=self.lines_export,
-            points_as=self.points_export,
-            color=self.entity_color_to,
-            layer=self.entity_layer_to,
-            layer_separate=self.entity_layer_separate,
-            delta_xyz=self.delta_xyz,
+            settings=self,
         )
 
         if exporter.export_file(self.filepath):

@@ -34,24 +34,12 @@ class DXFExporter:
             self,
             objects,
             context,
-            faces_as,
-            lines_as,
-            points_as,
-            layer,
-            layer_separate,
-            color,
-            delta_xyz,
+            settings,
             ):
         [self.write_object(
             obj=obj,
             context=context,
-            faces_as=faces_as,
-            lines_as=lines_as,
-            points_as=points_as,
-            layer=layer,
-            layer_separate=layer_separate,
-            color=color,
-            delta_xyz=delta_xyz,
+            settings=settings,
         )
             for obj in objects]
         if self.debug_mode:
@@ -74,13 +62,7 @@ class DXFExporter:
             self,
             obj,
             context,
-            faces_as,
-            lines_as,
-            points_as,
-            layer='0',
-            layer_separate=False,
-            color='BYLAYER',
-            delta_xyz=(0, 0, 0),
+            settings,
             ):
 
         if not self.is_object_supported(obj):
@@ -90,44 +72,44 @@ class DXFExporter:
         export_obj = obj.evaluated_get(depsgraph)
 
         dxfattribs = {
-            'layer': get_layer_name(self.doc.layers, context, obj, layer),
-            'color': MSPInterfaceColor.get_ACI_color(color)
+            'layer': get_layer_name(self.doc.layers, context, obj, settings.entity_layer_to),
+            'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to)
         }
 
-        obj_color, obj_alpha = MSPInterfaceColor.get_color(context, obj, color)
+        obj_color, obj_alpha = MSPInterfaceColor.get_color(context, obj, settings.entity_color_to)
         dxfattribs['transparency'] = int(float_to_hex(1 - obj_alpha), 16)
         dxfattribs['transparency'] = 50
         if dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 
-        self.export_mesh(export_obj, dxfattribs, faces_as, lines_as, points_as, layer_separate, delta_xyz)
+        self.export_mesh(export_obj, dxfattribs, settings)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-    def export_mesh(self, obj, dxfattribs, faces_as, lines_as, points_as, layer_separate, delta_xyz):
+    def export_mesh(self, obj, dxfattribs, settings):
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()
 
         layer = dxfattribs['layer']
 
         for i, mesh_creation_method in enumerate((
-                MSPInterfaceMesh.create_mesh(lines_as),
-                MSPInterfaceMesh.create_mesh(points_as), 
-                MSPInterfaceMesh.create_mesh(faces_as),
+                MSPInterfaceMesh.create_mesh(settings.lines_export),
+                MSPInterfaceMesh.create_mesh(settings.points_export), 
+                MSPInterfaceMesh.create_mesh(settings.faces_export),
         )):
             if mesh_creation_method is None:
                 continue
             if i == 2: # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
-                MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, faces_as)
-            if layer_separate:
+                MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, settings.faces_export)
+            if settings.entity_layer_separate:
                 if i == 0:
                     dxfattribs['layer'] = layer + "_LINES"
                 if i == 1:
                     dxfattribs['layer'] = layer + "_POINTS"
                 if i == 2:
                     dxfattribs['layer'] = layer + "_FACES"
-            mesh_creation_method(self.msp, mesh, obj_matrix_world, delta_xyz, dxfattribs.copy())
+            mesh_creation_method(self.msp, mesh, obj_matrix_world, settings.delta_xyz, dxfattribs.copy())
 
 
 
