@@ -1,4 +1,5 @@
 import ezdxf
+import bmesh
 import bpy
 from .shared_properties import (
     entity_layer,
@@ -103,6 +104,7 @@ class DXFExporter:
         dxfattribs['transparency'] = 50
         if dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
+
         self.export_mesh(export_obj, dxfattribs, mesh_as)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
@@ -111,6 +113,16 @@ class DXFExporter:
     def export_mesh(self, obj, dxfattribs, mesh_as):    
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()
+
+        # Make sure there is no N-Gon (not supported in DXF Faces)
+        if obj.type == 'MESH' and mesh_as in (
+                dxf_mesh_type.FACES3D.value, 
+                dxf_mesh_type.POLYFACE.value):
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            bmesh.ops.triangulate(bm, faces=bm.faces[:])
+            bm.to_mesh(mesh)
+            bm.free()
 
         # Support for multiple mesh export type later on in development.
         # For example, user wants to export Points AND Faces
