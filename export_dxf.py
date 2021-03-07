@@ -2,15 +2,19 @@ import ezdxf
 import bpy
 from .shared_properties import (
     entity_layer,
+    get_256_rgb_a,
+    rgb_to_hex,
+    float_to_hex,
 )
 from .modelspace import create_mesh
+
 
 class DXFExporter:
     supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
 
     def __init__(self, debug_mode=False):
-        self.doc = ezdxf.new(dxfversion="R2010") # Create new document
-        self.msp = self.doc.modelspace() # Access to dxf Modelspace
+        self.doc = ezdxf.new(dxfversion="R2010")  # Create new document
+        self.msp = self.doc.modelspace()  # Access to dxf Modelspace
         self.debug_mode = debug_mode
         self.log = []
         self.exported_objects = 0
@@ -95,6 +99,10 @@ class DXFExporter:
             'layer': self.get_layer_name(coll_colors, obj, layer)
         }
 
+        dxfattribs['transparency'] = int(float_to_hex(1 - obj_alpha), 16)
+        dxfattribs['transparency'] = 50
+        if dxfattribs['color'] == 257:
+            dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
         self.export_mesh(export_obj, dxfattribs, mesh_as)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
@@ -109,7 +117,7 @@ class DXFExporter:
         for mesh_creation_method in [create_mesh(mesh_as), ]:
             if mesh_creation_method is None:
                 continue
-            mesh_creation_method(mesh, obj_matrix_world, dxfattribs)
+            mesh_creation_method(self.msp, mesh, obj_matrix_world, dxfattribs)
 
     def export_file(self, path):
         self.doc.entitydb.purge()

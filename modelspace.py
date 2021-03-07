@@ -1,15 +1,15 @@
 from .shared_properties import dxf_mesh_type
 
 def create_mesh(mesh_type):
-    if mesh_type == dxf_mesh_type.FACES3D:
+    if mesh_type == dxf_mesh_type.FACES3D.value:
         return create_mesh_3dfaces
-    elif mesh_type == dxf_mesh_type.POLYFACE:
+    elif mesh_type == dxf_mesh_type.POLYFACE.value:
         return create_mesh_polyface
-    elif mesh_type == dxf_mesh_type.POLYLINES:
+    elif mesh_type == dxf_mesh_type.POLYLINES.value:
         return create_mesh_polylines
-    elif mesh_type == dxf_mesh_type.LINES:
+    elif mesh_type == dxf_mesh_type.LINES.value:
         return create_mesh_lines
-    elif mesh_type == dxf_mesh_type.POINTS:
+    elif mesh_type == dxf_mesh_type.POINTS.value:
         return create_mesh_points
 
 def create_mesh_points(msp, mesh, matrix, dxfattribs):
