@@ -31,6 +31,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=True,
         description="What object will be exported? Only selected / All objects")
 
+    use_blocks: BoolProperty(
+        name="Export Linked Data as Blocks",
+        description="If objects share the same mesh data, they will be exported as Block objects.\nWarning : Will not work if linked objects have a rotation along X or Y",
+        default=False,
+    )
+
     faces_export: EnumProperty(
         name="Export Faces",
         default=dxf_face_type.MESH.value,
@@ -120,6 +126,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "only_selected")
+        layout.prop(self, "use_blocks")
         for prop, name in zip(
                 ("faces_export", "lines_export", "points_export"),
                 ("Export Faces", "Export Edges", "Export Vertices")
