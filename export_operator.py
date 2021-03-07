@@ -22,7 +22,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
     filename_ext = ".dxf"
 
     only_selected: BoolProperty(
-        name="Only Selected", 
+        name="Export Only Selected Objects", 
         default=True,
         description="What object will be exported? Only selected / All objects")
 
@@ -46,6 +46,13 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=entity_layer.COLLECTION.value,
         description="Entity LAYER assigned to ?",
         items=[(e_l.value,)*3 for e_l in entity_layer])
+    
+    entity_layer_separate: BoolProperty(
+        name="Separate Entity Types",
+        description="Check for faces, lines and points to be drawn on separate layers",
+        # TODO : Add customization in addonprefs
+        default=False,
+    )
         
     entity_color_to: EnumProperty(
         name="Object Color", 
@@ -83,6 +90,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             points_as=self.points_export,
             color=self.entity_color_to,
             layer=self.entity_layer_to,
+            layer_separate=self.entity_layer_separate,
             )
 
         exporter.export_file(self.filepath)
@@ -102,7 +110,11 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             faces_split = box.split(factor=0.6)
             faces_split.label(text=name)
             faces_split.props_enum(self, prop)
-        layout.prop(self, "entity_layer_to")
+
+        layer_box = layout.box()
+        layer_box.label(text="Object Layer")
+        layer_box.prop(self, "entity_layer_to", text="")
+        layer_box.prop(self, "entity_layer_separate")
         layout.prop(self, "entity_color_to")
         layout.prop(self, "verbose")
 
