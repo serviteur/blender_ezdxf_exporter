@@ -84,19 +84,23 @@ class MSPInterfaceMesh:
         # Make sure there is no N-Gon (not supported in DXF Faces)
         if obj_type != 'MESH' or mesh_as not in (
                 dxf_face_type.FACES3D.value, 
-                dxf_face_type.POLYFACE.value):
+                dxf_face_type.POLYFACE.value,
+                dxf_face_type.MESH.value):
             return
-        bm = bmesh.new()
-        bm.from_mesh(mesh)
-        bmesh.ops.triangulate(bm, faces=bm.faces[:])
-        bm.to_mesh(mesh)
-        bm.free()
+        if any([len(p.vertices) > 4 for p in mesh.polygons]):   
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            bmesh.ops.triangulate(bm, faces=bm.faces[:])
+            bm.to_mesh(mesh)
+            bm.free()
     
     
     @staticmethod
     def create_mesh(mesh_type):
         if mesh_type == dxf_face_type.FACES3D.value:
             return MSPInterfaceMesh._create_mesh_3dfaces
+        elif mesh_type == dxf_face_type.MESH.value:
+            return MSPInterfaceMesh._create_mesh_mesh
         elif mesh_type == dxf_face_type.POLYFACE.value:
             return MSPInterfaceMesh._create_mesh_polyface
         elif mesh_type == dxf_line_type.POLYLINES.value:
@@ -153,3 +157,13 @@ class MSPInterfaceMesh:
             msp.add_3dface(
                 [matrix @ mesh.vertices[v].co for v in f.vertices],
                 dxfattribs=dxfattribs).translate(dx, dy, dz)
+    
+    @staticmethod
+    def _create_mesh_mesh(msp, bl_mesh, matrix, delta_xyz, dxfattribs):
+        #This is the fastest way to create a Mesh entity in DXF
+        dx, dy, dz = delta_xyz
+        dxf_mesh = msp.add_mesh(dxfattribs)
+        with dxf_mesh.edit_data() as mesh_data:
+            mesh_data.vertices = [matrix @ v.co for v in bl_mesh.vertices]
+            mesh_data.faces = [f.vertices for f in bl_mesh.polygons]
+        dxf_mesh.translate(dx, dy, dz)

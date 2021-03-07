@@ -33,7 +33,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
     faces_export: EnumProperty(
         name="Export Faces",
-        default=dxf_face_type.FACES3D.value,
+        default=dxf_face_type.MESH.value,
         items=[(f_t.value,)*3 for f_t in dxf_face_type])
 
     lines_export: EnumProperty(

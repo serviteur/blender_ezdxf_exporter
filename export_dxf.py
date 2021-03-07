@@ -127,8 +127,9 @@ class DXFExporter:
                     dxfattribs['layer'] = layer + "_POINTS"
                 if i == 2:
                     dxfattribs['layer'] = layer + "_FACES"
-            mesh_creation_method(self.msp, mesh, obj_matrix_world, delta_xyz, dxfattribs)
-            print(delta_xyz)
+            mesh_creation_method(self.msp, mesh, obj_matrix_world, delta_xyz, dxfattribs.copy())
+
+
 
     def export_file(self, path):
         self.doc.entitydb.purge()

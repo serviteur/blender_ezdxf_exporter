@@ -4,14 +4,15 @@ import struct
 
 class dxf_face_type(Enum):
     NONE = "Don't Export"
+    MESH = "MESH"
     FACES3D = "3DFACEs"
     POLYFACE = 'POLYFACE'
 
 
 class dxf_line_type(Enum):
     NONE = "Don't Export"
-    POLYLINES = 'POLYLINEs'
     LINES = 'LINEs'
+    POLYLINES = 'POLYLINEs'
 
 
 class dxf_point_type(Enum):
