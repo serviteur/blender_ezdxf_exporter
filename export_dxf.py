@@ -96,15 +96,15 @@ class DXFExporter:
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()
 
-        MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, faces_as)
-
-        for mesh_creation_method in (
-                MSPInterfaceMesh.create_mesh(faces_as), 
+        for i, mesh_creation_method in enumerate((
                 MSPInterfaceMesh.create_mesh(lines_as),
-                MSPInterfaceMesh.create_mesh(points_as),        
-        ):
+                MSPInterfaceMesh.create_mesh(points_as), 
+                MSPInterfaceMesh.create_mesh(faces_as),
+        )):
             if mesh_creation_method is None:
                 continue
+            if i == 2: # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
+                MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, faces_as)
             mesh_creation_method(self.msp, mesh, obj_matrix_world, dxfattribs)
 
     def export_file(self, path):
