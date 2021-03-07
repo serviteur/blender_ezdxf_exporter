@@ -3,14 +3,13 @@ import bmesh
 import bpy
 from .shared_properties import (
     dxf_mesh_type,
-    entity_layer,
-    entity_color,
-    get_256_rgb_a,
     rgb_to_hex,
     float_to_hex,
 )
 from .modelspace import (
     MSPInterfaceMesh,
+    MSPInterfaceColor,
+    get_layer_name,
 )
 
 
@@ -46,63 +45,6 @@ class DXFExporter:
             self.log.append(
                 f"NOT Exported : {self.not_exported_objects} Objects")
 
-    def get_collection_color(self, coll: bpy.types.Collection, context):
-        coll_colors = context.preferences.themes[0].collection_color
-        if coll_colors is not None:
-            color_tag = coll.color_tag
-            if color_tag != 'NONE':
-                return get_256_rgb_a(coll_colors[int(color_tag[-2:])-1].color)
-            else:
-                return (0, 0, 0), 1
-
-    def get_object_color(self, obj: bpy.types.Object):
-        return get_256_rgb_a(obj.color)
-
-    def get_material_color(self, mat: bpy.types.Material):
-        return get_256_rgb_a(mat.diffuse_color)
-
-    def get_layer_name(self, context, obj, layer) -> str:
-        if layer == entity_layer.COLLECTION.value:
-            coll = obj.users_collection[0]
-            if coll.name not in self.doc.layers:
-                new_layer = self.doc.layers.new(coll.name)
-                new_layer.rgb, _ = self.get_collection_color(coll, context)
-            return coll.name
-        elif layer == entity_layer.COLLECTION.DATA_NAME.value:
-            return obj.data.name
-        elif layer == entity_layer.COLLECTION.OBJECT_NAME.value:
-            if obj.name not in self.doc.layers:
-                new_layer = self.doc.layers.new(obj.name)
-                rgb, a = self.get_object_color(obj)
-                new_layer.rgb, new_layer.transparency = rgb, 1 - a
-            return obj.name
-        elif layer == entity_layer.COLLECTION.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
-            mat = obj.data.materials[0]
-            if mat.name not in self.doc.layers:
-                new_layer = self.doc.layers.new(mat.name)
-                rgb, a = self.get_material_color(mat)
-                new_layer.rgb, new_layer.transparency = rgb, 1 - a
-            return mat.name
-        elif layer == entity_layer.SCENE_NAME.value:
-            return context.scene.name
-        return '0'
-    
-    def get_color_by(self, color):
-        if color == entity_color.BYLAYER.value:
-            return 256
-        elif color == entity_color.BYBLOCK.value:
-            return 0
-        return 257    
-    
-    def get_color(self, context, obj, color):
-        if color == entity_color.COLLECTION.value:
-            return self.get_collection_color(obj.users_collection[0])
-        elif color == entity_color.OBJECT.value:
-            return self.get_object_color(obj)
-        elif color == entity_color.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
-            return self.get_material_color(obj.data.materials[0])
-        return (0, 0, 0), 1
-        
 
     def is_object_supported(self, obj):
         if obj.type in self.supported_types:
@@ -130,11 +72,11 @@ class DXFExporter:
         export_obj = obj.evaluated_get(depsgraph)
 
         dxfattribs = {
-            'layer': self.get_layer_name(context, obj, layer),
-            'color': self.get_color_by(color)
+            'layer': get_layer_name(self.doc.layers, context, obj, layer),
+            'color': MSPInterfaceColor.get_ACI_color(color)
         }
 
-        obj_color, obj_alpha = self.get_color(context, obj, color)
+        obj_color, obj_alpha = MSPInterfaceColor.get_color(context, obj, color)
         dxfattribs['transparency'] = int(float_to_hex(1 - obj_alpha), 16)
         dxfattribs['transparency'] = 50
         if dxfattribs['color'] == 257:
