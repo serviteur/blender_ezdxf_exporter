@@ -108,42 +108,48 @@ class MSPInterfaceMesh:
         return None
 
     @staticmethod
-    def _create_mesh_points(msp, mesh, matrix, dxfattribs):
+    def _create_mesh_points(msp, mesh, matrix, delta_xyz, dxfattribs):
+        dx, dy, dz = delta_xyz
         for v in mesh.vertices:
             msp.add_point(
-                matrix @ v.co,
-                dxfattribs=dxfattribs)
+                    matrix @ v.co,
+                    dxfattribs=dxfattribs).translate(dx, dy, dz)
 
     @staticmethod
-    def _create_mesh_lines(msp, mesh, matrix, dxfattribs):
+    def _create_mesh_lines(msp, mesh, matrix, delta_xyz, dxfattribs):
+        dx, dy, dz = delta_xyz
         for e in mesh.edges:
             msp.add_line(
                 matrix @ mesh.vertices[e.vertices[0]].co,
                 matrix @ mesh.vertices[e.vertices[1]].co,
-                dxfattribs=dxfattribs)
+                dxfattribs=dxfattribs).translate(dx, dy, dz)
 
     @staticmethod
-    def _create_mesh_polylines(msp, mesh, matrix, dxfattribs):
+    def _create_mesh_polylines(msp, mesh, matrix, delta_xyz, dxfattribs):
+        dx, dy, dz = delta_xyz
         for e in mesh.edges:
             msp.add_polyline3d(
                 (
                     matrix @ mesh.vertices[e.vertices[0]].co,
                     matrix @ mesh.vertices[e.vertices[1]].co,
                 ),
-                dxfattribs=dxfattribs)
+                dxfattribs=dxfattribs).translate(dx, dy, dz)
 
     @staticmethod
-    def _create_mesh_polyface(msp, mesh, matrix, dxfattribs):
+    def _create_mesh_polyface(msp, mesh, matrix, delta_xyz, dxfattribs):
+        dx, dy, dz = delta_xyz
         polyface = msp.add_polyface(dxfattribs=dxfattribs)
         polyface.append_faces(
             [[matrix @ mesh.vertices[v].co for v in f.vertices]
                 for f in mesh.polygons],
             dxfattribs=dxfattribs)
+        polyface.translate(dx, dy, dz)
         polyface.optimize()
 
     @staticmethod
-    def _create_mesh_3dfaces(msp, mesh, matrix, dxfattribs):
+    def _create_mesh_3dfaces(msp, mesh, matrix, delta_xyz, dxfattribs):
+        dx, dy, dz = delta_xyz
         for f in mesh.polygons:
             msp.add_3dface(
                 [matrix @ mesh.vertices[v].co for v in f.vertices],
-                dxfattribs=dxfattribs)
+                dxfattribs=dxfattribs).translate(dx, dy, dz)

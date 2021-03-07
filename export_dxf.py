@@ -39,7 +39,8 @@ class DXFExporter:
             points_as,
             layer,
             layer_separate,
-            color
+            color,
+            delta_xyz,
             ):
         [self.write_object(
             obj=obj,
@@ -50,6 +51,7 @@ class DXFExporter:
             layer=layer,
             layer_separate=layer_separate,
             color=color,
+            delta_xyz=delta_xyz,
         )
             for obj in objects]
         if self.debug_mode:
@@ -77,7 +79,8 @@ class DXFExporter:
             points_as,
             layer='0',
             layer_separate=False,
-            color='BYLAYER'
+            color='BYLAYER',
+            delta_xyz=(0, 0, 0),
             ):
 
         if not self.is_object_supported(obj):
@@ -97,12 +100,12 @@ class DXFExporter:
         if dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 
-        self.export_mesh(export_obj, dxfattribs, faces_as, lines_as, points_as, layer_separate)
+        self.export_mesh(export_obj, dxfattribs, faces_as, lines_as, points_as, layer_separate, delta_xyz)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-    def export_mesh(self, obj, dxfattribs, faces_as, lines_as, points_as, layer_separate):
+    def export_mesh(self, obj, dxfattribs, faces_as, lines_as, points_as, layer_separate, delta_xyz):
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()
 
@@ -124,7 +127,8 @@ class DXFExporter:
                     dxfattribs['layer'] = layer + "_POINTS"
                 if i == 2:
                     dxfattribs['layer'] = layer + "_FACES"
-            mesh_creation_method(self.msp, mesh, obj_matrix_world, dxfattribs)
+            mesh_creation_method(self.msp, mesh, obj_matrix_world, delta_xyz, dxfattribs)
+            print(delta_xyz)
 
     def export_file(self, path):
         self.doc.entitydb.purge()
