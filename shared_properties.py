@@ -2,12 +2,20 @@ from enum import Enum
 import struct
 
 
-class dxf_mesh_type(Enum):
-    NONE = 'Do not export'
-    FACES3D = '3DFACEs'
+class dxf_face_type(Enum):
+    NONE = "Don't Export"
+    FACES3D = "3DFACEs"
     POLYFACE = 'POLYFACE'
+
+
+class dxf_line_type(Enum):
+    NONE = "Don't Export"
     POLYLINES = 'POLYLINEs'
     LINES = 'LINEs'
+
+
+class dxf_point_type(Enum):
+    NONE = "Don't Export"    
     POINTS = 'POINTs'
 
 

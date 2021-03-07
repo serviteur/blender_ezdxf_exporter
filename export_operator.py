@@ -6,7 +6,9 @@ from bpy.types import Operator
 
 from .export_dxf import DXFExporter
 from .shared_properties import (
-    dxf_mesh_type,
+    dxf_face_type,
+    dxf_line_type,
+    dxf_point_type,
     entity_layer,
     entity_color,
 )
@@ -24,17 +26,26 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=True,
         description="What object will be exported? Only selected / All objects")
 
-    mesh_as: EnumProperty( 
-        name="Export Mesh As", 
-        default=dxf_mesh_type.FACES3D.value,
-        description="Select representation of a mesh",
-        items=[(m_t.value,)*3 for m_t in dxf_mesh_type])
+    faces_export:EnumProperty(
+        name="Export Faces", 
+        default=dxf_face_type.FACES3D.value,
+        items=[(f_t.value,)*3 for f_t in dxf_face_type])
+    
+    lines_export:EnumProperty(
+        name="Export Lines", 
+        default=dxf_line_type.NONE.value,
+        items=[(l_t.value,)*3 for l_t in dxf_line_type])
+
+    points_export:EnumProperty(
+        name="Export Points", 
+        default=dxf_point_type.NONE.value,
+        items=[(p_t.value,)*3 for p_t in dxf_point_type])
 
     entity_layer_to: EnumProperty(
         name="Object Layer", 
         default=entity_layer.COLLECTION.value,
         description="Entity LAYER assigned to ?",
-        items=[(e_l.value,)*3 for e_l in entity_layer])    
+        items=[(e_l.value,)*3 for e_l in entity_layer])
         
     entity_color_to: EnumProperty(
         name="Object Color", 
@@ -67,15 +78,33 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
-            mesh_as=self.mesh_as,
+            faces_as=self.faces_export,
+            lines_as=self.lines_export,
+            points_as=self.points_export,
             color=self.entity_color_to,
             layer=self.entity_layer_to,
             )
+
         exporter.export_file(self.filepath)
         if self.verbose:
             for line in exporter.log:
                 print(line)
         return {'FINISHED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "only_selected")
+        for prop, name in zip(
+                ("faces_export", "lines_export", "points_export"),
+                ("Export Faces", "Export Edges", "Export Vertices")
+                ):
+            box = layout.box()
+            faces_split = box.split(factor=0.6)
+            faces_split.label(text=name)
+            faces_split.props_enum(self, prop)
+        layout.prop(self, "entity_layer_to")
+        layout.prop(self, "entity_color_to")
+        layout.prop(self, "verbose")
 
 
 def menu_func_export(self, context):

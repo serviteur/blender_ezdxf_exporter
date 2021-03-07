@@ -6,7 +6,9 @@ from bpy.types import (
 )
 from .shared_properties import (
     entity_color,
-    dxf_mesh_type,
+    dxf_face_type,
+    dxf_line_type,
+    dxf_point_type,
     entity_layer,
     get_256_rgb_a,
 )
@@ -81,8 +83,8 @@ class MSPInterfaceMesh:
     def triangulate_if_needed(mesh, obj_type, mesh_as):
         # Make sure there is no N-Gon (not supported in DXF Faces)
         if obj_type != 'MESH' or mesh_as not in (
-                dxf_mesh_type.FACES3D.value, 
-                dxf_mesh_type.POLYFACE.value):
+                dxf_face_type.FACES3D.value, 
+                dxf_face_type.POLYFACE.value):
             return
         bm = bmesh.new()
         bm.from_mesh(mesh)
@@ -90,19 +92,20 @@ class MSPInterfaceMesh:
         bm.to_mesh(mesh)
         bm.free()
     
-
+    
     @staticmethod
     def create_mesh(mesh_type):
-        if mesh_type == dxf_mesh_type.FACES3D.value:
+        if mesh_type == dxf_face_type.FACES3D.value:
             return MSPInterfaceMesh._create_mesh_3dfaces
-        elif mesh_type == dxf_mesh_type.POLYFACE.value:
+        elif mesh_type == dxf_face_type.POLYFACE.value:
             return MSPInterfaceMesh._create_mesh_polyface
-        elif mesh_type == dxf_mesh_type.POLYLINES.value:
+        elif mesh_type == dxf_line_type.POLYLINES.value:
             return MSPInterfaceMesh._create_mesh_polylines
-        elif mesh_type == dxf_mesh_type.LINES.value:
+        elif mesh_type == dxf_line_type.LINES.value:
             return MSPInterfaceMesh._create_mesh_lines
-        elif mesh_type == dxf_mesh_type.POINTS.value:
+        elif mesh_type == dxf_point_type.POINTS.value:
             return MSPInterfaceMesh._create_mesh_points
+        return None
 
     @staticmethod
     def _create_mesh_points(msp, mesh, matrix, dxfattribs):

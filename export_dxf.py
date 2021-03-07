@@ -2,7 +2,6 @@ import ezdxf
 import bmesh
 import bpy
 from .shared_properties import (
-    dxf_mesh_type,
     rgb_to_hex,
     float_to_hex,
 )
@@ -28,14 +27,18 @@ class DXFExporter:
             self,
             objects,
             context,
-            mesh_as,
+            faces_as,
+            lines_as,
+            points_as,
             layer,
             color
             ):
         [self.write_object(
             obj=obj,
             context=context,
-            mesh_as=mesh_as,
+            faces_as=faces_as,
+            lines_as=lines_as,
+            points_as=points_as,
             layer=layer,
             color=color,
         )
@@ -60,7 +63,9 @@ class DXFExporter:
             self,
             obj,
             context,
-            mesh_as,
+            faces_as,
+            lines_as,
+            points_as,
             layer='0',
             color='BYLAYER'
             ):
@@ -82,20 +87,22 @@ class DXFExporter:
         if dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 
-        self.export_mesh(export_obj, dxfattribs, mesh_as)
+        self.export_mesh(export_obj, dxfattribs, faces_as, lines_as, points_as)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-    def export_mesh(self, obj, dxfattribs, mesh_as):
+    def export_mesh(self, obj, dxfattribs, faces_as, lines_as, points_as):
         obj_matrix_world = obj.matrix_world
         mesh = obj.to_mesh()
 
-        MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, mesh_as)
+        MSPInterfaceMesh.triangulate_if_needed(mesh, obj.type, faces_as)
 
-        # Support for multiple mesh export type later on in development.
-        # For example, user wants to export Points AND Faces
-        for mesh_creation_method in [MSPInterfaceMesh.create_mesh(mesh_as), ]:
+        for mesh_creation_method in (
+                MSPInterfaceMesh.create_mesh(faces_as), 
+                MSPInterfaceMesh.create_mesh(lines_as),
+                MSPInterfaceMesh.create_mesh(points_as),        
+        ):
             if mesh_creation_method is None:
                 continue
             mesh_creation_method(self.msp, mesh, obj_matrix_world, dxfattribs)
