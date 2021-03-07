@@ -8,6 +8,7 @@ from .export_dxf import DXFExporter
 from .shared_properties import (
     dxf_mesh_type,
     entity_layer,
+    entity_color,
 )
 
 
@@ -23,22 +24,23 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=True,
         description="What object will be exported? Only selected / All objects")
 
-    apply_modifiers: BoolProperty(
-        name="Apply Modifiers", 
-        default=True,
-        description="Export the objects with all modifiers and shapekeys applied")
-
     mesh_as: EnumProperty( 
         name="Export Mesh As", 
         default=dxf_mesh_type.FACES3D.value,
         description="Select representation of a mesh",
         items=[(m_t.value,)*3 for m_t in dxf_mesh_type])
 
-    entitylayer_from: EnumProperty(
+    entity_layer_to: EnumProperty(
         name="Object Layer", 
         default=entity_layer.COLLECTION.value,
-        description="Entity LAYER assigned to?",
-        items=[(e_l.value,)*3 for e_l in entity_layer])
+        description="Entity LAYER assigned to ?",
+        items=[(e_l.value,)*3 for e_l in entity_layer])    
+        
+    entity_color_to: EnumProperty(
+        name="Object Color", 
+        default=entity_color.BYLAYER.value,
+        description="Entity COLOR assigned to ?",
+        items=[(e_c.value,)*3 for e_c in entity_color])
 
     verbose: BoolProperty(
         name="Verbose", 
@@ -65,9 +67,10 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
-            apply_modifiers=self.apply_modifiers,
             mesh_as=self.mesh_as,
-            layer=self.entitylayer_from)
+            color=self.entity_color_to,
+            layer=self.entity_layer_to,
+            )
         exporter.export_file(self.filepath)
         if self.verbose:
             for line in exporter.log:
