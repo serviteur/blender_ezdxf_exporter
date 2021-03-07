@@ -82,6 +82,9 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         exporter = DXFExporter(
             debug_mode=self.verbose,
         )
+        if not exporter.can_write_file(self.filepath):
+            self.report({'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software)")            
+            return {'FINISHED'}
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
             context=context,
@@ -93,10 +96,14 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             layer_separate=self.entity_layer_separate,
             )
 
-        exporter.export_file(self.filepath)
+        if exporter.export_file(self.filepath):
+            self.report({'INFO'}, "Export Succesfully Completed")
+        else:
+            self.report({'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software)")
         if self.verbose:
             for line in exporter.log:
                 print(line)
+        
         return {'FINISHED'}
     
     def draw(self, context):

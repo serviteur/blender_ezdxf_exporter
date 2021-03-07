@@ -23,6 +23,13 @@ class DXFExporter:
         self.exported_objects = 0
         self.not_exported_objects = 0
 
+    def can_write_file(self, path):        
+        try:
+            self.doc.saveas(path)
+            return True
+        except PermissionError:
+            return False
+
     def write_objects(
             self,
             objects,
@@ -121,4 +128,9 @@ class DXFExporter:
 
     def export_file(self, path):
         self.doc.entitydb.purge()
-        self.doc.saveas(path)
+        try:
+            self.doc.saveas(path)
+            return True
+        except PermissionError:
+            return False
+            
