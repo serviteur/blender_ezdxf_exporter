@@ -155,6 +155,14 @@ class DXFExporter:
 
         layer = dxfattribs['layer']
 
+        matrix = obj.matrix_world if use_matrix else Matrix()
+        if settings.export_scale != (1, 1, 1):
+            mx = Matrix.Scale(settings.export_scale[0], 4, (1, 0, 0))
+            my = Matrix.Scale(settings.export_scale[1], 4, (0, 1, 0))
+            mz = Matrix.Scale(settings.export_scale[2], 4, (0, 0, 1))
+            matrix = mx @ my @ mz @ matrix
+        delta_xyz = settings.delta_xyz if use_matrix else Vector((0, 0, 0))
+
         for i, mesh_creation_method in enumerate((
                 MSPInterfaceMesh.create_mesh(settings.lines_export),
                 MSPInterfaceMesh.create_mesh(settings.points_export),
@@ -174,9 +182,9 @@ class DXFExporter:
                     dxfattribs['layer'] = layer + "_FACES"
             mesh_creation_method(
                 layout, 
-                mesh, 
-                obj.matrix_world if use_matrix else Matrix(), 
-                settings.delta_xyz if use_matrix else Vector((0, 0, 0)), 
+                mesh,
+                matrix,
+                delta_xyz,
                 dxfattribs.copy())
 
     def export_file(self, path):

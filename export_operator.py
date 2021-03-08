@@ -2,7 +2,7 @@ import bpy
 
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
-    StringProperty,
+    FloatProperty, StringProperty,
     BoolProperty,
     EnumProperty,
     FloatVectorProperty,
@@ -19,12 +19,35 @@ from .shared_properties import (
 )
 
 
+def update_export_scale(self, context):
+    if not self.uniform_export_scale:
+        return
+    if self.export_scale[0] != self.export_scale[1]:
+        self.export_scale[1] = self.export_scale[0]
+        return
+    if self.export_scale[0] != self.export_scale[2]:
+        self.export_scale[2] = self.export_scale[0]
+
+
 class DXFExporter_OT_Export(Operator, ExportHelper):
     """File selection operator to export objects in DXF file"""
     bl_idname = "dxf_exporter.export"
     bl_label = "Export As DXF"
 
     filename_ext = ".dxf"
+    
+    filter_glob: StringProperty(
+        default="*.dxf",
+        options={'HIDDEN'},
+        maxlen=255,  # Max internal buffer length, longer would be clamped.
+    )
+
+    filepath: StringProperty(name="File Name",
+                             description="filepath",
+                             default="",
+                             maxlen=1024,
+                             options={'ANIMATABLE'},
+                             subtype='NONE')
 
     only_selected: BoolProperty(
         name="Export Only Selected Objects",
@@ -80,23 +103,24 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         # size=3,
     )
 
+    uniform_export_scale: BoolProperty(
+        name="Uniform Scale",
+        description="Scale uniformly in all axes",
+        default=True,
+        update=update_export_scale,
+    )
+
+    export_scale: FloatVectorProperty(
+        name="Unit Scale",
+        description="This parameter will scale every entity globally, starting at the center of the world (0, 0, 0)",
+        default=(1, 1, 1),
+        update=update_export_scale,
+    )
+
     verbose: BoolProperty(
         name="Verbose",
         default=False,
         description="Run the exporter in debug mode.  Check the console for output")
-
-    filter_glob: StringProperty(
-        default="*.dxf",
-        options={'HIDDEN'},
-        maxlen=255,  # Max internal buffer length, longer would be clamped.
-    )
-
-    filepath: StringProperty(name="File Name",
-                             description="filepath",
-                             default="",
-                             maxlen=1024,
-                             options={'ANIMATABLE'},
-                             subtype='NONE')
 
     def execute(self, context):
         exporter = DXFExporter(
@@ -136,17 +160,29 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             faces_split.label(text=name)
             faces_split.props_enum(self, prop)
 
+        layout.label(text="Object Layer")
         layer_box = layout.box()
-        layer_box.label(text="Object Layer")
         layer_box.prop(self, "entity_layer_to", text="")
         layer_box.prop(self, "entity_layer_separate")
         layout.prop(self, "entity_color_to")
 
+        layout.label(text="Scale")
+        scale_box = layout.box()
+        scale_box.prop(self, "uniform_export_scale")
+        scale_box.prop(self, "export_scale", index=0, text="X")
+        scale_box_y = scale_box.row()
+        scale_box_y.prop(self, "export_scale", index=1, text="Y")
+        scale_box_y.enabled = not self.uniform_export_scale
+        scale_box_z  = scale_box.row()
+        scale_box_z.prop(self, "export_scale", index=2, text="Z")
+        scale_box_z.enabled = not self.uniform_export_scale
+
+        layout.label(text="Delta XYZ")
         delta_xyz_box = layout.box()
-        delta_xyz_box.label(text="Delta XYZ")
         delta_xyz_box.prop(self, "delta_xyz", index=0, text="X")
         delta_xyz_box.prop(self, "delta_xyz", index=1, text="Y")
         delta_xyz_box.prop(self, "delta_xyz", index=2, text="Z")
+
         layout.prop(self, "verbose")
 
 
