@@ -10,6 +10,8 @@ from .shared_properties import (
     dxf_line_type,
     dxf_point_type,
     entity_layer,
+)
+from .shared_maths import (
     get_256_rgb_a,
 )
 

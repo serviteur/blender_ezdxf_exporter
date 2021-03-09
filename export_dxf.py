@@ -1,11 +1,8 @@
 from mathutils import Matrix, Vector
 from math import degrees
 import ezdxf
-import bmesh
-import bpy
-from .shared_properties import (
+from .shared_maths import (
     rgb_to_hex,
-    float_to_hex,
 )
 from .modelspace import (
     MSPInterfaceMesh,
@@ -19,6 +16,9 @@ class DXFExporter:
 
     def __init__(self, debug_mode=False):
         self.doc = ezdxf.new(dxfversion="R2010")  # Create new document
+        self.doc.header['$INSUNITS'] = 6 # Insertion units : Meters
+        self.doc.header['$MEASUREMENT'] = 1 # Metric system
+        # See https://ezdxf.readthedocs.io/en/stable/concepts/units.html
         self.msp = self.doc.modelspace()  # Access to dxf Modelspace
         self.debug_mode = debug_mode
         # TODO : Log export times
