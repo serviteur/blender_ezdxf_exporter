@@ -144,7 +144,13 @@ class DXFExporter:
         }
         
         if not settings.entity_layer_separate:
-            dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents),
+            dxfattribs['layer'] = create_layer_if_needed_and_get_name(
+                self.doc.layers, 
+                context, 
+                obj, 
+                settings.entity_layer_to, 
+                settings.entity_layer_transparency, 
+                coll_parents)
         
         obj_color, obj_alpha = MSPInterfaceColor.get_color(
             context, obj, settings.entity_color_to, coll_parents)
@@ -169,7 +175,7 @@ class DXFExporter:
     def export_mesh(self, layout, base_obj, export_obj, use_matrix, dxfattribs, settings, context, coll_parents=None):
         mesh = export_obj.to_mesh()
 
-        matrix = export_obj.matrix_world if use_matrix else Matrix()
+        matrix = base_obj.matrix_world if use_matrix else Matrix()
         if settings.export_scale != (1, 1, 1):
             mx = Matrix.Scale(settings.export_scale[0], 4, (1, 0, 0))
             my = Matrix.Scale(settings.export_scale[1], 4, (0, 1, 0))
@@ -186,7 +192,7 @@ class DXFExporter:
                 continue
             if i == 2:  # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
                 MSPInterfaceMesh.triangulate_if_needed(
-                    mesh, export_obj.type, settings.faces_export)
+                    mesh, base_obj.type, settings.faces_export)
             if settings.entity_layer_separate:
                 if i == 0:
                     dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_LINES") 

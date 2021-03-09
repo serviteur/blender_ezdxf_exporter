@@ -161,7 +161,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         )
 
         if exporter.export_file(self.filepath):
-            self.report({'INFO'}, "Export Succesfully Completed")
+            self.report({'INFO'}, "Export Succesful : " + self.filepath)
         else:
             self.report(
                 {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
