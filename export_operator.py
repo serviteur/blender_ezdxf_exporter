@@ -199,11 +199,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layout.label(text="Scale")
         scale_box = layout.box()
         scale_box.prop(self, "uniform_export_scale")
-        scale_box.prop(self, "export_scale", index=0, text="X")
-        scale_box_y = scale_box.row()
+        scale_row = scale_box.row(align=True)
+        scale_row.prop(self, "export_scale", index=0, text="X")
+        scale_box_y = scale_row.row()
         scale_box_y.prop(self, "export_scale", index=1, text="Y")
         scale_box_y.enabled = not self.uniform_export_scale
-        scale_box_z  = scale_box.row()
+        scale_box_z  = scale_row.row()
         scale_box_z.prop(self, "export_scale", index=2, text="Z")
         scale_box_z.enabled = not self.uniform_export_scale
 
