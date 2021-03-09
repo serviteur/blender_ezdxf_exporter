@@ -87,12 +87,30 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         # TODO : Add customization in addonprefs
         default=False,
     )
+    
+    entity_layer_color: BoolProperty(
+        name="Use Color",
+        description="Set layer color if available in source",
+        default=True,
+    )
+    
+    entity_layer_transparency: BoolProperty(
+        name="Use Transparency",
+        description="Set layer transparency if available in source Color",
+        default=False,
+    )
 
     entity_color_to: EnumProperty(
         name="Object Color",
         default=entity_color.BYLAYER.value,
         description="Entity COLOR assigned to ?",
         items=[(e_c.value,)*3 for e_c in entity_color])
+
+    entity_color_transparency: BoolProperty(
+        name="Use Transparency",
+        description="Enable to set color transparency if available in source Color",
+        default=False,
+    )
 
     delta_xyz: FloatVectorProperty(
         name="Delta XYZ",
@@ -140,7 +158,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             self.report({'INFO'}, "Export Succesfully Completed")
         else:
             self.report(
-                {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software)")
+                {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
         if self.verbose:
             for line in exporter.log:
                 print(line)
@@ -163,8 +181,19 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layout.label(text="Object Layer")
         layer_box = layout.box()
         layer_box.prop(self, "entity_layer_to", text="")
-        layer_box.prop(self, "entity_layer_separate")
-        layout.prop(self, "entity_color_to")
+        layer_box.prop(self, "entity_layer_separate", toggle=True)
+        layer_color_split = layer_box.split(factor=0.5)
+        layer_color_split.prop(self, "entity_layer_color", toggle=True)
+        layer_transparency = layer_color_split.row()
+        layer_transparency.prop(self, "entity_layer_transparency", toggle=True)
+        layer_transparency.enabled = self.entity_layer_color and self.entity_layer_to in (entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
+        
+        layout.label(text="Object Color")
+        color_box = layout.box()
+        color_box.prop(self, "entity_color_to", text="")
+        col_transparency = color_box.row()
+        col_transparency.prop(self, "entity_color_transparency", toggle=True)
+        col_transparency.enabled = self.entity_color_to in (entity_color.OBJECT.value, entity_color.MATERIAL.value)
 
         layout.label(text="Scale")
         scale_box = layout.box()

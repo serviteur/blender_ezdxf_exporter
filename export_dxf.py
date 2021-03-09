@@ -135,8 +135,8 @@ class DXFExporter:
 
         obj_color, obj_alpha = MSPInterfaceColor.get_color(
             context, obj, settings.entity_color_to)
-        dxfattribs['transparency'] = int(float_to_hex(1 - obj_alpha), 16)
-        dxfattribs['transparency'] = 50
+        if settings.entity_color_transparency:
+            dxfattribs['transparency'] = 1 - obj_alpha
         if dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 

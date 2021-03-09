@@ -27,14 +27,14 @@ def create_layer_if_needed_and_get_name(layers, context, obj, layer, use_transpa
         if obj.name not in layers:
             new_layer = layers.new(obj.name)
             rgb, a = MSPInterfaceColor._get_object_color(obj)
-            new_layer.rgb, new_layer.transparency = rgb, 1 - a
+            new_layer.rgb, new_layer.transparency = rgb, 1 - a if use_transparency else 0
         return obj.name
     elif layer == entity_layer.COLLECTION.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
         mat = obj.data.materials[0]
         if mat.name not in layers:
             new_layer = layers.new(mat.name)
             rgb, a = MSPInterfaceColor._get_material_color(mat)
-            new_layer.rgb, new_layer.transparency = rgb, 1 - a
+            new_layer.rgb, new_layer.transparency = rgb, 1 - a if use_transparency else 0
         return mat.name
     elif layer == entity_layer.SCENE_NAME.value:
         return context.scene.name
@@ -114,30 +114,43 @@ class MSPInterfaceMesh:
     @staticmethod
     def _create_mesh_points(msp, mesh, matrix, delta_xyz, dxfattribs):
         dx, dy, dz = delta_xyz
+        transparency = dxfattribs.get("transparency")
         for v in mesh.vertices:
-            msp.add_point(
+            point = msp.add_point(
                     matrix @ v.co,
-                    dxfattribs=dxfattribs).translate(dx, dy, dz)
+                    dxfattribs=dxfattribs)
+            point.translate(dx, dy, dz)
+            if transparency:
+                point.transparency = transparency
 
     @staticmethod
     def _create_mesh_lines(msp, mesh, matrix, delta_xyz, dxfattribs):
         dx, dy, dz = delta_xyz
+        transparency = dxfattribs.get("transparency")
         for e in mesh.edges:
-            msp.add_line(
+            line = msp.add_line(
                 matrix @ mesh.vertices[e.vertices[0]].co,
                 matrix @ mesh.vertices[e.vertices[1]].co,
-                dxfattribs=dxfattribs).translate(dx, dy, dz)
+                dxfattribs=dxfattribs)
+            line.translate(dx, dy, dz)
+            line.translate(dx, dy, dz)
+            if transparency:
+                line.transparency = transparency
 
     @staticmethod
     def _create_mesh_polylines(msp, mesh, matrix, delta_xyz, dxfattribs):
         dx, dy, dz = delta_xyz
+        transparency = dxfattribs.get("transparency")
         for e in mesh.edges:
-            msp.add_polyline3d(
+            polyline = msp.add_polyline3d(
                 (
                     matrix @ mesh.vertices[e.vertices[0]].co,
                     matrix @ mesh.vertices[e.vertices[1]].co,
                 ),
-                dxfattribs=dxfattribs).translate(dx, dy, dz)
+                dxfattribs=dxfattribs)
+            polyline.translate(dx, dy, dz)
+            if transparency:
+                polyline.transparency = transparency
 
     @staticmethod
     def _create_mesh_polyface(msp, mesh, matrix, delta_xyz, dxfattribs):
@@ -148,15 +161,21 @@ class MSPInterfaceMesh:
                 for f in mesh.polygons],
             dxfattribs=dxfattribs)
         polyface.translate(dx, dy, dz)
+        if dxfattribs.get("transparency"):
+            polyface.transparency = dxfattribs.get("transparency")
         polyface.optimize()
 
     @staticmethod
     def _create_mesh_3dfaces(msp, mesh, matrix, delta_xyz, dxfattribs):
         dx, dy, dz = delta_xyz
+        transparency = dxfattribs.get("transparency")
         for f in mesh.polygons:
-            msp.add_3dface(
+            face = msp.add_3dface(
                 [matrix @ mesh.vertices[v].co for v in f.vertices],
-                dxfattribs=dxfattribs).translate(dx, dy, dz)
+                dxfattribs=dxfattribs)
+            face.translate(dx, dy, dz)
+            if transparency:
+                face.transparency = transparency
     
     @staticmethod
     def _create_mesh_mesh(msp, bl_mesh, matrix, delta_xyz, dxfattribs):
@@ -167,3 +186,5 @@ class MSPInterfaceMesh:
             mesh_data.vertices = [matrix @ v.co for v in bl_mesh.vertices]
             mesh_data.faces = [f.vertices for f in bl_mesh.polygons]
         dxf_mesh.translate(dx, dy, dz)
+        if dxfattribs.get("transparency"):
+            dxf_mesh.transparency = dxfattribs.get("transparency")
