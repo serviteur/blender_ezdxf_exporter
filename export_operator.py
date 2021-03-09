@@ -198,7 +198,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
         layout.label(text="Scale")
         scale_box = layout.box()
-        scale_box.prop(self, "uniform_export_scale")
+        scale_box.prop(self, "uniform_export_scale", toggle=True)
         scale_row = scale_box.row(align=True)
         scale_row.prop(self, "export_scale", index=0, text="X")
         scale_box_y = scale_row.row()
@@ -209,10 +209,10 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         scale_box_z.enabled = not self.uniform_export_scale
 
         layout.label(text="Delta XYZ")
-        delta_xyz_box = layout.box()
-        delta_xyz_box.prop(self, "delta_xyz", index=0, text="X")
-        delta_xyz_box.prop(self, "delta_xyz", index=1, text="Y")
-        delta_xyz_box.prop(self, "delta_xyz", index=2, text="Z")
+        col = layout.box().column(align=True)
+        col.prop(self, "delta_xyz", index=0, text="X")
+        col.prop(self, "delta_xyz", index=1, text="Y")
+        col.prop(self, "delta_xyz", index=2, text="Z")
 
         layout.prop(self, "verbose")
 
