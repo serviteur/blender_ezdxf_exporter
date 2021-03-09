@@ -14,7 +14,7 @@ from .shared_properties import (
 )
 
 
-def get_layer_name(layers, context, obj, layer):
+def create_layer_if_needed_and_get_name(layers, context, obj, layer, use_transparency):
     if layer == entity_layer.COLLECTION.value:
         coll = obj.users_collection[0]
         if coll.name not in layers:

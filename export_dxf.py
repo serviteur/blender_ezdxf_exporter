@@ -10,7 +10,7 @@ from .shared_properties import (
 from .modelspace import (
     MSPInterfaceMesh,
     MSPInterfaceColor,
-    get_layer_name,
+    create_layer_if_needed_and_get_name,
 )
 
 
@@ -93,7 +93,7 @@ class DXFExporter:
                 self.log.append(f"Object {obj.name} should be inserted as a block but it has a local X or Y rotation. Insert as a regular Mesh instead")
             return
         dxfattribs = {
-            'layer': get_layer_name(self.doc.layers, context, obj, settings.entity_layer_to),
+            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency),
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),
             'xscale': scale[0],
             'yscale': scale[1],
@@ -129,7 +129,7 @@ class DXFExporter:
         export_obj = obj.evaluated_get(depsgraph)
 
         dxfattribs = {
-            'layer': get_layer_name(self.doc.layers, context, obj, settings.entity_layer_to),
+            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency),
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to)
         }
 
