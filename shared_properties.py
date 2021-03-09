@@ -34,3 +34,4 @@ class entity_color(Enum):
     OBJECT = 'Object Color'
     MATERIAL = 'Material Color'
     COLLECTION = 'Collection Tag Color'   
+    # TODO : Custom property ?

@@ -96,6 +96,7 @@ class DXFExporter:
         ucs = ezdxf.math.UCS(origin=matrix.to_translation()).rotate((raa[1], raa[2], raa[3]), raa[0])
         blockref = self.msp.add_blockref(block.name, insert=(0, 0, 0), dxfattribs=dxfattribs)
         blockref.transform(ucs.matrix)
+        blockref.translate(settings.delta_xyz[0], settings.delta_xyz[1], settings.delta_xyz[2])
 
         if self.debug_mode:
             self.log.append(f"Object {obj.name} was added as a Block")

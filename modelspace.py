@@ -135,7 +135,6 @@ class MSPInterfaceMesh:
                 matrix @ mesh.vertices[e.vertices[1]].co,
                 dxfattribs=dxfattribs)
             line.translate(dx, dy, dz)
-            line.translate(dx, dy, dz)
             if transparency:
                 line.transparency = transparency
 
