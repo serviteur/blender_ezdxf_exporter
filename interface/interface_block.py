@@ -1,8 +1,8 @@
 from ezdxf.math import UCS
-from .layout_interface import LayoutInterface
+from .interface import Interface
 
 
-class LayoutInterfaceBlock(LayoutInterface):
+class InterfaceBlock(Interface):
     def instantiate_blocks(self):
         not_blocks = []
         exp = self.exporter
@@ -13,9 +13,7 @@ class LayoutInterfaceBlock(LayoutInterface):
                 data_obj_dict[data].append(obj)
             else:
                 data_obj_dict[data] = [obj]
-        print(data_obj_dict)
         for data, objs in data_obj_dict.items():
-            print(data)
             if not objs:
                 continue
             if len(objs) == 1:
@@ -50,4 +48,4 @@ class LayoutInterfaceBlock(LayoutInterface):
             exp.settings.delta_xyz[0], exp.settings.delta_xyz[1], exp.settings.delta_xyz[2])
 
         if exp.debug_mode:
-            exp.log.append(f"Object {obj.name} was added as a Block")
+            exp.log.append(f"{obj.name} was added as a Block")

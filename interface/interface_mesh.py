@@ -6,10 +6,10 @@ from ..shared_properties import (
     dxf_point_type,
 )
 from ..shared_maths import rgb_to_hex
-from .layout_interface import LayoutInterface
+from .interface import Interface
 
 
-class LayoutInterfaceMesh(LayoutInterface):
+class InterfaceMesh(Interface):
     def __init__(self, exporter) -> None:
         super().__init__(exporter)
         self.mesh_creation_methods_dic = {

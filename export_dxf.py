@@ -1,17 +1,11 @@
 from mathutils import Matrix, Vector
 import ezdxf
-from .shared_maths import (
-    rgb_to_hex,
-)
 from .interface import (
-    layout_interface_block, 
-    layout_interface_color,
-    layout_interface_dimension,
-    layout_interface_layer,
-    layout_interface_mesh,
-)
-from . shared_properties import (
-    entity_layer,
+    interface_block,
+    interface_color,
+    interface_dimension,
+    interface_layer,
+    interface_mesh,
 )
 
 
@@ -30,11 +24,12 @@ class DXFExporter:
         self.objects = [o for o in objects if o.type in self.supported_types]
         self.coll_parents = coll_parents
 
-        self.interface_block = layout_interface_block.LayoutInterfaceBlock(self)
-        self.interface_mesh = layout_interface_mesh.LayoutInterfaceMesh(self)
-        self.interface_color = layout_interface_color.LayoutInterfaceColor(self)
-        self.interface_layer = layout_interface_layer.LayoutInterfaceLayer(self)
-        self.interface_dimension = layout_interface_dimension.LayoutInterfaceDimensions(self)
+        self.interface_block = interface_block.InterfaceBlock(self)
+        self.interface_mesh = interface_mesh.InterfaceMesh(self)
+        self.interface_color = interface_color.InterfaceColor(self)
+        self.interface_layer = interface_layer.InterfaceLayer(self)
+        self.interface_dimension = interface_dimension.InterfaceDimensions(
+            self)
 
         self.debug_mode = settings.verbose
         # TODO : Log export times
@@ -65,7 +60,8 @@ class DXFExporter:
             # TODO : Angle dimensions
             if len(s.points) != 2:
                 continue
-            self.interface_dimension.add_aligned_dim(s.points[0].co, s.points[1].co, 5)
+            self.interface_dimension.add_aligned_dim(
+                s.points[0].co, s.points[1].co, 5)
 
     def export_file(self, path):
         self.doc.entitydb.purge()

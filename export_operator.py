@@ -1,3 +1,4 @@
+from time import time
 import bpy
 
 from bpy_extras.io_utils import ExportHelper
@@ -156,6 +157,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         description="Run the exporter in debug mode.  Check the console for output")
 
     def execute(self, context):
+        start_time = time()
         exporter = DXFExporter(
             context=context,
             settings=self,
@@ -179,7 +181,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
                     {'ERROR'}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers")
 
         if exporter.export_file(self.filepath):
-            self.report({'INFO'}, "Export Succesful : " + self.filepath)
+            self.report({'INFO'}, f"Export Succesful : {self.filepath} in {round(time() - start_time, 2)} sec.")
         else:
             self.report(
                 {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")

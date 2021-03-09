@@ -1,9 +1,9 @@
 from ..shared_properties import entity_color
 from ..shared_maths import get_256_rgb_a
-from .layout_interface import LayoutInterface
+from .interface import Interface
 
 
-class LayoutInterfaceColor(LayoutInterface):
+class InterfaceColor(Interface):
     def get_ACI_color(self):
         exp = self.exporter
         if exp.settings.entity_color_to == entity_color.BYLAYER.value:

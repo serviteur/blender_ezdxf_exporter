@@ -1,8 +1,8 @@
 from ..shared_properties import entity_layer
-from .layout_interface import LayoutInterface
+from .interface import Interface
 
 
-class LayoutInterfaceLayer(LayoutInterface):
+class InterfaceLayer(Interface):
     def create_layer_if_needed_and_get_name(self, obj, suffix=""):
         exp = self.exporter
         layers = exp.doc.layers
