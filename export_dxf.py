@@ -140,33 +140,36 @@ class DXFExporter:
         export_obj = obj.evaluated_get(depsgraph)
 
         dxfattribs = {
-            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents),
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to)
         }
-
+        
+        if not settings.entity_layer_separate:
+            dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents),
+        
         obj_color, obj_alpha = MSPInterfaceColor.get_color(
             context, obj, settings.entity_color_to, coll_parents)
-        if settings.entity_color_transparency:
+        if (obj_alpha or obj_alpha == 0) and settings.entity_color_transparency:
             dxfattribs['transparency'] = 1 - obj_alpha
-        if dxfattribs['color'] == 257:
+        if obj_color and dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 
         self.export_mesh(
             layout,
+            obj,
             export_obj,
             use_matrix,
             dxfattribs,
-            settings)
+            settings,
+            context,
+            coll_parents)
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-    def export_mesh(self, layout, obj, use_matrix, dxfattribs, settings):
-        mesh = obj.to_mesh()
+    def export_mesh(self, layout, base_obj, export_obj, use_matrix, dxfattribs, settings, context, coll_parents=None):
+        mesh = export_obj.to_mesh()
 
-        layer = dxfattribs['layer']
-
-        matrix = obj.matrix_world if use_matrix else Matrix()
+        matrix = export_obj.matrix_world if use_matrix else Matrix()
         if settings.export_scale != (1, 1, 1):
             mx = Matrix.Scale(settings.export_scale[0], 4, (1, 0, 0))
             my = Matrix.Scale(settings.export_scale[1], 4, (0, 1, 0))
@@ -183,14 +186,14 @@ class DXFExporter:
                 continue
             if i == 2:  # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
                 MSPInterfaceMesh.triangulate_if_needed(
-                    mesh, obj.type, settings.faces_export)
+                    mesh, export_obj.type, settings.faces_export)
             if settings.entity_layer_separate:
                 if i == 0:
-                    dxfattribs['layer'] = layer + "_LINES"
+                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_LINES") 
                 elif i == 1:
-                    dxfattribs['layer'] = layer + "_POINTS"
+                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_POINTS") 
                 elif i == 2:
-                    dxfattribs['layer'] = layer + "_FACES"
+                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_FACES") 
             mesh_creation_method(
                 layout,
                 mesh,
