@@ -21,12 +21,12 @@ class dxf_point_type(Enum):
 
 
 class entity_layer(Enum):
-    NONE = 'Default'
+    NONE = 'Default (Layer 0)'
     COLLECTION = 'Collection'
     OBJECT_NAME = 'Object Name'
     DATA_NAME = 'Mesh Name'
-    SCENE_NAME = 'Scene Name'
-    MATERIAL = 'Material'
+    SCENE_NAME = 'Current Scene Name'
+    MATERIAL = 'Current Material'
 
 
 class entity_color(Enum):

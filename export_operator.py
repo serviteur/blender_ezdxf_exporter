@@ -55,7 +55,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         description="What object will be exported? Only selected / All objects")
 
     use_blocks: BoolProperty(
-        name="Export Linked Data as Blocks",
+        name="Objects with shared mesh as Blocks",
         description="If objects share the same mesh data, they will be exported as Block objects.\nWarning : Will not work if linked objects have a rotation along X or Y",
         default=False,
     )
@@ -168,15 +168,16 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "only_selected")
-        layout.prop(self, "use_blocks")
+        layout.label(text="Export Geometry")
+        geometry_box = layout.box()
         for prop, name in zip(
                 ("faces_export", "lines_export", "points_export"),
-                ("Export Faces", "Export Edges", "Export Vertices")
+                ("Faces", "Edges", "Vertices")
         ):
-            box = layout.box()
-            faces_split = box.split(factor=0.6)
-            faces_split.label(text=name)
-            faces_split.props_enum(self, prop)
+            geom_split = geometry_box.split(factor=0.3)
+            geom_split.label(text=name)
+            geom_split.prop(self, prop, text="")
+        geometry_box.prop(self, "use_blocks", toggle=True)
 
         layout.label(text="Object Layer")
         layer_box = layout.box()
