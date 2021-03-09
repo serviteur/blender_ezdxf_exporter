@@ -16,12 +16,12 @@ from .shared_maths import (
 )
 
 
-def create_layer_if_needed_and_get_name(layers, context, obj, layer, use_transparency):
+def create_layer_if_needed_and_get_name(layers, context, obj, layer, use_transparency, coll_parents=None):
     if layer == entity_layer.COLLECTION.value:
         coll = obj.users_collection[0]
         if coll.name not in layers:
             new_layer = layers.new(coll.name)
-            new_layer.rgb, _ = MSPInterfaceColor._get_collection_color(coll, context)
+            new_layer.rgb, _ = MSPInterfaceColor._get_collection_color(coll, context, coll_parents=coll_parents)
         return coll.name
     elif layer == entity_layer.COLLECTION.DATA_NAME.value:
         return obj.data.name
@@ -52,9 +52,9 @@ class MSPInterfaceColor:
         return 257
 
     @staticmethod
-    def get_color(context, obj, color):
+    def get_color(context, obj, color, coll_parents=None):
         if color == entity_color.COLLECTION.value:
-            return MSPInterfaceColor._get_collection_color(obj.users_collection[0], context)
+            return MSPInterfaceColor._get_collection_color(obj.users_collection[0], context, coll_parents)
         elif color == entity_color.OBJECT.value:
             return MSPInterfaceColor._get_object_color(obj)
         elif color == entity_color.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
@@ -62,14 +62,20 @@ class MSPInterfaceColor:
         return (0, 0, 0), 1
 
     @staticmethod
-    def _get_collection_color(coll: Collection, context):
+    def _get_collection_color(coll: Collection, context, coll_parents=None):
         coll_colors = context.preferences.themes[0].collection_color
         if coll_colors is not None:
             color_tag = coll.color_tag
             if color_tag != 'NONE':
                 return get_256_rgb_a(coll_colors[int(color_tag[-2:])-1].color)
-            else:
-                return (0, 0, 0), 1
+            elif coll_parents is not None:
+                parent = coll_parents.get(coll)
+                while parent is not None:
+                    if parent.color_tag != 'NONE':
+                        return get_256_rgb_a(coll_colors[int(parent.color_tag[-2:])-1].color)                       
+                    parent = coll_parents.get(parent)
+        return (0, 0, 0), 1
+                        
 
     @staticmethod
     def _get_object_color(obj: Object):

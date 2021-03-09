@@ -92,6 +92,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         name="Use Color",
         description="Set layer color if available in source",
         default=True,
+    )    
+    
+    entity_layer_color_parent: BoolProperty(
+        name="Use Parent",
+        description="Set layer color to parent collection if color tag isn't set.\nRecursively search for parent collection tag until it finds one.\nDefaults to Black if no color tag is set in hierarchy",
+        default=True,
     )
     
     entity_layer_transparency: BoolProperty(
@@ -185,9 +191,13 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layer_box.prop(self, "entity_layer_separate", toggle=True)
         layer_color_split = layer_box.split(factor=0.5)
         layer_color_split.prop(self, "entity_layer_color", toggle=True)
-        layer_transparency = layer_color_split.row()
-        layer_transparency.prop(self, "entity_layer_transparency", toggle=True)
-        layer_transparency.enabled = self.entity_layer_color and self.entity_layer_to in (entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
+        layer_setting = layer_color_split.row()
+        if self.entity_layer_to == entity_layer.COLLECTION.value:
+            layer_setting.prop(self, "entity_layer_color_parent", toggle=True)
+            layer_setting.enabled = self.entity_layer_color
+        else:
+            layer_setting.prop(self, "entity_layer_transparency", toggle=True)
+            layer_setting.enabled = self.entity_layer_color and self.entity_layer_to in (entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
         
         layout.label(text="Object Color")
         color_box = layout.box()

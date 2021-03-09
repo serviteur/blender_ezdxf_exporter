@@ -1,13 +1,16 @@
 from mathutils import Matrix, Vector
-from math import degrees
 import ezdxf
 from .shared_maths import (
     rgb_to_hex,
+    parent_lookup,
 )
 from .modelspace import (
     MSPInterfaceMesh,
     MSPInterfaceColor,
     create_layer_if_needed_and_get_name,
+)
+from . shared_properties import (
+    entity_layer,
 )
 
 
@@ -16,8 +19,8 @@ class DXFExporter:
 
     def __init__(self, debug_mode=False):
         self.doc = ezdxf.new(dxfversion="R2010")  # Create new document
-        self.doc.header['$INSUNITS'] = 6 # Insertion units : Meters
-        self.doc.header['$MEASUREMENT'] = 1 # Metric system
+        self.doc.header['$INSUNITS'] = 6  # Insertion units : Meters
+        self.doc.header['$MEASUREMENT'] = 1  # Metric system
         # See https://ezdxf.readthedocs.io/en/stable/concepts/units.html
         self.msp = self.doc.modelspace()  # Access to dxf Modelspace
         self.debug_mode = debug_mode
@@ -41,6 +44,12 @@ class DXFExporter:
     ):
         objects = [o for o in objects if self.is_object_supported(o)]
 
+        # Get all collections of the scene and their parents in a dict
+        coll_parents = parent_lookup(context.scene.collection) \
+            if settings.entity_layer_to == entity_layer.COLLECTION.value \
+                and settings.entity_layer_color \
+            else None
+
         if settings.use_blocks:
             data_obj_dict = {}
             for obj in objects:
@@ -56,14 +65,16 @@ class DXFExporter:
                     self.write_object(obj=objs[0],
                                       layout=self.msp,
                                       context=context,
-                                      settings=settings)
+                                      settings=settings,
+                                      coll_parents=coll_parents)
                 else:
                     block = self.doc.blocks.new(name=data.name)
                     self.write_object(obj=objs[0],
                                       layout=block,
                                       context=context,
                                       settings=settings,
-                                      use_matrix=False)
+                                      use_matrix=False,
+                                      coll_parents=coll_parents)
                     [self.instantiate_block(block=block,
                                             context=context,
                                             settings=settings,
@@ -73,30 +84,34 @@ class DXFExporter:
             [self.write_object(obj=obj,
                                layout=self.msp,
                                context=context,
-                               settings=settings) for obj in objects]
+                               settings=settings,
+                               coll_parents=coll_parents) for obj in objects]
         if self.debug_mode:
             self.log.append(f"Exported : {self.exported_objects} Objects")
             self.log.append(
                 f"NOT Exported : {self.not_exported_objects} Objects")
 
-    def instantiate_block(self, block, context, settings, obj):
+    def instantiate_block(self, block, context, settings, obj, coll_parents=None):
         matrix = obj.matrix_world
         scale = matrix.to_scale()
         depsgraph = context.evaluated_depsgraph_get()
         export_obj = obj.evaluated_get(depsgraph)
         dxfattribs = {
-            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency),
-            'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),        
+            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents=coll_parents),
+            'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),
             'xscale': scale[0],
             'yscale': scale[1],
             'zscale': scale[2],
         }
         export_obj.rotation_mode = 'AXIS_ANGLE'
         raa = export_obj.rotation_axis_angle
-        ucs = ezdxf.math.UCS(origin=matrix.to_translation()).rotate((raa[1], raa[2], raa[3]), raa[0])
-        blockref = self.msp.add_blockref(block.name, insert=(0, 0, 0), dxfattribs=dxfattribs)
+        ucs = ezdxf.math.UCS(origin=matrix.to_translation()).rotate(
+            (raa[1], raa[2], raa[3]), raa[0])
+        blockref = self.msp.add_blockref(
+            block.name, insert=(0, 0, 0), dxfattribs=dxfattribs)
         blockref.transform(ucs.matrix)
-        blockref.translate(settings.delta_xyz[0], settings.delta_xyz[1], settings.delta_xyz[2])
+        blockref.translate(
+            settings.delta_xyz[0], settings.delta_xyz[1], settings.delta_xyz[2])
 
         if self.debug_mode:
             self.log.append(f"Object {obj.name} was added as a Block")
@@ -118,18 +133,19 @@ class DXFExporter:
             context,
             settings,
             use_matrix=True,
+            coll_parents=None,
     ):
 
         depsgraph = context.evaluated_depsgraph_get()
         export_obj = obj.evaluated_get(depsgraph)
 
         dxfattribs = {
-            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency),
+            'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents),
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to)
         }
 
         obj_color, obj_alpha = MSPInterfaceColor.get_color(
-            context, obj, settings.entity_color_to)
+            context, obj, settings.entity_color_to, coll_parents)
         if settings.entity_color_transparency:
             dxfattribs['transparency'] = 1 - obj_alpha
         if dxfattribs['color'] == 257:
@@ -176,7 +192,7 @@ class DXFExporter:
                 elif i == 2:
                     dxfattribs['layer'] = layer + "_FACES"
             mesh_creation_method(
-                layout, 
+                layout,
                 mesh,
                 matrix,
                 delta_xyz,
