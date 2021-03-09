@@ -194,3 +194,5 @@ class DXFExporter:
             return True
         except PermissionError:
             return False
+        except FileNotFoundError:
+            return False
