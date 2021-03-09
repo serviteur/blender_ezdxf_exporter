@@ -82,27 +82,21 @@ class DXFExporter:
     def instantiate_block(self, block, context, settings, obj):
         matrix = obj.matrix_world
         scale = matrix.to_scale()
-        euler = matrix.to_euler()
-        # FIXME : Matrix fails if object is rotated along local X or Y axis.
-        if euler[0] != 0 or euler[1] != 0:
-            self.write_object(obj=obj,
-                              layout=self.msp,
-                              context=context,
-                              settings=settings)
-            if self.debug_mode:
-                self.log.append(f"Object {obj.name} should be inserted as a block but it has a local X or Y rotation. Insert as a regular Mesh instead")
-            return
+        depsgraph = context.evaluated_depsgraph_get()
+        export_obj = obj.evaluated_get(depsgraph)
         dxfattribs = {
             'layer': create_layer_if_needed_and_get_name(self.doc.layers, context, obj, settings.entity_layer_to, settings.entity_layer_transparency),
-            'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),
+            'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to),        
             'xscale': scale[0],
             'yscale': scale[1],
             'zscale': scale[2],
-            'rotation': degrees(euler[2])
         }
+        export_obj.rotation_mode = 'AXIS_ANGLE'
+        raa = export_obj.rotation_axis_angle
+        ucs = ezdxf.math.UCS(origin=matrix.to_translation()).rotate((raa[1], raa[2], raa[3]), raa[0])
+        blockref = self.msp.add_blockref(block.name, insert=(0, 0, 0), dxfattribs=dxfattribs)
+        blockref.transform(ucs.matrix)
 
-        self.msp.add_blockref(
-            block.name, matrix.to_translation() + settings.delta_xyz, dxfattribs=dxfattribs)
         if self.debug_mode:
             self.log.append(f"Object {obj.name} was added as a Block")
 

@@ -55,9 +55,9 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         description="What object will be exported? Only selected / All objects")
 
     use_blocks: BoolProperty(
-        name="Objects with shared mesh as Blocks",
-        description="If objects share the same mesh data, they will be exported as Block objects.\nWarning : Will not work if linked objects have a rotation along X or Y",
-        default=False,
+        name="Linked objects as Blocks",
+        description="Export objects that share the same mesh data as Block entities",
+        default=True,
     )
 
     faces_export: EnumProperty(
@@ -146,7 +146,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         )
         if not exporter.can_write_file(self.filepath):
             self.report(
-                {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software)")
+                {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
             return {'FINISHED'}
         exporter.write_objects(
             objects=context.selected_objects if self.only_selected else context.scene.objects,
