@@ -7,6 +7,7 @@ from .shared_maths import (
 from .modelspace import (
     MSPInterfaceMesh,
     MSPInterfaceColor,
+    MSPInterfaceDimensions,
     create_layer_if_needed_and_get_name,
 )
 from . shared_properties import (
@@ -47,7 +48,7 @@ class DXFExporter:
         # Get all collections of the scene and their parents in a dict
         coll_parents = parent_lookup(context.scene.collection) \
             if settings.entity_layer_to == entity_layer.COLLECTION.value \
-                and settings.entity_layer_color \
+            and settings.entity_layer_color \
             else None
 
         if settings.use_blocks:
@@ -142,16 +143,16 @@ class DXFExporter:
         dxfattribs = {
             'color': MSPInterfaceColor.get_ACI_color(settings.entity_color_to)
         }
-        
+
         if not settings.entity_layer_separate:
             dxfattribs['layer'] = create_layer_if_needed_and_get_name(
-                self.doc.layers, 
-                context, 
-                obj, 
-                settings.entity_layer_to, 
-                settings.entity_layer_transparency, 
+                self.doc.layers,
+                context,
+                obj,
+                settings.entity_layer_to,
+                settings.entity_layer_transparency,
                 coll_parents)
-        
+
         obj_color, obj_alpha = MSPInterfaceColor.get_color(
             context, obj, settings.entity_color_to, coll_parents)
         if (obj_alpha or obj_alpha == 0) and settings.entity_color_transparency:
@@ -195,17 +196,28 @@ class DXFExporter:
                     mesh, base_obj.type, settings.faces_export)
             if settings.entity_layer_separate:
                 if i == 0:
-                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_LINES") 
+                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(
+                        self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_LINES")
                 elif i == 1:
-                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_POINTS") 
+                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(
+                        self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_POINTS")
                 elif i == 2:
-                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_FACES") 
+                    dxfattribs['layer'] = create_layer_if_needed_and_get_name(
+                        self.doc.layers, context, base_obj, settings.entity_layer_to, settings.entity_layer_transparency, coll_parents, suffix="_FACES")
             mesh_creation_method(
                 layout,
                 mesh,
                 matrix,
                 delta_xyz,
                 dxfattribs.copy())
+
+    def write_dimensions(self, strokes):
+        for s in strokes:
+            # TODO : Angle dimensions
+            if len(s.points) != 2:
+                continue
+            MSPInterfaceDimensions.add_aligned_dim(
+                self.msp, s.points[0].co, s.points[1].co, 5)
 
     def export_file(self, path):
         self.doc.entitydb.purge()

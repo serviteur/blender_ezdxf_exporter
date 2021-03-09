@@ -141,6 +141,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         update=update_export_scale,
     )
 
+    use_dimensions: BoolProperty(
+        name="Export Dimensions",
+        description="Export Dimensions extracted from the built-in Measure Tool\nWarning : Works only with XY Planar dimensions",
+        default=True,
+    )
+
     verbose: BoolProperty(
         name="Verbose",
         default=False,
@@ -159,7 +165,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             context=context,
             settings=self,
         )
-
+        if self.use_dimensions:
+            try:
+                exporter.write_dimensions(bpy.data.grease_pencils["Annotations"].layers['RulerData3D'].frames[0].strokes)         
+            except KeyError:
+                self.report({'ERROR'}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers")
+            
         if exporter.export_file(self.filepath):
             self.report({'INFO'}, "Export Succesful : " + self.filepath)
         else:
@@ -173,7 +184,11 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "only_selected")
+        layout.label(text="Miscellaneous")
+        misc_box = layout.box()
+        misc_box.prop(self, "only_selected")
+        misc_box.prop(self, "use_dimensions")
+        
         layout.label(text="Export Geometry")
         geometry_box = layout.box()
         for prop, name in zip(

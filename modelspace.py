@@ -1,3 +1,4 @@
+import ezdxf
 import bmesh
 from bpy.types import (
     Object,
@@ -22,7 +23,8 @@ def create_layer_if_needed_and_get_name(layers, context, obj, layer, use_transpa
         layer_name = coll.name + suffix
         if layer_name not in layers:
             new_layer = layers.new(layer_name)
-            rgb, _ = MSPInterfaceColor._get_collection_color(coll, context, coll_parents=coll_parents)
+            rgb, _ = MSPInterfaceColor._get_collection_color(
+                coll, context, coll_parents=coll_parents)
             if rgb:
                 new_layer.rgb = rgb
         return layer_name
@@ -46,6 +48,7 @@ def create_layer_if_needed_and_get_name(layers, context, obj, layer, use_transpa
     elif layer == entity_layer.SCENE_NAME.value:
         return context.scene.name + suffix
     return '0' + suffix
+
 
 class MSPInterfaceColor:
     @staticmethod
@@ -77,10 +80,9 @@ class MSPInterfaceColor:
                 parent = coll_parents.get(coll)
                 while parent is not None:
                     if parent.color_tag != 'NONE':
-                        return get_256_rgb_a(coll_colors[int(parent.color_tag[-2:])-1].color)                       
+                        return get_256_rgb_a(coll_colors[int(parent.color_tag[-2:])-1].color)
                     parent = coll_parents.get(parent)
         return False, False
-                        
 
     @staticmethod
     def _get_object_color(obj: Object):
@@ -92,22 +94,21 @@ class MSPInterfaceColor:
 
 
 class MSPInterfaceMesh:
-    @staticmethod    
+    @staticmethod
     def triangulate_if_needed(mesh, obj_type, mesh_as):
         # Make sure there is no N-Gon (not supported in DXF Faces)
         if obj_type != 'MESH' or mesh_as not in (
-                dxf_face_type.FACES3D.value, 
+                dxf_face_type.FACES3D.value,
                 dxf_face_type.POLYFACE.value,
                 dxf_face_type.MESH.value):
             return
-        if any([len(p.vertices) > 4 for p in mesh.polygons]):   
+        if any([len(p.vertices) > 4 for p in mesh.polygons]):
             bm = bmesh.new()
             bm.from_mesh(mesh)
             bmesh.ops.triangulate(bm, faces=bm.faces[:])
             bm.to_mesh(mesh)
             bm.free()
-    
-    
+
     @staticmethod
     def create_mesh(mesh_type):
         if mesh_type == dxf_face_type.FACES3D.value:
@@ -130,8 +131,8 @@ class MSPInterfaceMesh:
         transparency = dxfattribs.get("transparency")
         for v in mesh.vertices:
             point = msp.add_point(
-                    matrix @ v.co,
-                    dxfattribs=dxfattribs)
+                matrix @ v.co,
+                dxfattribs=dxfattribs)
             point.translate(dx, dy, dz)
             if transparency:
                 point.transparency = transparency
@@ -188,10 +189,10 @@ class MSPInterfaceMesh:
             face.translate(dx, dy, dz)
             if transparency:
                 face.transparency = transparency
-    
+
     @staticmethod
     def _create_mesh_mesh(msp, bl_mesh, matrix, delta_xyz, dxfattribs):
-        #This is the fastest way to create a Mesh entity in DXF
+        # This is the fastest way to create a Mesh entity in DXF
         dx, dy, dz = delta_xyz
         dxf_mesh = msp.add_mesh(dxfattribs)
         with dxf_mesh.edit_data() as mesh_data:
@@ -200,3 +201,12 @@ class MSPInterfaceMesh:
         dxf_mesh.translate(dx, dy, dz)
         if dxfattribs.get("transparency"):
             dxf_mesh.transparency = dxfattribs.get("transparency")
+
+
+class MSPInterfaceDimensions:
+    @staticmethod
+    def add_aligned_dim(msp, p1, p2, distance=1, precision=2):
+        line = msp.add_aligned_dim(p1=p1, p2=p2, distance=distance, dxfattribs={
+                                   'layer': "Dimensions"})
+        line.set_text_format(dec=precision)
+        line.render(ezdxf.math.UCS(origin=(0, 0, (p1[2] + p2[2]) / 2)))
