@@ -2,7 +2,7 @@ import bpy
 
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
-    FloatProperty, StringProperty,
+    StringProperty,
     BoolProperty,
     EnumProperty,
     FloatVectorProperty,
@@ -16,6 +16,9 @@ from .shared_properties import (
     dxf_point_type,
     entity_layer,
     entity_color,
+)
+from .shared_maths import(
+    parent_lookup,
 )
 
 
@@ -35,7 +38,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
     bl_label = "Export As DXF"
 
     filename_ext = ".dxf"
-    
+
     filter_glob: StringProperty(
         default="*.dxf",
         options={'HIDDEN'},
@@ -87,19 +90,19 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         # TODO : Add customization in addonprefs
         default=False,
     )
-    
+
     entity_layer_color: BoolProperty(
         name="Use Color",
         description="Set layer color if available in source",
         default=True,
-    )    
-    
+    )
+
     entity_layer_color_parent: BoolProperty(
         name="Use Parent",
         description="Set layer color to parent collection if color tag isn't set.\nRecursively search for parent collection tag until it finds one.\nDefaults to Black if no color tag is set in hierarchy",
         default=True,
     )
-    
+
     entity_layer_transparency: BoolProperty(
         name="Use Transparency",
         description="Set layer transparency if available in source Color",
@@ -154,23 +157,27 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
     def execute(self, context):
         exporter = DXFExporter(
-            debug_mode=self.verbose,
+            context=context,
+            settings=self,
+            objects=context.selected_objects if self.only_selected else context.scene.objects,
+            coll_parents=parent_lookup(context.scene.collection)
+            if self.entity_layer_to == entity_layer.COLLECTION.value
+            and self.entity_layer_color
+            else None
         )
-        if not exporter.can_write_file(self.filepath):
+        if not exporter.write_file(self.filepath):
             self.report(
                 {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
             return {'FINISHED'}
-        exporter.write_objects(
-            objects=context.selected_objects if self.only_selected else context.scene.objects,
-            context=context,
-            settings=self,
-        )
+        exporter.write_objects()
         if self.use_dimensions:
             try:
-                exporter.write_dimensions(bpy.data.grease_pencils["Annotations"].layers['RulerData3D'].frames[0].strokes)         
+                exporter.write_dimensions(
+                    bpy.data.grease_pencils["Annotations"].layers['RulerData3D'].frames[0].strokes)
             except KeyError:
-                self.report({'ERROR'}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers")
-            
+                self.report(
+                    {'ERROR'}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers")
+
         if exporter.export_file(self.filepath):
             self.report({'INFO'}, "Export Succesful : " + self.filepath)
         else:
@@ -187,8 +194,13 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layout.label(text="Miscellaneous")
         misc_box = layout.box()
         misc_box.prop(self, "only_selected")
-        misc_box.prop(self, "use_dimensions")
-        
+        dimensions_available = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils["Annotations"].layers
+        dim_row = misc_box.row()        
+        dim_row.prop(self, "use_dimensions")
+        dim_row.enabled = dimensions_available
+        if not dimensions_available:
+            self.use_dimensions = False
+
         layout.label(text="Export Geometry")
         geometry_box = layout.box()
         for prop, name in zip(
@@ -212,14 +224,16 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             layer_setting.enabled = self.entity_layer_color
         else:
             layer_setting.prop(self, "entity_layer_transparency", toggle=True)
-            layer_setting.enabled = self.entity_layer_color and self.entity_layer_to in (entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
-        
+            layer_setting.enabled = self.entity_layer_color and self.entity_layer_to in (
+                entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
+
         layout.label(text="Object Color")
         color_box = layout.box()
         color_box.prop(self, "entity_color_to", text="")
         col_transparency = color_box.row()
         col_transparency.prop(self, "entity_color_transparency", toggle=True)
-        col_transparency.enabled = self.entity_color_to in (entity_color.OBJECT.value, entity_color.MATERIAL.value)
+        col_transparency.enabled = self.entity_color_to in (
+            entity_color.OBJECT.value, entity_color.MATERIAL.value)
 
         layout.label(text="Scale")
         scale_box = layout.box()
@@ -229,7 +243,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         scale_box_y = scale_row.row()
         scale_box_y.prop(self, "export_scale", index=1, text="Y")
         scale_box_y.enabled = not self.uniform_export_scale
-        scale_box_z  = scale_row.row()
+        scale_box_z = scale_row.row()
         scale_box_z.prop(self, "export_scale", index=2, text="Z")
         scale_box_z.enabled = not self.uniform_export_scale
 
