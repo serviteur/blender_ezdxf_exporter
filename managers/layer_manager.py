@@ -11,7 +11,7 @@ class LayerManager(Manager):
         exp = self.exporter
         layers = exp.doc.layers
         context = exp.context
-        layer_to = exp.settings.entity_layer_to
+        layer_to = exp.settings.layer_settings.entity_layer_to
         if layer_to == entity_layer.COLLECTION.value:
             coll = obj.users_collection[0]
             layer_name = coll.name + suffix
@@ -29,7 +29,7 @@ class LayerManager(Manager):
                 new_layer = layers.new()
                 rgb, a = exp.color_mgr._get_object_color(obj)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
-                    a if exp.settings.entity_layer_transparency else 0
+                    a if exp.settings.layer_settings.entity_layer_transparency else 0
             return layer_name
         elif layer_to == entity_layer.COLLECTION.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
             mat = obj.data.materials[0]
@@ -38,7 +38,7 @@ class LayerManager(Manager):
                 new_layer = layers.new()
                 rgb, a = exp.color_mgr._get_material_color(mat)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
-                    a if exp.settings.entity_layer_transparency else 0
+                    a if exp.settings.layer_settings.entity_layer_transparency else 0
             return layer_name
         elif layer_to == entity_layer.SCENE_NAME.value:
             return context.scene.name + suffix

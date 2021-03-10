@@ -1,11 +1,9 @@
-from mathutils import Matrix, Vector
 import bmesh
 from ..shared_properties import (
     dxf_face_type,
     dxf_line_type,
-    dxf_point_type, entity_color,
+    dxf_point_type,
 )
-from ..shared_maths import rgb_to_hex
 from .manager import Manager
 
 
@@ -23,7 +21,7 @@ class MeshManager(Manager):
 
     def triangulate_if_needed(self, mesh, obj_type):
         # Make sure there is no N-Gon (not supported in DXF Faces)
-        if obj_type != 'MESH' or self.exporter.settings.faces_export not in (
+        if obj_type != 'MESH' or self.exporter.settings.geometry_settings.faces_export not in (
                 dxf_face_type.FACES3D.value,
                 dxf_face_type.POLYFACE.value,
                 dxf_face_type.MESH.value):
@@ -90,7 +88,7 @@ class MeshManager(Manager):
 
     def create_and_transform_entity(self, entity_func, use_matrix, dxfattribs):
         entity = entity_func()
-        dx, dy, dz = self.exporter.settings.delta_xyz if use_matrix else (
+        dx, dy, dz = self.exporter.settings.transform_settings.delta_xyz if use_matrix else (
             0, 0, 0)
         entity.translate(dx, dy, dz)
         # TODO : Transparency should not be set here

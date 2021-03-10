@@ -9,17 +9,16 @@ from .manager import Manager
 class ColorManager(Manager):
     "Methods for object color access and modification"
     def populate_dxfattribs(self, obj, dxfattribs):
-        exp = self.exporter    
         dxfattribs ['color'] = self.get_ACI_color()
         obj_color, obj_alpha = self.get_color(obj)
-        if (obj_alpha or obj_alpha == 0) and exp.settings.entity_color_use_transparency:
+        if (obj_alpha or obj_alpha == 0) and self.exporter.settings.color_settings.entity_color_use_transparency:
             dxfattribs['transparency'] = 1 - obj_alpha        
         if obj_color and dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 
     def get_ACI_color(self):
         "Returns the color as Autocad Color Index"
-        settings = self.exporter.settings
+        settings = self.exporter.settings.color_settings
         if settings.entity_color_to == entity_color.BYLAYER.value:
             return 256
         elif settings.entity_color_to == entity_color.BYBLOCK.value:
@@ -30,7 +29,7 @@ class ColorManager(Manager):
 
     def get_color(self, obj):
         "Return the relevant color information. Depends on the type of object passed as parameter"
-        settings = self.exporter.settings
+        settings = self.exporter.settings.color_settings
         if settings.entity_color_to == entity_color.COLLECTION.value:
             return self._get_collection_color(obj.users_collection[0])
         elif settings.entity_color_to == entity_color.OBJECT.value:

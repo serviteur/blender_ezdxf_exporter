@@ -51,7 +51,7 @@ class BlockManager(Manager):
             block.name, insert=(0, 0, 0), dxfattribs=dxfattribs)
         blockref.transform(ucs.matrix)
         blockref.translate(
-            exp.settings.delta_xyz[0], exp.settings.delta_xyz[1], exp.settings.delta_xyz[2])
+            exp.settings.transform_settings.delta_xyz[0], exp.settings.transform_settings.delta_xyz[1], exp.settings.transform_settings.delta_xyz[2])
 
         if exp.debug_mode:
             exp.log.append(f"{obj.name} was added as a Block")

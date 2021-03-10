@@ -6,11 +6,12 @@ from .managers import (
     layer_manager,
     mesh_manager,
     transform_manager,
+    text_manager
 )
 
 
 class DXFExporter:
-    supported_types = ('MESH', 'CURVE', 'META', 'SURFACE')
+    supported_types = ('MESH', 'CURVE', 'META', 'SURFACE', 'FONT') 
 
     def __init__(self, context, settings, objects, coll_parents):
         self.doc = ezdxf.new(dxfversion="R2010")  # Create new document
@@ -30,9 +31,9 @@ class DXFExporter:
         self.layer_mgr = layer_manager.LayerManager(self)
         self.dimension_mgr = dimension_manager.DimensionManager(self)
         self.transform_mgr = transform_manager.TransformManager(self)
+        self.text_mgr = text_manager.TextManager(self)
 
         self.debug_mode = settings.verbose
-        # TODO : Log export times
         self.log = []
         self.exported_objects = 0
 
@@ -57,7 +58,7 @@ class DXFExporter:
         i = -1
         for suffix, mesh_setting in zip(
             ("_POINTS", "_LINES", "_FACES"),
-            (settings.points_export, settings.lines_export, settings.faces_export)
+            (settings.geometry_settings.points_export, settings.geometry_settings.lines_export, settings.geometry_settings.faces_export)
         ):
             i += 1
             mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
@@ -67,16 +68,16 @@ class DXFExporter:
             self.layer_mgr.populate_dxfattribs(
                 obj,
                 dxfattribs,
-                suffix=suffix if settings.entity_layer_separate[2 - i] else "",
-                override=settings.entity_layer_links[2 - i])
+                suffix=suffix if settings.layer_settings.entity_layer_separate[2 - i] else "",
+                override=settings.layer_settings.entity_layer_links[2 - i])
             if i == 2:
                 # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
                 self.mesh_mgr.triangulate_if_needed(evaluated_mesh, obj.type)
             mesh_method(
                 self.msp if layout is None else layout,
-                evaluated_mesh, 
+                evaluated_mesh,
                 self.transform_mgr.get_matrix(obj, use_matrix),
-                use_matrix, 
+                use_matrix,
                 dxfattribs.copy())
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
@@ -89,7 +90,7 @@ class DXFExporter:
         self.block_mgr.instantiate_block(block, obj)
 
     def write_objects(self):
-        if self.settings.use_blocks:
+        if self.settings.geometry_settings.use_blocks:
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
             [self.write_object(obj) for obj in not_blocks]
             for obj, (block, _) in blocks_dic.items():

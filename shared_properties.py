@@ -38,6 +38,12 @@ class entity_color(Enum):
     # TODO : Custom property ?
 
 
+class text_type(Enum):
+    MTEXT = 'MText'
+    TEXT = 'Text'
+    MESH = 'Mesh'
+
+
 def source_has_alpha(source: entity_color):
     return source in (
         entity_color.OBJECT.value,
