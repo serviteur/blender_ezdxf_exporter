@@ -4,7 +4,10 @@ from .interface import Interface
 
 
 class InterfaceColor(Interface):
+    "Methods for object color access and modification"
+
     def get_ACI_color(self):
+        "Returns the color as Autocad Color Index"
         exp = self.exporter
         if exp.settings.entity_color_to == entity_color.BYLAYER.value:
             return 256
@@ -13,6 +16,7 @@ class InterfaceColor(Interface):
         return 257
 
     def get_color(self, obj):
+        "Return the relevant color information. Depends on the type of object passed as parameter"
         settings = self.exporter.settings
         if settings.entity_color_to == entity_color.COLLECTION.value:
             return self._get_collection_color(obj.users_collection[0])
@@ -23,6 +27,7 @@ class InterfaceColor(Interface):
         return False, False
 
     def _get_collection_color(self, coll):
+        "Returns the color tag of collection or of first parent that has one if setting is selected"
         exp = self.exporter
         coll_colors = exp.context.preferences.themes[0].collection_color
         if coll_colors is not None:
@@ -39,8 +44,10 @@ class InterfaceColor(Interface):
 
     @classmethod
     def _get_object_color(cls, obj):
+        "Returns the object color as a 0-255 rgb color"
         return get_256_rgb_a(obj.color)
 
     @classmethod
     def _get_material_color(cls, mat):
+        "Returns the material color as a 0-255 rgb color"
         return get_256_rgb_a(mat.diffuse_color)

@@ -3,9 +3,8 @@ from .interface import Interface
 
 
 class InterfaceBlock(Interface):
-    def instantiate_blocks(self):
-        not_blocks = []
-        exp = self.exporter
+    "Methods for block creation and instantation"
+        "Returns a dict with data as key and object users a values"
         data_obj_dict = {}
         for obj in exp.objects:
             data = obj.data
@@ -13,7 +12,7 @@ class InterfaceBlock(Interface):
                 data_obj_dict[data].append(obj)
             else:
                 data_obj_dict[data] = [obj]
-        for data, objs in data_obj_dict.items():
+        "Instantiate objects that share the same data as Blocks. Returns single-user data objects as a list"
             if not objs:
                 continue
             if len(objs) == 1:
