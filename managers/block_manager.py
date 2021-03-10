@@ -1,8 +1,8 @@
 from ezdxf.math import UCS
-from .interface import Interface
+from .manager import Manager
 
 
-class InterfaceBlock(Interface):
+class BlockManager(Manager):
     "Methods for block creation and instantation"
     def get_data_users(self) -> dict:
         "Returns a dict with data as key and object users a values"
@@ -39,8 +39,6 @@ class InterfaceBlock(Interface):
         depsgraph = exp.context.evaluated_depsgraph_get()
         export_obj = obj.evaluated_get(depsgraph)
         dxfattribs = {
-            'layer': exp.interface_layer.get_or_create_layer(obj),
-            'color': exp.interface_color.get_ACI_color(),
             'xscale': scale[0],
             'yscale': scale[1],
             'zscale': scale[2],

@@ -1,8 +1,11 @@
 from ..shared_properties import entity_layer
-from .interface import Interface
+from .manager import Manager
 
 
-class InterfaceLayer(Interface):
+class LayerManager(Manager):
+    def populate_dxfattribs(self, obj, dxfattribs, suffix="", override=True):
+        dxfattribs['layer'] = self.get_or_create_layer(obj, suffix, override)
+
     def get_or_create_layer(self, obj, suffix="", override=True):
         "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
         exp = self.exporter
@@ -14,7 +17,7 @@ class InterfaceLayer(Interface):
             layer_name = coll.name + suffix
             if override and layer_name not in layers:
                 new_layer = layers.new(layer_name)
-                rgb, _ = exp.interface_color._get_collection_color(coll)
+                rgb, _ = exp.color_mgr._get_collection_color(coll)
                 if rgb:
                     new_layer.rgb = rgb
             return layer_name
@@ -24,7 +27,7 @@ class InterfaceLayer(Interface):
             layer_name = obj.name + suffix
             if override and layer_name not in layers:
                 new_layer = layers.new()
-                rgb, a = exp.interface_color._get_object_color(obj)
+                rgb, a = exp.color_mgr._get_object_color(obj)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
                     a if exp.settings.entity_layer_transparency else 0
             return layer_name
@@ -33,7 +36,7 @@ class InterfaceLayer(Interface):
             layer_name = mat.name + suffix
             if override and layer_name not in layers:
                 new_layer = layers.new()
-                rgb, a = exp.interface_color._get_material_color(mat)
+                rgb, a = exp.color_mgr._get_material_color(mat)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
                     a if exp.settings.entity_layer_transparency else 0
             return layer_name

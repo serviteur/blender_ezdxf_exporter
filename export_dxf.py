@@ -1,11 +1,11 @@
-from mathutils import Matrix, Vector
 import ezdxf
-from .interface import (
-    interface_block,
-    interface_color,
-    interface_dimension,
-    interface_layer,
-    interface_mesh,
+from .managers import (
+    block_manager,
+    color_manager,
+    dimension_manager,
+    layer_manager,
+    mesh_manager,
+    transform_manager,
 )
 
 
@@ -24,12 +24,12 @@ class DXFExporter:
         self.objects = [o for o in objects if o.type in self.supported_types]
         self.coll_parents = coll_parents
 
-        self.interface_block = interface_block.InterfaceBlock(self)
-        self.interface_mesh = interface_mesh.InterfaceMesh(self)
-        self.interface_color = interface_color.InterfaceColor(self)
-        self.interface_layer = interface_layer.InterfaceLayer(self)
-        self.interface_dimension = interface_dimension.InterfaceDimensions(
-            self)
+        self.block_mgr = block_manager.BlockManager(self)
+        self.mesh_mgr = mesh_manager.MeshManager(self)
+        self.color_mgr = color_manager.ColorManager(self)
+        self.layer_mgr = layer_manager.LayerManager(self)
+        self.dimension_mgr = dimension_manager.DimensionManager(self)
+        self.transform_mgr = transform_manager.TransformManager(self)
 
         self.debug_mode = settings.verbose
         # TODO : Log export times
@@ -53,7 +53,7 @@ class DXFExporter:
 
     def write_objects(self):
         if self.settings.use_blocks:
-            blocks_dic, not_blocks = self.interface_block.initialize_blocks()
+            blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
             [self.write_object(obj) for obj in not_blocks]
             for obj, (block, _) in blocks_dic.items():
                 self.write_object(obj=obj, layout=block, use_matrix=False)
@@ -69,7 +69,7 @@ class DXFExporter:
             # TODO : Angle dimensions
             if len(s.points) != 2:
                 continue
-            self.interface_dimension.add_aligned_dim(
+            self.dimension_mgr.add_aligned_dim(
                 s.points[0].co, s.points[1].co, 5)
 
     def export_file(self, path):

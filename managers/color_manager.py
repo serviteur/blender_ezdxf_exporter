@@ -3,10 +3,10 @@ from ..shared_maths import (
     get_256_rgb_a,
     rgb_to_hex,
 )
-from .interface import Interface
+from .manager import Manager
 
 
-class InterfaceColor(Interface):
+class ColorManager(Manager):
     "Methods for object color access and modification"
     def populate_dxfattribs(self, obj, dxfattribs):
         exp = self.exporter    
@@ -16,7 +16,6 @@ class InterfaceColor(Interface):
             dxfattribs['transparency'] = 1 - obj_alpha        
         if obj_color and dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
-        return dxfattribs
 
     def get_ACI_color(self):
         "Returns the color as Autocad Color Index"
