@@ -47,9 +47,46 @@ class DXFExporter:
             return False
 
     def write_object(self, obj, layout=None, use_matrix=True):
+        if layout is None:
+            layout = self.msp
         dxfattribs = {}
-        self.interface_color.populate_dxfattribs(obj, dxfattribs)
-        self.interface_mesh.write_object(obj, dxfattribs, layout, use_matrix)
+        settings = self.settings
+
+        self.color_mgr.populate_dxfattribs(obj, dxfattribs)
+        evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
+        i = -1
+        for suffix, mesh_setting in zip(
+            ("_POINTS", "_LINES", "_FACES"),
+            (settings.points_export, settings.lines_export, settings.faces_export)
+        ):
+            i += 1
+            mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
+                mesh_setting)
+            if mesh_method is None:
+                continue
+            self.layer_mgr.populate_dxfattribs(
+                obj,
+                dxfattribs,
+                suffix=suffix if settings.entity_layer_separate[2 - i] else "",
+                override=settings.entity_layer_links[2 - i])
+            if i == 2:
+                # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
+                self.mesh_mgr.triangulate_if_needed(evaluated_mesh, obj.type)
+            mesh_method(
+                self.msp if layout is None else layout,
+                evaluated_mesh, 
+                self.transform_mgr.get_matrix(obj, use_matrix),
+                use_matrix, 
+                dxfattribs.copy())
+        if self.debug_mode:
+            self.log.append(f"{obj.name} WAS exported.")
+            self.exported_objects += 1
+
+    def write_block(self, block, obj):
+        dxfattribs = {}
+        for mgr in (self.color_mgr, self.layer_mgr):
+            mgr.populate_dxfattribs(obj, dxfattribs)
+        self.block_mgr.instantiate_block(block, obj)
 
     def write_objects(self):
         if self.settings.use_blocks:
@@ -58,7 +95,7 @@ class DXFExporter:
             for obj, (block, _) in blocks_dic.items():
                 self.write_object(obj=obj, layout=block, use_matrix=False)
             for block, objs in blocks_dic.values():
-                [self.interface_block.instantiate_block(block, obj) for obj in objs]
+                [self.write_block(block, obj) for obj in objs]
         else:
             [self.write_object(obj) for obj in self.objects]
         if self.debug_mode:
