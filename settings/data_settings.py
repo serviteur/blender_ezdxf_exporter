@@ -1,17 +1,35 @@
+from enum import Enum
 from bpy.types import PropertyGroup
 from bpy.props import (
     EnumProperty,
     BoolProperty,
 )
-from ..shared_properties import (
-    dxf_face_type,
-    dxf_line_type,
-    dxf_point_type,
-    text_type,
-)
+
+class dxf_face_type(Enum):
+    NONE = 'No Export'
+    MESH = 'MESH'
+    FACES3D = '3DFACEs'
+    POLYFACE = 'POLYFACE'
 
 
-class GeometrySettings(PropertyGroup):
+class dxf_line_type(Enum):
+    NONE = 'No Export'
+    LINES = 'LINEs'
+    POLYLINES = 'POLYLINEs'
+
+
+class dxf_point_type(Enum):
+    NONE = 'No Export'
+    POINTS = 'POINTs'
+
+
+class text_type(Enum):
+    MTEXT = 'MText'
+    TEXT = 'Text'
+    MESH = 'Mesh'
+
+
+class DataSettings(PropertyGroup):
     faces_export: EnumProperty(
         name="Export Faces",
         default=dxf_face_type.MESH.value,
@@ -39,7 +57,7 @@ class GeometrySettings(PropertyGroup):
     )
 
     def draw(self, layout):
-        layout.label(text="Export Geometry")
+        layout.label(text="Export Data")
         geometry_box = layout.box()
         for prop, name in zip(
                 (

@@ -1,5 +1,5 @@
 from ezdxf.math import UCS
-from ..shared_properties import text_type
+from ..settings.data_settings import text_type
 from .manager import Manager
 
 
@@ -19,7 +19,7 @@ class TextManager(Manager):
     def select_text_objects(self):
         "If Text objects are not set to render as Mesh, returns them.\nElse returns an empty List"
         exp = self.exporter
-        export_as_mesh = exp.settings.geometry_settings.texts_export == text_type.MESH
+        export_as_mesh = exp.settings.data_settings.texts_export == text_type.MESH
         text_objects = []
         for i in range(len(exp.objects) - 1, -1, -1):
             if exp.objects[i].type == 'FONT' and not export_as_mesh:
@@ -79,6 +79,6 @@ class TextManager(Manager):
             return text_dxf
 
         self.create_and_transform_entity(
-            entity_func_mtext if self.exporter.settings.geometry_settings.texts_export == text_type.MTEXT.value else entity_func_text,
+            entity_func_mtext if self.exporter.settings.data_settings.texts_export == text_type.MTEXT.value else entity_func_text,
             True,
             dxfattribs)

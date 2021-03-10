@@ -1,5 +1,5 @@
 import bmesh
-from ..shared_properties import (
+from ..settings.data_settings import (
     dxf_face_type,
     dxf_line_type,
     dxf_point_type,
@@ -21,7 +21,7 @@ class MeshManager(Manager):
 
     def triangulate_if_needed(self, mesh, obj_type):
         # Make sure there is no N-Gon (not supported in DXF Faces)
-        if obj_type != 'MESH' or self.exporter.settings.geometry_settings.faces_export not in (
+        if obj_type != 'MESH' or self.exporter.settings.data_settings.faces_export not in (
                 dxf_face_type.FACES3D.value,
                 dxf_face_type.POLYFACE.value,
                 dxf_face_type.MESH.value):

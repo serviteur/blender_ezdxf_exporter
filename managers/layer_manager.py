@@ -1,4 +1,4 @@
-from ..shared_properties import entity_layer
+from ..settings.layer_settings import entity_layer
 from .manager import Manager
 
 

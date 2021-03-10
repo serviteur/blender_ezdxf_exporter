@@ -1,4 +1,4 @@
-from ..shared_properties import entity_color
+from ..settings.color_settings import entity_color
 from ..shared_maths import (
     get_256_rgb_a,
     rgb_to_hex,

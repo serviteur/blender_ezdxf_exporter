@@ -60,7 +60,7 @@ class DXFExporter:
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
                 dxfattribs)
-        if self.settings.geometry_settings.use_blocks:
+        if self.settings.data_settings.use_blocks:
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
             [self.write_object(obj) for obj in not_blocks]
             for obj, (block, _) in blocks_dic.items():
@@ -83,7 +83,7 @@ class DXFExporter:
         i = -1
         for suffix, mesh_setting in zip(
             ("_POINTS", "_LINES", "_FACES"),
-            (settings.geometry_settings.points_export, settings.geometry_settings.lines_export, settings.geometry_settings.faces_export)
+            (settings.data_settings.points_export, settings.data_settings.lines_export, settings.data_settings.faces_export)
         ):
             i += 1
             mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(

@@ -12,14 +12,14 @@ from bpy.types import (
 )
 
 from .export_dxf import DXFExporter
-from .shared_properties import (
-    entity_layer,
-)
 from .shared_maths import(
     parent_lookup,
 )
-from .settings.layer_settings import LayerSettings
-from .settings.geometry_settings import GeometrySettings
+from .settings.layer_settings import (
+    LayerSettings,
+    entity_layer,
+)
+from .settings.data_settings import DataSettings
 from .settings.color_settings import ColorSettings
 from .settings.transform_settings import TransformSettings
 
@@ -45,7 +45,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
                              subtype='NONE')
 
     layer_settings: PointerProperty(type=LayerSettings)
-    geometry_settings: PointerProperty(type=GeometrySettings)
+    data_settings: PointerProperty(type=DataSettings)
     color_settings: PointerProperty(type=ColorSettings)
     transform_settings: PointerProperty(type=TransformSettings)
 
@@ -114,7 +114,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         if not dimensions_available:
             self.use_dimensions = False
 
-        self.geometry_settings.draw(layout)
+        self.data_settings.draw(layout)
         self.layer_settings.draw(layout)
         self.color_settings.draw(layout)
         self.transform_settings.draw(layout)

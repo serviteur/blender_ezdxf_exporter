@@ -1,10 +1,20 @@
+from enum import Enum
 from bpy.types import PropertyGroup
 from bpy.props import (
     EnumProperty,
     BoolVectorProperty,
     BoolProperty
 )
-from ..shared_properties import entity_layer
+
+
+class entity_layer(Enum):
+    NONE = 'Default (Layer 0)'
+    COLLECTION = 'Collection'
+    OBJECT_NAME = 'Object Name'
+    DATA_NAME = 'Mesh Name'
+    SCENE_NAME = 'Current Scene Name'
+    MATERIAL = 'Current Material'
+
 
 class LayerSettings(PropertyGroup):
     entity_layer_to: EnumProperty(
