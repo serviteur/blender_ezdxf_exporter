@@ -214,7 +214,8 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
                     {'ERROR'}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers")
 
         if exporter.export_file(self.filepath):
-            self.report({'INFO'}, f"Export Succesful : {self.filepath} in {round(time() - start_time, 2)} sec.")
+            self.report(
+                {'INFO'}, f"Export Succesful : {self.filepath} in {round(time() - start_time, 2)} sec.")
         else:
             self.report(
                 {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
@@ -242,7 +243,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
                 ("faces_export", "lines_export", "points_export"),
                 ("Faces", "Edges", "Vertices")
         ):
-            geom_split = geometry_box.split(factor=0.3)
+            geom_split = geometry_box.split(factor=0.3, align=True)
             geom_split.label(text=name)
             geom_split.prop(self, prop, text="")
         geometry_box.prop(self, "use_blocks", toggle=True)
