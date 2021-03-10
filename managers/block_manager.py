@@ -32,26 +32,21 @@ class BlockManager(Manager):
         return blocks_dic, not_blocks
 
 
-    def instantiate_block(self, block, obj):
+    def instantiate_block(self, block, obj, matrix, raa):
         exp = self.exporter
-        matrix = obj.matrix_world
         scale = matrix.to_scale()
-        depsgraph = exp.context.evaluated_depsgraph_get()
-        export_obj = obj.evaluated_get(depsgraph)
         dxfattribs = {
             'xscale': scale[0],
             'yscale': scale[1],
             'zscale': scale[2],
         }
-        export_obj.rotation_mode = 'AXIS_ANGLE'
-        raa = export_obj.rotation_axis_angle
         ucs = UCS(origin=matrix.to_translation()).rotate(
             (raa[1], raa[2], raa[3]), raa[0])
         blockref = exp.msp.add_blockref(
             block.name, insert=(0, 0, 0), dxfattribs=dxfattribs)
         blockref.transform(ucs.matrix)
-        blockref.translate(
-            exp.settings.transform_settings.delta_xyz[0], exp.settings.transform_settings.delta_xyz[1], exp.settings.transform_settings.delta_xyz[2])
+        dx, dy, dz = exp.settings.transform_settings.delta_xyz
+        blockref.translate(dx, dy, dz)
 
         if exp.debug_mode:
             exp.log.append(f"{obj.name} was added as a Block")

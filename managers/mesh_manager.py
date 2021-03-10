@@ -86,15 +86,5 @@ class MeshManager(Manager):
             return dxf_mesh
         self.create_and_transform_entity(entity_func, use_matrix, dxfattribs)
 
-    def create_and_transform_entity(self, entity_func, use_matrix, dxfattribs):
-        entity = entity_func()
-        dx, dy, dz = self.exporter.settings.transform_settings.delta_xyz if use_matrix else (
-            0, 0, 0)
-        entity.translate(dx, dy, dz)
-        # TODO : Transparency should not be set here
-        if dxfattribs.get("transparency"):
-            entity.transparency = dxfattribs.get("transparency") / 10
-        return entity
-
     def get_evaluated_mesh(self, obj):
         return obj.evaluated_get(self.exporter.context.evaluated_depsgraph_get()).to_mesh()

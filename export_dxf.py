@@ -14,7 +14,7 @@ class DXFExporter:
     supported_types = ('MESH', 'CURVE', 'META', 'SURFACE', 'FONT') 
 
     def __init__(self, context, settings, objects, coll_parents):
-        self.doc = ezdxf.new(dxfversion="R2010")  # Create new document
+        self.doc = ezdxf.new(dxfversion="R2010", setup=True)  # Create new document
         self.doc.header['$INSUNITS'] = 6  # Insertion units : Meters
         self.doc.header['$MEASUREMENT'] = 1  # Metric system
         # See https://ezdxf.readthedocs.io/en/stable/concepts/units.html
@@ -22,8 +22,6 @@ class DXFExporter:
 
         self.context = context
         self.settings = settings
-        self.objects = [o for o in objects if o.type in self.supported_types]
-        self.coll_parents = coll_parents
 
         self.block_mgr = block_manager.BlockManager(self)
         self.mesh_mgr = mesh_manager.MeshManager(self)
@@ -32,6 +30,10 @@ class DXFExporter:
         self.dimension_mgr = dimension_manager.DimensionManager(self)
         self.transform_mgr = transform_manager.TransformManager(self)
         self.text_mgr = text_manager.TextManager(self)
+
+        self.objects = [o for o in objects if o.type in self.supported_types]
+        self.objects_text = self.text_mgr.select_text_objects()
+        self.coll_parents = coll_parents
 
         self.debug_mode = settings.verbose
         self.log = []
@@ -46,6 +48,29 @@ class DXFExporter:
             return False
         except FileNotFoundError:
             return False
+
+    def write_objects(self):
+        for text in self.objects_text:
+            dxfattribs = {}
+            for mgr in (self.color_mgr, self.layer_mgr):
+                mgr.populate_dxfattribs(text, dxfattribs)
+            self.text_mgr.write_text(
+                self.msp,
+                text, 
+                self.transform_mgr.get_matrix(text),
+                self.transform_mgr.get_rotation_axis_angle(text),
+                dxfattribs)
+        if self.settings.geometry_settings.use_blocks:
+            blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
+            [self.write_object(obj) for obj in not_blocks]
+            for obj, (block, _) in blocks_dic.items():
+                self.write_object(obj=obj, layout=block, use_matrix=False)
+            for block, objs in blocks_dic.values():
+                [self.write_block(block, obj) for obj in objs]
+        else:
+            [self.write_object(obj) for obj in self.objects]
+        if self.debug_mode:
+            self.log.append(f"Exported {self.exported_objects} Objects")
 
     def write_object(self, obj, layout=None, use_matrix=True):
         if layout is None:
@@ -87,20 +112,11 @@ class DXFExporter:
         dxfattribs = {}
         for mgr in (self.color_mgr, self.layer_mgr):
             mgr.populate_dxfattribs(obj, dxfattribs)
-        self.block_mgr.instantiate_block(block, obj)
-
-    def write_objects(self):
-        if self.settings.geometry_settings.use_blocks:
-            blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
-            [self.write_object(obj) for obj in not_blocks]
-            for obj, (block, _) in blocks_dic.items():
-                self.write_object(obj=obj, layout=block, use_matrix=False)
-            for block, objs in blocks_dic.values():
-                [self.write_block(block, obj) for obj in objs]
-        else:
-            [self.write_object(obj) for obj in self.objects]
-        if self.debug_mode:
-            self.log.append(f"Exported {self.exported_objects} Objects")
+        self.block_mgr.instantiate_block(
+            block, 
+            obj,
+            self.transform_mgr.get_matrix(obj),
+            self.transform_mgr.get_rotation_axis_angle(obj))
 
     def write_dimensions(self, strokes):
         for s in strokes:
