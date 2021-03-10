@@ -46,7 +46,6 @@ def rgb_to_hex(vals, rgbtype=1):
   #Ensure values are rounded integers, convert to hex, and concatenate
   return '0x' + ''.join(['{:02X}'.format(int(round(x))) for x in vals])
 
-
 def float_to_hex(f):
     return hex(struct.unpack('<I', struct.pack('<f', f))[0])
 

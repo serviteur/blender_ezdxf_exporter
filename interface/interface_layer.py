@@ -3,7 +3,8 @@ from .interface import Interface
 
 
 class InterfaceLayer(Interface):
-    def create_layer_if_needed_and_get_name(self, obj, suffix=""):
+    def get_or_create_layer(self, obj, suffix="", override=True):
+        "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
         exp = self.exporter
         layers = exp.doc.layers
         context = exp.context
@@ -11,7 +12,7 @@ class InterfaceLayer(Interface):
         if layer_to == entity_layer.COLLECTION.value:
             coll = obj.users_collection[0]
             layer_name = coll.name + suffix
-            if layer_name not in layers:
+            if override and layer_name not in layers:
                 new_layer = layers.new(layer_name)
                 rgb, _ = exp.interface_color._get_collection_color(coll)
                 if rgb:
@@ -21,7 +22,7 @@ class InterfaceLayer(Interface):
             return obj.data.name + suffix
         elif layer_to == entity_layer.COLLECTION.OBJECT_NAME.value:
             layer_name = obj.name + suffix
-            if layer_name not in layers:
+            if override and layer_name not in layers:
                 new_layer = layers.new()
                 rgb, a = exp.interface_color._get_object_color(obj)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
@@ -30,7 +31,7 @@ class InterfaceLayer(Interface):
         elif layer_to == entity_layer.COLLECTION.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
             mat = obj.data.materials[0]
             layer_name = mat.name + suffix
-            if layer_name not in layers:
+            if override and layer_name not in layers:
                 new_layer = layers.new()
                 rgb, a = exp.interface_color._get_material_color(mat)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \

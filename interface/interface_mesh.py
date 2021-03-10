@@ -146,24 +146,23 @@ class InterfaceMesh(Interface):
             matrix = mx @ my @ mz @ matrix
         delta_xyz = settings.delta_xyz if use_matrix else Vector(
             (0, 0, 0))
-
-        for i, mesh_creation_method in enumerate((
-                self.mesh_creation_methods_dic.get(settings.lines_export),
+        i = -1
+        for suffix, mesh_creation_method in zip(
+            ("_POINTS", "_LINES", "_FACES"),
+            (
                 self.mesh_creation_methods_dic.get(settings.points_export),
+                self.mesh_creation_methods_dic.get(settings.lines_export),
                 self.mesh_creation_methods_dic.get(settings.faces_export),
-        )):
+            )
+        ):
+            i += 1
             if mesh_creation_method is None:
                 continue
-            if i == 2:  # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
+            dxfattribs['layer'] = exp.interface_layer.get_or_create_layer(
+                    base_obj,
+                    suffix=suffix if settings.entity_layer_separate[2 - i] else "",
+                    override=settings.entity_layer_links[2 - i])
+            if i == 2:
+                # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
                 exp.interface_mesh.triangulate_if_needed(mesh, base_obj.type)
-            if settings.entity_layer_separate:
-                if i == 0:
-                    dxfattribs['layer'] = exp.interface_layer.create_layer_if_needed_and_get_name(
-                        base_obj, suffix="_LINES")
-                elif i == 1:
-                    dxfattribs['layer'] = exp.interface_layer.create_layer_if_needed_and_get_name(
-                        base_obj, suffix="_POINTS")
-                elif i == 2:
-                    dxfattribs['layer'] = exp.interface_layer.create_layer_if_needed_and_get_name(
-                        base_obj, suffix="_FACES")
             mesh_creation_method(layout, mesh, matrix, dxfattribs.copy())

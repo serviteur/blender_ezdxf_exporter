@@ -85,17 +85,24 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         description="Entity LAYER assigned to ?",
         items=[(e_l.value,)*3 for e_l in entity_layer])
 
-    entity_layer_separate: BoolProperty(
+    entity_layer_separate: BoolVectorProperty(
         name="Face, Edge and Vertex Sub-Layers",
-        description="Faces, lines and points are drawn on separate sub-layers",
+        description="Faces, Lines and Points are drawn on separate sub-layers",
         # TODO : Add customization in addonprefs
-        default=False,
+        default=(False, False, False)
     )
 
     entity_layer_color: BoolProperty(
         name="Use Color",
         description="Set layer color if available in source",
         default=True,
+    )
+
+    entity_layer_links: BoolVectorProperty(
+        name="Link Layer",
+        description="Link layer to source color.\nIf set to false, layer will take default values",
+        size=3,
+        default=(True, True, True),
     )
 
     entity_layer_color_parent: BoolProperty(
@@ -228,6 +235,15 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             layer_setting.prop(self, "entity_layer_transparency", toggle=True)
             layer_setting.enabled = self.entity_layer_color and self.entity_layer_to in (
                 entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
+        layer_separate = layer_box.column(heading="Sub Layers", align=True)
+        layer_separate.use_property_split = True
+        layer_separate.use_property_decorate = False
+        for i, text in enumerate(("Faces", "Lines", "Points")):
+            split = layer_separate.split(factor=0.9, align=True)
+            split.prop(self, "entity_layer_separate",
+                       index=i, toggle=True, text=text)
+            split.prop(self, "entity_layer_links", index=i, text="",
+                       icon='LINKED' if self.entity_layer_links[i] else 'UNLINKED')
 
         layout.label(text="Object Color")
         color_box = layout.box()
