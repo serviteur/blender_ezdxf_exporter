@@ -51,7 +51,7 @@ class DXFExporter:
             not_blocks = self.interface_block.instantiate_blocks()
             [self.interface_mesh.write_object(obj) for obj in not_blocks]
         else:
-            [self.interface_mesh.write_object(obj) for obj in objects]
+            [self.interface_mesh.write_object(obj) for obj in self.objects]
         if self.debug_mode:
             self.log.append(f"Exported {self.exported_objects} Objects")
 
