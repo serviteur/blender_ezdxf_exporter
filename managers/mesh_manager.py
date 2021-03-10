@@ -93,9 +93,9 @@ class MeshManager(Manager):
         dx, dy, dz = self.exporter.settings.delta_xyz if use_matrix else (
             0, 0, 0)
         entity.translate(dx, dy, dz)
-        # TODO : Transparency should not be tackled here
+        # TODO : Transparency should not be set here
         if dxfattribs.get("transparency"):
-            self.entity.transparency = dxfattribs.get("transparency")
+            entity.transparency = dxfattribs.get("transparency") / 10
         return entity
 
     def get_evaluated_mesh(self, obj):
