@@ -230,8 +230,9 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layout.label(text="Miscellaneous")
         misc_box = layout.box()
         misc_box.prop(self, "only_selected")
-        dimensions_available = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils["Annotations"].layers
-        dim_row = misc_box.row()        
+        dimensions_available = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils[
+            "Annotations"].layers
+        dim_row = misc_box.row()
         dim_row.prop(self, "use_dimensions")
         dim_row.enabled = dimensions_available
         if not dimensions_available:
@@ -251,7 +252,6 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layout.label(text="Object Layer")
         layer_box = layout.box()
         layer_box.prop(self, "entity_layer_to", text="")
-        layer_box.prop(self, "entity_layer_separate", toggle=True)
         layer_color_split = layer_box.split(factor=0.5)
         layer_color_split.prop(self, "entity_layer_color", toggle=True)
         layer_setting = layer_color_split.row()
