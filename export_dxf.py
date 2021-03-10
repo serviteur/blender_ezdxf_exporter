@@ -46,12 +46,21 @@ class DXFExporter:
         except FileNotFoundError:
             return False
 
+    def write_object(self, obj, layout=None, use_matrix=True):
+        dxfattribs = {}
+        self.interface_color.populate_dxfattribs(obj, dxfattribs)
+        self.interface_mesh.write_object(obj, dxfattribs, layout, use_matrix)
+
     def write_objects(self):
         if self.settings.use_blocks:
-            not_blocks = self.interface_block.instantiate_blocks()
-            [self.interface_mesh.write_object(obj) for obj in not_blocks]
+            blocks_dic, not_blocks = self.interface_block.initialize_blocks()
+            [self.write_object(obj) for obj in not_blocks]
+            for obj, (block, _) in blocks_dic.items():
+                self.write_object(obj=obj, layout=block, use_matrix=False)
+            for block, objs in blocks_dic.values():
+                [self.interface_block.instantiate_block(block, obj) for obj in objs]
         else:
-            [self.interface_mesh.write_object(obj) for obj in self.objects]
+            [self.write_object(obj) for obj in self.objects]
         if self.debug_mode:
             self.log.append(f"Exported {self.exported_objects} Objects")
 

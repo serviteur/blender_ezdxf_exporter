@@ -107,22 +107,12 @@ class InterfaceMesh(Interface):
         if dxfattribs.get("transparency"):
             dxf_mesh.transparency = dxfattribs.get("transparency")
 
-    def write_object(self, obj, layout=None, use_matrix=True):
+    def write_object(self, obj, dxfattribs, layout=None, use_matrix=True):
         if layout is None:
             layout = self.exporter.msp
         exp = self.exporter
         depsgraph = exp.context.evaluated_depsgraph_get()
         export_obj = obj.evaluated_get(depsgraph)
-
-        dxfattribs = {
-            'color': exp.interface_color.get_ACI_color()
-        }
-
-        obj_color, obj_alpha = exp.interface_color.get_color(obj)
-        if (obj_alpha or obj_alpha == 0) and exp.settings.entity_color_use_transparency:
-            dxfattribs['transparency'] = 1 - obj_alpha
-        if obj_color and dxfattribs['color'] == 257:
-            dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
 
         self.export_mesh(layout, obj, export_obj, use_matrix, dxfattribs)
         if exp.debug_mode:

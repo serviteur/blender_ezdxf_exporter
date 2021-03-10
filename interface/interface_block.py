@@ -15,8 +15,12 @@ class InterfaceBlock(Interface):
                 data_obj_dict[data] = [obj]
         return data_obj_dict
 
-    def instantiate_blocks(self):
-        "Instantiate objects that share the same data as Blocks. Returns single-user data objects as a list"
+    def initialize_blocks(self):
+        """Initialize objects that share the same data as Blocks. 
+    Returns :
+    Arg 1 : Dictionary with one of the objects as a key, and a tuple (n=2) containing the block (i=0) and a list will all linked objects (i=1) as a value
+    Arg 2 : List containing single-user data objects"""
+        blocks_dic = {}
         not_blocks = []
         for data, objs in self.get_data_users().items():
             if not objs:
@@ -24,14 +28,9 @@ class InterfaceBlock(Interface):
             if len(objs) == 1:
                 not_blocks.append(objs[0])
             else:
-                block = self.initialize_block(objs[0], data.name)
-                [self.instantiate_block(block=block, obj=obj) for obj in objs]
-        return not_blocks
+                blocks_dic[objs[0]] = (self.exporter.doc.blocks.new(name=data.name), objs)
+        return blocks_dic, not_blocks
 
-    def initialize_block(self, obj, block_name):
-        block = self.exporter.doc.blocks.new(name=block_name)
-        self.exporter.interface_mesh.write_object(
-            obj=obj, layout=block, use_matrix=False)
 
     def instantiate_block(self, block, obj):
         exp = self.exporter

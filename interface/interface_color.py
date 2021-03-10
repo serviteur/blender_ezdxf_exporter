@@ -1,10 +1,22 @@
 from ..shared_properties import entity_color
-from ..shared_maths import get_256_rgb_a
+from ..shared_maths import (
+    get_256_rgb_a,
+    rgb_to_hex,
+)
 from .interface import Interface
 
 
 class InterfaceColor(Interface):
     "Methods for object color access and modification"
+    def populate_dxfattribs(self, obj, dxfattribs):
+        exp = self.exporter    
+        dxfattribs ['color'] = self.get_ACI_color()
+        obj_color, obj_alpha = self.get_color(obj)
+        if (obj_alpha or obj_alpha == 0) and exp.settings.entity_color_use_transparency:
+            dxfattribs['transparency'] = 1 - obj_alpha        
+        if obj_color and dxfattribs['color'] == 257:
+            dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
+        return dxfattribs
 
     def get_ACI_color(self):
         "Returns the color as Autocad Color Index"
