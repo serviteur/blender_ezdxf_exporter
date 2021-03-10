@@ -20,11 +20,13 @@ class InterfaceColor(Interface):
 
     def get_ACI_color(self):
         "Returns the color as Autocad Color Index"
-        exp = self.exporter
-        if exp.settings.entity_color_to == entity_color.BYLAYER.value:
+        settings = self.exporter.settings
+        if settings.entity_color_to == entity_color.BYLAYER.value:
             return 256
-        elif exp.settings.entity_color_to == entity_color.BYBLOCK.value:
+        elif settings.entity_color_to == entity_color.BYBLOCK.value:
             return 0
+        elif settings.entity_color_to == entity_color.ACI.value:
+            return int(settings.entity_color_aci)
         return 257
 
     def get_color(self, obj):
