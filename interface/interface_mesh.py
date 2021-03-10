@@ -118,12 +118,8 @@ class InterfaceMesh(Interface):
             'color': exp.interface_color.get_ACI_color()
         }
 
-        if not exp.settings.entity_layer_separate:
-            dxfattribs['layer'] = exp.interface_layer.create_layer_if_needed_and_get_name(
-                obj)
-
         obj_color, obj_alpha = exp.interface_color.get_color(obj)
-        if (obj_alpha or obj_alpha == 0) and exp.settings.entity_color_transparency:
+        if (obj_alpha or obj_alpha == 0) and exp.settings.entity_color_use_transparency:
             dxfattribs['transparency'] = 1 - obj_alpha
         if obj_color and dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)

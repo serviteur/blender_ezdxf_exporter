@@ -15,7 +15,7 @@ class dxf_line_type(Enum):
 
 
 class dxf_point_type(Enum):
-    NONE = 'No Export'    
+    NONE = 'No Export'
     POINTS = 'POINTs'
 
 
@@ -29,9 +29,27 @@ class entity_layer(Enum):
 
 
 class entity_color(Enum):
-    BYLAYER= 'BYLAYER'
+    BYLAYER = 'BYLAYER'
     BYBLOCK = 'BYBLOCK'
     OBJECT = 'Object Color'
     MATERIAL = 'Material Color'
-    COLLECTION = 'Collection Tag Color'   
+    COLLECTION = 'Collection Tag Color'
+    ACI = 'Autocad Color Index (ACI)'
     # TODO : Custom property ?
+
+
+def source_has_alpha(source: entity_color):
+    return source in (
+        entity_color.OBJECT.value,
+        entity_color.MATERIAL.value)
+
+
+class ACI_Colors(Enum):
+    WHITE = ("7", "White", "Default Value (7)")
+    BLACK = ("0", "Black", "0")
+    RED = ("1", "Red", "1")
+    YELLOW = ("2", "Yellow", "2")
+    GREEN = ("3", "Green", "3")
+    CYAN = ("4", "Cyan", "4")
+    BLUE = ("5", "Blue", "5")
+    MAGENTA = ("6", "Magenta", "6")
