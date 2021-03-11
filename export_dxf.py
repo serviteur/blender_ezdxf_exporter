@@ -1,4 +1,5 @@
 from .settings.data_settings import (
+    empty_type,
     camera_type,
 )
 import ezdxf
@@ -19,6 +20,7 @@ class DXFExporter:
 
     def update_supported_types(self):
         for attr, _enum, _type in (
+            ("empties_export", empty_type, 'EMPTY'),
             ("cameras_export", camera_type, 'CAMERA'),
         ):        
             if getattr(self.settings.data_settings, attr, 'No Export') == _enum.NONE.value:
@@ -49,6 +51,7 @@ class DXFExporter:
 
         self.objects = [o for o in objects if o.type in self.supported_types]
         self.objects_text = self.text_mgr.select_text_objects()
+        self.objects_empty_blocks = self.block_mgr.select_empty_objects()
         self.objects_camera = self.camera_mgr.select_camera_objects()
 
         self.coll_parents = coll_parents
@@ -79,6 +82,14 @@ class DXFExporter:
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
                 self.get_dxf_attribs(text))
+
+        if self.objects_empty_blocks:
+            empty_block = self.block_mgr.initialize_block("Empty")
+            self.mesh_mgr.create_mesh_point(empty_block, (0, 0, 0))
+            # TODO : Add custom properties as Block attributes
+            for empty in self.objects_empty_blocks:
+                self.write_block(empty_block, empty)
+
         if self.settings.data_settings.use_blocks:
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
             [self.write_object(obj) for obj in not_blocks]
@@ -101,12 +112,17 @@ class DXFExporter:
         dxfattribs = {}
         settings = self.settings
 
+        if obj.type == 'EMPTY':
+            self.mesh_mgr.create_mesh_point(self.msp, obj.location, self.get_dxf_attribs(obj))
+        else:
         self.color_mgr.populate_dxfattribs(obj, dxfattribs)
         evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
         i = -1
         for suffix, mesh_setting in zip(
             ("_POINTS", "_LINES", "_FACES"),
-            (settings.data_settings.points_export, settings.data_settings.lines_export, settings.data_settings.faces_export)
+                (settings.data_settings.points_export,
+                settings.data_settings.lines_export, 
+                settings.data_settings.faces_export)
         ):
             i += 1
             mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
@@ -132,14 +148,12 @@ class DXFExporter:
             self.exported_objects += 1
 
     def write_block(self, block, obj):
-        dxfattribs = {}
-        for mgr in (self.color_mgr, self.layer_mgr):
-            mgr.populate_dxfattribs(obj, dxfattribs)
         self.block_mgr.instantiate_block(
             block, 
             obj,
             self.transform_mgr.get_matrix(obj),
-            self.transform_mgr.get_rotation_axis_angle(obj))
+            self.transform_mgr.get_rotation_axis_angle(obj),
+            self.get_dxf_attribs(obj))
 
     def write_dimensions(self, strokes):
         for s in strokes:

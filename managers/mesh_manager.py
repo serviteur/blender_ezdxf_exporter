@@ -32,6 +32,11 @@ class MeshManager(Manager):
             bmesh.ops.triangulate(bm, faces=bm.faces[:])
             bm.to_mesh(mesh)
             bm.free()
+    
+    def create_mesh_point(self, layout, position, dxfattribs=None):
+        if dxfattribs is None:
+            dxfattribs = {}
+        layout.add_point(position, dxfattribs=dxfattribs)
 
     def _create_mesh_points(self, layout, mesh, matrix, use_matrix, dxfattribs):
         for v in mesh.vertices:

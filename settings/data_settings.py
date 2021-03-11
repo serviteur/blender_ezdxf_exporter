@@ -29,6 +29,13 @@ class text_type(Enum):
     MESH = 'Mesh'
 
 
+class empty_type(Enum):
+    NONE = 'No Export'
+    BLOCK = 'Block'
+    POINT = 'POINT'
+    # TODO Export Empty as its viewport Geometry ?
+
+
 class camera_type(Enum):
     NONE = 'No Export'
     VIEWPORT = 'VIEWPORT (Paperspace)'
@@ -57,6 +64,10 @@ class DataSettings(PropertyGroup):
         default=text_type.MTEXT.value,
         items=[(t_t.value,)*3 for t_t in text_type])
 
+    empties_export: EnumProperty(
+        name="Export Empties",
+        default=empty_type.NONE.value,
+        items=[(e_t.value,)*3 for e_t in empty_type])
     
     cameras_export: EnumProperty(
         name="Export Cameras",

@@ -54,3 +54,13 @@ class BlockManager(Manager):
 
         if exp.debug_mode:
             exp.log.append(f"{obj.name} was added as a Block")
+
+    def select_empty_objects(self):
+        "If Empty objects are set to render as Block, returns them and pops them from exporter objects.\nElse returns an empty List"
+        exp = self.exporter
+        export_as_mesh = exp.settings.data_settings.empties_export == empty_type.BLOCK.value
+        empty_objects = []
+        for i in range(len(exp.objects) - 1, -1, -1):
+            if exp.objects[i].type == 'EMPTY' and not export_as_mesh:
+                empty_objects.append(exp.objects.pop(i))
+        return empty_objects
