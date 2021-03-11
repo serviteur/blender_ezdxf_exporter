@@ -1,10 +1,13 @@
+from typing import Dict
 from .settings.data_settings import (
+    CurveType, 
     FaceType,
     LineType,
     PointType,
     EmptyType,
     TextType,
     CameraType,
+    NO_EXPORT
 )
 import ezdxf
 from .managers import (
@@ -16,6 +19,7 @@ from .managers import (
     transform_manager,
     text_manager,
     camera_manager,
+    spline_manager,
 )
 
 
@@ -57,7 +61,7 @@ class DXFExporter:
         self.debug_mode = settings.verbose
         self.log = []
         self.exported_objects = 0
-
+    
     def update_supported_types(self):
         "Dynamically update supported object types. Use before filtering them"
         for attr, _type in (
@@ -78,7 +82,7 @@ class DXFExporter:
             return True
         except (PermissionError, FileNotFoundError):
             return False
-
+    
     def filter_objects(self):
         for attr, value, _type, container in (
             ("texts_export", TextType.MESH.value, 'FONT', self.objects_text),
@@ -92,12 +96,27 @@ class DXFExporter:
                 if self.objects[i].type == _type and not export_as:
                     container.append(self.objects.pop(i))
 
+    def get_dxf_attribs(self, obj, entity_type=None) -> Dict[str, any]:
+        """Populate dxfattribs used by most Drawing entity factor methods
+        1. Adds color keys and values
+        2. Adds the layer name
+        """
         dxfattribs = {}
         for mgr in (self.color_mgr, self.layer_mgr):
             mgr.populate_dxfattribs(obj, dxfattribs, entity_type=entity_type)
         return dxfattribs
 
     def write_objects(self):
+        # Export CURVE Objects as Spline
+        for curve in self.objects_curve:
+            self.spline_mgr.write_curve(
+                self.msp,
+                curve,
+                self.transform_mgr.get_matrix(curve),
+                self.transform_mgr.get_rotation_axis_angle(curve),
+                self.get_dxf_attribs(curve, CurveType))
+
+        # Export FONT Objects as MTEXT or TEXT
         for text in self.objects_text:
             self.text_mgr.write_text(
                 self.msp,
@@ -106,6 +125,7 @@ class DXFExporter:
                 self.transform_mgr.get_rotation_axis_angle(text),
                 self.get_dxf_attribs(text, TextType))
 
+        # Export EMPTY objects as BLOCK with 1 point entity (Else you can't select it)
         if self.objects_empty_blocks:
             empty_block = self.block_mgr.initialize_block("Empty")
             self.mesh_mgr.create_mesh_point(empty_block, (0, 0, 0))
@@ -113,23 +133,29 @@ class DXFExporter:
             for empty in self.objects_empty_blocks:
                 self.write_block(empty_block, empty, EmptyType)
 
+        # Export Linked Objects as multiple BLOCK
         if self.settings.data_settings.use_blocks:
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
-            [self.write_object(obj) for obj in not_blocks]
+            [self.instantiate_mesh_object(obj) for obj in not_blocks]
             for obj, (block, _) in blocks_dic.items():
-                self.write_object(obj=obj, layout=block, use_matrix=False)
+                # Create the BLOCK def which all linked objects will instantiate
+                self.instantiate_mesh_object(
+                    obj=obj, layout=block, use_matrix=False)
             for block, objs in blocks_dic.values():
+                # Instantiate all linked objects from block definition
                 [self.write_block(block, obj) for obj in objs]
         else:
-            [self.write_object(obj) for obj in self.objects]
+            # Export objects as MESH and/or LINES and/or POINTS
+            [self.instantiate_mesh_object(obj) for obj in self.objects]
 
         for camera in self.objects_camera:
+            # Initialize viewports from Camera (WIP)
             self.camera_mgr.initialize_camera(camera)
 
         if self.debug_mode:
             self.log.append(f"Exported {self.exported_objects} Objects")
 
-    def write_object(self, obj, layout=None, use_matrix=True):
+    def instantiate_mesh_object(self, obj, layout=None, use_matrix=True):
         if layout is None:
             layout = self.msp
         dxfattribs = {}
@@ -137,10 +163,13 @@ class DXFExporter:
         data_settings = settings.data_settings
 
         if obj.type == 'EMPTY':
-            self.mesh_mgr.create_mesh_point(self.msp, obj.location, self.get_dxf_attribs(obj, EmptyType))
+            self.mesh_mgr.create_mesh_point(
+                self.msp, obj.location, self.get_dxf_attribs(obj, EmptyType))
         else:
             self.color_mgr.populate_dxfattribs(obj, dxfattribs)
             evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
+            # Since Mesh Objects can be exported as Faces, Edges and Vertices
+            # We loop through all three of these options
             i = -1
             for mesh_type, mesh_setting in (
                 (PointType, data_settings.points_export),
@@ -159,7 +188,8 @@ class DXFExporter:
                     override=settings.layer_settings.entity_layer_links[2 - i])
                 if i == 2:
                     # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
-                    self.mesh_mgr.triangulate_if_needed(evaluated_mesh, obj.type)
+                    self.mesh_mgr.triangulate_if_needed(
+                        evaluated_mesh, obj.type)
                 mesh_method(
                     self.msp if layout is None else layout,
                     evaluated_mesh,
@@ -185,7 +215,7 @@ class DXFExporter:
                 continue
             self.dimension_mgr.add_aligned_dim(
                 s.points[0].co, s.points[1].co, 5)
-
+    
     def export_materials_as_layers(self):
         layer_settings = self.settings.layer_settings
         if not layer_settings.material_layer_export:

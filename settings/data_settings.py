@@ -57,11 +57,12 @@ class CameraType(Enum):
 class DataSettings(PropertyGroup):
     sub_layers_suffixes = {
         FaceType: "FACES",
-        LineType: "LINES",
-        PointType: "POINTS",
+        LineType: "EDGES",
+        PointType: "VERTICES",
         TextType: "TEXTS",
         EmptyType: "EMPTIES",
         CameraType: "VIEW",
+        CurveType: "CURVES",
     }
 
     faces_export: EnumProperty(
@@ -78,6 +79,11 @@ class DataSettings(PropertyGroup):
         name="Export Points",
         default=PointType.NONE.value,
         items=[(p_t.value,)*3 for p_t in PointType])
+    
+    curves_export: EnumProperty(
+        name="Export Curves",
+        default=CurveType.MESH.value,
+        items=[(c_t.value,)*3 for c_t in CurveType])
 
     texts_export: EnumProperty(
         name="Export Texts",
@@ -115,16 +121,22 @@ class DataSettings(PropertyGroup):
         for obj in objects:
             lookup_type_dic[obj.type] = True
         i = -1
-        for prop, name, _type in (
-            ("faces_export", "Faces", 'MESH'),
-            ("lines_export", "Edges", 'MESH'),
-            ("points_export", "Vertices", 'MESH'),
-            ("texts_export", "Texts", 'FONT'),
-            ("empties_export", "Empties", 'EMPTY'),
-            ("cameras_export", "Cameras", 'CAMERA'),
+        for prop, name, _types in (
+            ("faces_export", "Faces", ('MESH', 'CURVE', 'FONT')),
+            ("lines_export", "Edges", ('MESH', 'CURVE', 'FONT')),
+            ("points_export", "Vertices", ('MESH', 'CURVE', 'FONT')),
+            ("curves_export", "Curves", ('CURVE',)),
+            ("texts_export", "Texts", ('FONT',)),
+            ("empties_export", "Empties", ('EMPTY',)),
+            ("cameras_export", "Cameras", ('CAMERA',)),
         ):
             i += 1
-            if lookup_type_dic.get(_type) is None:
+            mesh_type_supported = False
+            for _type in _types:
+                if lookup_type_dic.get(_type) is not None:
+                    mesh_type_supported = True
+                    break
+            if not mesh_type_supported:
                 continue
             geom_split = col.split(factor=0.25, align=True)
             geom_split.label(text=name)
