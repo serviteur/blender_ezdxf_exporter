@@ -6,6 +6,19 @@ class LayerManager(Manager):
     def populate_dxfattribs(self, obj, dxfattribs, entity_type, override=True):
         dxfattribs['layer'] = self.get_or_create_layer(obj, entity_type, override)
 
+    def get_or_create_layer_from_material(self, mat):
+        if mat is None:
+            return
+        exp = self.exporter
+        layers = exp.doc.layers
+        layer_name = "MATERIAL_" + mat.name
+        if layer_name not in layers:
+            new_layer = layers.new(layer_name)
+            rgb, a = exp.color_mgr._get_material_color(mat)
+            new_layer.rgb, new_layer.transparency = rgb, 1 - \
+                a if exp.settings.layer_settings.entity_layer_transparency else 0
+        return layer_name
+
     def get_or_create_layer(self, obj, entity_type, override=True):
         "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
         exp = self.exporter
@@ -27,7 +40,7 @@ class LayerManager(Manager):
         elif layer_to == EntityLayer.COLLECTION.OBJECT_NAME.value:
             layer_name = obj.name + suffix
             if override and layer_name not in layers:
-                new_layer = layers.new()
+                new_layer = layers.new(layer_name)
                 rgb, a = exp.color_mgr._get_object_color(obj)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
                     a if exp.settings.layer_settings.entity_layer_transparency else 0
@@ -36,7 +49,7 @@ class LayerManager(Manager):
             mat = obj.data.materials[0]
             layer_name = mat.name + suffix
             if override and layer_name not in layers:
-                new_layer = layers.new()
+                new_layer = layers.new(layer_name)
                 rgb, a = exp.color_mgr._get_material_color(mat)
                 new_layer.rgb, new_layer.transparency = rgb, 1 - \
                     a if exp.settings.layer_settings.entity_layer_transparency else 0

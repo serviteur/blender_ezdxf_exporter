@@ -11,9 +11,9 @@ class EntityLayer(Enum):
     NONE = 'Default (Layer 0)'
     COLLECTION = 'Collection'
     OBJECT_NAME = 'Object Name'
-    DATA_NAME = 'Mesh Name'
+    DATA_NAME = 'Data/Mesh Name'
     SCENE_NAME = 'Current Scene Name'
-    MATERIAL = 'Current Material'
+    MATERIAL = 'Object 1st Material'
 
 
 class LayerSettings(PropertyGroup):
@@ -54,6 +54,18 @@ class LayerSettings(PropertyGroup):
         default=False,
     )
 
+    material_layer_export: BoolProperty(        
+        name="Materials as Layers",
+        description="Export Materials as Layers",
+        default=False,
+    )
+    
+    material_layer_export_only_selected: BoolProperty(        
+        name="Only Exported",
+        description="Export Only Materials linked to exported objects\nUncheck to import all materials in current scene",
+        default=True,
+    )
+
     def draw(self, layout):
         layout.label(text="Object Layer")
         layer_box = layout.box()
@@ -65,3 +77,8 @@ class LayerSettings(PropertyGroup):
         layer_setting.active = self.entity_layer_color and self.entity_layer_to in (
             EntityLayer.OBJECT_NAME.value, EntityLayer.MATERIAL.value)
         layer_box.prop(self, "entity_layer_separate")
+        mat_layer = layer_box.split(factor=0.9, align=True)
+        mat_layer.prop(self, "material_layer_export")
+        mat_layer_link = mat_layer.row()
+        mat_layer_link.prop(self, "material_layer_export_only_selected", text="", icon='LINKED' if self.material_layer_export_only_selected else 'UNLINKED')
+        mat_layer_link.active = self.material_layer_export

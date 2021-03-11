@@ -7,40 +7,48 @@ from bpy.props import (
 )
 
 
+NO_EXPORT = 'No Export'
+
 class FaceType(Enum):
-    NONE = 'No Export'
+    NONE = NO_EXPORT
     MESH = 'MESH'
     FACES3D = '3DFACEs'
     POLYFACE = 'POLYFACE'
 
 
 class LineType(Enum):
-    NONE = 'No Export'
+    NONE = NO_EXPORT
     LINES = 'LINEs'
     POLYLINES = 'POLYLINEs'
 
 
 class PointType(Enum):
-    NONE = 'No Export'
+    NONE = NO_EXPORT
     POINTS = 'POINTs'
 
 
 class TextType(Enum):
-    NONE = 'No Export'
+    NONE = NO_EXPORT
     MTEXT = 'MText'
     TEXT = 'Text'
     MESH = 'Mesh'
 
 
+class CurveType(Enum):
+    NONE = NO_EXPORT
+    SPLINE = 'Spline'
+    MESH = 'Mesh'
+
+
 class EmptyType(Enum):
-    NONE = 'No Export'
+    NONE = NO_EXPORT
     BLOCK = 'Block'
     POINT = 'POINT'
     # TODO Export Empty as its viewport Geometry ?
 
 
 class CameraType(Enum):
-    NONE = 'No Export'
+    NONE = NO_EXPORT
     VIEWPORT = 'VIEWPORT (Paperspace)'
     VPORT = 'VPORT (Modelspace)'
     VIEW = 'VIEW (Modelspace)'

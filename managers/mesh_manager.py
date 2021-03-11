@@ -66,12 +66,13 @@ class MeshManager(Manager):
 
     def _create_mesh_polyface(self, layout, mesh, matrix, use_matrix, dxfattribs):
         def entity_func():
-            polyface = layout.add_polyface(dxfattribs=dxfattribs)
-            polyface.append_faces(
-                [[matrix @ mesh.vertices[v].co for v in f.vertices]
-                    for f in mesh.polygons],
-                dxfattribs=dxfattribs)
-            return polyface
+            if len(mesh.polygons) > 0:
+                polyface = layout.add_polyface(dxfattribs=dxfattribs)
+                polyface.append_faces(
+                    [[matrix @ mesh.vertices[v].co for v in f.vertices]
+                        for f in mesh.polygons],
+                    dxfattribs=dxfattribs)
+                return polyface
         self.create_and_transform_entity(entity_func, use_matrix, dxfattribs)
 
     def _create_mesh_3dfaces(self, layout, mesh, matrix, use_matrix, dxfattribs):
@@ -84,11 +85,12 @@ class MeshManager(Manager):
 
     def _create_mesh_mesh(self, layout, mesh, matrix, use_matrix, dxfattribs):
         def entity_func():
-            dxf_mesh = layout.add_mesh(dxfattribs)
-            with dxf_mesh.edit_data() as mesh_data:
-                mesh_data.vertices = [matrix @ v.co for v in mesh.vertices]
-                mesh_data.faces = [f.vertices for f in mesh.polygons]
-            return dxf_mesh
+            if len(mesh.polygons) > 0:
+                dxf_mesh = layout.add_mesh(dxfattribs)
+                with dxf_mesh.edit_data() as mesh_data:
+                    mesh_data.vertices = [matrix @ v.co for v in mesh.vertices]
+                    mesh_data.faces = [f.vertices for f in mesh.polygons]
+                return dxf_mesh
         self.create_and_transform_entity(entity_func, use_matrix, dxfattribs)
 
     def get_evaluated_mesh(self, obj):

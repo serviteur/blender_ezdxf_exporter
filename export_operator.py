@@ -83,6 +83,9 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             self.report(
                 {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
             return {'FINISHED'}
+
+        exporter.export_materials_as_layers()
+        exporter.filter_objects()
         exporter.write_objects()
         if self.use_dimensions:
             try:

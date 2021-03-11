@@ -20,18 +20,8 @@ from .managers import (
 
 
 class DXFExporter:
-    supported_types = {'MESH', 'CURVE', 'META', 'SURFACE', 'FONT', 'EMPTY', 'CAMERA'}
-
-    def update_supported_types(self):
-        for attr, _enum, _type in (
-            ("empties_export", EmptyType, 'EMPTY'),
-            ("texts_export", TextType, 'FONT'),
-            ("cameras_export", CameraType, 'CAMERA'),
-        ):        
-            if getattr(self.settings.data_settings, attr, 'No Export') == _enum.NONE.value:
-                self.supported_types.discard(_type)
-            else:
-                self.supported_types.add(_type)
+    supported_types = {'MESH', 'CURVE', 'META',
+                       'SURFACE', 'FONT', 'EMPTY', 'CAMERA'}
 
     def __init__(self, context, settings, objects, coll_parents):
         # Create new document
@@ -43,7 +33,6 @@ class DXFExporter:
 
         self.context = context
         self.settings = settings
-        self.update_supported_types()
 
         self.block_mgr = block_manager.BlockManager(self)
         self.mesh_mgr = mesh_manager.MeshManager(self)
@@ -53,28 +42,34 @@ class DXFExporter:
         self.transform_mgr = transform_manager.TransformManager(self)
         self.text_mgr = text_manager.TextManager(self)
         self.camera_mgr = camera_manager.CameraManager(self)
+        self.spline_mgr = spline_manager.SplineManager(self)
 
+        self.update_supported_types()
         self.objects = [o for o in objects if o.type in self.supported_types]
 
         self.objects_text = []
         self.objects_empty_blocks = []
         self.objects_camera = []
-
-        for attr, value, _type, container in (
-            ("texts_export", TextType.MESH.value, 'FONT', self.objects_text),
-            ("empties_export", EmptyType.POINT.value, 'EMPTY', self.objects_empty_blocks),
-            ("cameras_export", CameraType.NONE.value, 'CAMERA', self.objects_camera),
-        ):
-            export_as = getattr(self.settings.data_settings, attr) == value
-            for i in range(len(self.objects) - 1, -1, -1):
-                if self.objects[i].type == _type and not export_as:
-                    container.append(self.objects.pop(i))
+        self.objects_curve = []
 
         self.coll_parents = coll_parents
 
         self.debug_mode = settings.verbose
         self.log = []
         self.exported_objects = 0
+
+    def update_supported_types(self):
+        "Dynamically update supported object types. Use before filtering them"
+        for attr, _type in (
+            ("empties_export", 'EMPTY'),
+            ("texts_export", 'FONT'),
+            ("cameras_export", 'CAMERA'),
+            ("curves_export", 'CURVE'),
+        ):
+            if getattr(self.settings.data_settings, attr, NO_EXPORT) == NO_EXPORT:
+                self.supported_types.discard(_type)
+            else:
+                self.supported_types.add(_type)
 
     def write_file(self, path):
         "Saves the File and returns True if successful, False if Error"
@@ -84,7 +79,19 @@ class DXFExporter:
         except (PermissionError, FileNotFoundError):
             return False
 
-    def get_dxf_attribs(self, obj, entity_type=None):
+    def filter_objects(self):
+        for attr, value, _type, container in (
+            ("texts_export", TextType.MESH.value, 'FONT', self.objects_text),
+            ("empties_export", EmptyType.POINT.value,
+             'EMPTY', self.objects_empty_blocks),
+            ("cameras_export", CameraType.NONE.value, 'CAMERA', self.objects_camera),
+            ("curves_export", CurveType.MESH.value, 'CURVE', self.objects_curve),
+        ):
+            export_as = getattr(self.settings.data_settings, attr) == value
+            for i in range(len(self.objects) - 1, -1, -1):
+                if self.objects[i].type == _type and not export_as:
+                    container.append(self.objects.pop(i))
+
         dxfattribs = {}
         for mgr in (self.color_mgr, self.layer_mgr):
             mgr.populate_dxfattribs(obj, dxfattribs, entity_type=entity_type)
@@ -178,6 +185,15 @@ class DXFExporter:
                 continue
             self.dimension_mgr.add_aligned_dim(
                 s.points[0].co, s.points[1].co, 5)
+
+    def export_materials_as_layers(self):
+        layer_settings = self.settings.layer_settings
+        if not layer_settings.material_layer_export:
+            return
+        mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects
+        for mats in [o.data.materials for o in mat_objects if o.data and hasattr(o.data, "materials") and o.data.materials]:
+            [self.layer_mgr.get_or_create_layer_from_material(mat) for mat in mats]
+
 
     def export_file(self, path):
         self.doc.entitydb.purge()
