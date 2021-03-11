@@ -1,7 +1,6 @@
 from enum import Enum
 from .manager import Manager
 from ezdxf.math import Vec3
-from ..settings.data_settings import camera_type
 
 
 class CameraManager(Manager):
@@ -20,10 +19,6 @@ class CameraManager(Manager):
         ISOMETRIC_SNAP = 1024
         HIDE_PLOT = 2048
         ZOOM_LOCKING = 16384
-
-
-    def select_camera_objects(self):
-        return super().select_objects("cameras_export", camera_type.NONE.value, 'CAMERA')
 
     def initialize_camera(self, camera_obj):
         exp = self.exporter
@@ -52,7 +47,6 @@ class CameraManager(Manager):
             camera_obj.location, 
             view_height=cam_data.ortho_scale,
             )
-
 
         pp_viewport.dxf.view_direction_vector = z_local
         pp_viewport.dxf.flags = sum((

@@ -1,5 +1,5 @@
 from ezdxf.math import UCS
-from ..settings.data_settings import text_type
+from ..settings.data_settings import TextType
 from .manager import Manager
 
 
@@ -15,16 +15,6 @@ class TextManager(Manager):
         'MTEXT_BOTTOM_CENTER' : 8,
         'MTEXT_BOTTOM_RIGHT' : 9,
     }
-
-    def select_text_objects(self):
-        "If Text objects are not set to render as Mesh, returns them.\nElse returns an empty List"
-        exp = self.exporter
-        export_as_mesh = exp.settings.data_settings.texts_export == text_type.MESH.value
-        text_objects = []
-        for i in range(len(exp.objects) - 1, -1, -1):
-            if exp.objects[i].type == 'FONT' and not export_as_mesh:
-                text_objects.append(exp.objects.pop(i))
-        return text_objects
 
     def write_text(self, layout, text_obj, matrix, raa, dxfattribs):
         text = text_obj.data
@@ -76,6 +66,6 @@ class TextManager(Manager):
             return text_dxf
 
         self.create_and_transform_entity(
-            entity_func_mtext if self.exporter.settings.data_settings.texts_export == text_type.MTEXT.value else entity_func_text,
+            entity_func_mtext if self.exporter.settings.data_settings.texts_export == TextType.MTEXT.value else entity_func_text,
             True,
             dxfattribs)

@@ -1,8 +1,8 @@
 import bmesh
 from ..settings.data_settings import (
-    dxf_face_type,
-    dxf_line_type,
-    dxf_point_type,
+    FaceType,
+    LineType,
+    PointType,
 )
 from .manager import Manager
 
@@ -11,20 +11,20 @@ class MeshManager(Manager):
     def __init__(self, exporter) -> None:
         super().__init__(exporter)
         self.mesh_creation_methods_dic = {
-            dxf_face_type.FACES3D.value: self._create_mesh_3dfaces,
-            dxf_face_type.MESH.value: self._create_mesh_mesh,
-            dxf_face_type.POLYFACE.value: self._create_mesh_polyface,
-            dxf_line_type.POLYLINES.value: self._create_mesh_polylines,
-            dxf_line_type.LINES.value: self._create_mesh_lines,
-            dxf_point_type.POINTS.value: self._create_mesh_points,
+            FaceType.FACES3D.value: self._create_mesh_3dfaces,
+            FaceType.MESH.value: self._create_mesh_mesh,
+            FaceType.POLYFACE.value: self._create_mesh_polyface,
+            LineType.POLYLINES.value: self._create_mesh_polylines,
+            LineType.LINES.value: self._create_mesh_lines,
+            PointType.POINTS.value: self._create_mesh_points,
         }
 
     def triangulate_if_needed(self, mesh, obj_type):
         # Make sure there is no N-Gon (not supported in DXF Faces)
         if obj_type != 'MESH' or self.exporter.settings.data_settings.faces_export not in (
-                dxf_face_type.FACES3D.value,
-                dxf_face_type.POLYFACE.value,
-                dxf_face_type.MESH.value):
+                FaceType.FACES3D.value,
+                FaceType.POLYFACE.value,
+                FaceType.MESH.value):
             return
         if any([len(p.vertices) > 4 for p in mesh.polygons]):
             bm = bmesh.new()

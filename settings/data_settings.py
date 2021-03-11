@@ -3,41 +3,43 @@ from bpy.types import PropertyGroup
 from bpy.props import (
     EnumProperty,
     BoolProperty,
+    BoolVectorProperty,
 )
 
-class dxf_face_type(Enum):
+
+class FaceType(Enum):
     NONE = 'No Export'
     MESH = 'MESH'
     FACES3D = '3DFACEs'
     POLYFACE = 'POLYFACE'
 
 
-class dxf_line_type(Enum):
+class LineType(Enum):
     NONE = 'No Export'
     LINES = 'LINEs'
     POLYLINES = 'POLYLINEs'
 
 
-class dxf_point_type(Enum):
+class PointType(Enum):
     NONE = 'No Export'
     POINTS = 'POINTs'
 
 
-class text_type(Enum):
+class TextType(Enum):
     NONE = 'No Export'
     MTEXT = 'MText'
     TEXT = 'Text'
     MESH = 'Mesh'
 
 
-class empty_type(Enum):
+class EmptyType(Enum):
     NONE = 'No Export'
     BLOCK = 'Block'
     POINT = 'POINT'
     # TODO Export Empty as its viewport Geometry ?
 
 
-class camera_type(Enum):
+class CameraType(Enum):
     NONE = 'No Export'
     VIEWPORT = 'VIEWPORT (Paperspace)'
     VPORT = 'VPORT (Modelspace)'
@@ -45,35 +47,51 @@ class camera_type(Enum):
 
 
 class DataSettings(PropertyGroup):
+    sub_layers_suffixes = {
+        FaceType: "FACES",
+        LineType: "LINES",
+        PointType: "POINTS",
+        TextType: "TEXTS",
+        EmptyType: "EMPTIES",
+        CameraType: "VIEW",
+    }
+
     faces_export: EnumProperty(
         name="Export Faces",
-        default=dxf_face_type.MESH.value,
-        items=[(f_t.value,)*3 for f_t in dxf_face_type])
+        default=FaceType.MESH.value,
+        items=[(f_t.value,)*3 for f_t in FaceType])
 
     lines_export: EnumProperty(
         name="Export Lines",
-        default=dxf_line_type.NONE.value,
-        items=[(l_t.value,)*3 for l_t in dxf_line_type])
+        default=LineType.NONE.value,
+        items=[(l_t.value,)*3 for l_t in LineType])
 
     points_export: EnumProperty(
         name="Export Points",
-        default=dxf_point_type.NONE.value,
-        items=[(p_t.value,)*3 for p_t in dxf_point_type])
+        default=PointType.NONE.value,
+        items=[(p_t.value,)*3 for p_t in PointType])
 
     texts_export: EnumProperty(
         name="Export Texts",
-        default=text_type.MTEXT.value,
-        items=[(t_t.value,)*3 for t_t in text_type])
+        default=TextType.MTEXT.value,
+        items=[(t_t.value,)*3 for t_t in TextType])
 
     empties_export: EnumProperty(
         name="Export Empties",
-        default=empty_type.NONE.value,
-        items=[(e_t.value,)*3 for e_t in empty_type])
-    
+        default=EmptyType.NONE.value,
+        items=[(e_t.value,)*3 for e_t in EmptyType])
+
     cameras_export: EnumProperty(
         name="Export Cameras",
-        default=camera_type.VIEWPORT.value,
-        items=[(c_t.value,)*3 for c_t in camera_type])
+        default=CameraType.VIEWPORT.value,
+        items=[(c_t.value,)*3 for c_t in CameraType])
+
+    entity_link: BoolVectorProperty(
+        name="Use Exporter settings",
+        description="Use Exporter settings for exported entities if ON, else use default ones",
+        size=6,
+        default=(True,) * 6
+    )
 
     use_blocks: BoolProperty(
         name="Linked objects as Blocks",
@@ -84,38 +102,34 @@ class DataSettings(PropertyGroup):
     def draw(self, layout, objects):
         layout.label(text="Export Data")
         geometry_box = layout.box()
+        col = geometry_box.column(align=True)
         lookup_type_dic = {}
         for obj in objects:
             lookup_type_dic[obj.type] = True
-        for prop, name, _type in zip(
-                (
-                    "faces_export", 
-                    "lines_export", 
-                    "points_export",
-                    "texts_export",
-                    "empties_export",
-                    "cameras_export",
-                ),
-                (
-                    "Faces", 
-                    "Edges", 
-                    "Vertices",
-                    "Texts",
-                    "Empties",
-                    "Cameras",
-                ),
-                (
-                    'MESH',
-                    'MESH',
-                    'MESH',
-                    'FONT',
-                    'EMPTY',
-                    'CAMERA',
-                )
+        i = -1
+        for prop, name, _type in (
+            ("faces_export", "Faces", 'MESH'),
+            ("lines_export", "Edges", 'MESH'),
+            ("points_export", "Vertices", 'MESH'),
+            ("texts_export", "Texts", 'FONT'),
+            ("empties_export", "Empties", 'EMPTY'),
+            ("cameras_export", "Cameras", 'CAMERA'),
         ):
+            i += 1
             if lookup_type_dic.get(_type) is None:
                 continue
-            geom_split = geometry_box.split(factor=0.3, align=True)
+            geom_split = col.split(factor=0.25, align=True)
             geom_split.label(text=name)
+            geom_split = geom_split.split(factor=0.9, align=True)
             geom_split.prop(self, prop, text="")
-        geometry_box.prop(self, "use_blocks", toggle=True)
+            link = geom_split.row(align=True)
+            link.prop(self, "entity_link", index=i, text="",
+                      icon='LINKED' if self.entity_link[i] else 'UNLINKED')
+            # NONE.value is the same for all entity enums
+            link.active = getattr(self, prop) != TextType.NONE.value
+        geometry_box.prop(self, "use_blocks")
+
+    def get_sub_layer_suffix(self, entity_type):
+        # TODO : Add customization in addonprefs
+        suffix = self.sub_layers_suffixes.get(entity_type, "")
+        return suffix if suffix == "" else ("_" + suffix)

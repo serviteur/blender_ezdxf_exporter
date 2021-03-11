@@ -8,7 +8,7 @@ from .manager import Manager
 
 class ColorManager(Manager):
     "Methods for object color access and modification"
-    def populate_dxfattribs(self, obj, dxfattribs):
+    def populate_dxfattribs(self, obj, dxfattribs, entity_type=None):
         dxfattribs ['color'] = self.get_ACI_color()
         obj_color, obj_alpha = self.get_color(obj)
         if (obj_alpha or obj_alpha == 0) and self.exporter.settings.color_settings.entity_color_use_transparency:

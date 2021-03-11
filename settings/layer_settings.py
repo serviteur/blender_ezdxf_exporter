@@ -7,7 +7,7 @@ from bpy.props import (
 )
 
 
-class entity_layer(Enum):
+class EntityLayer(Enum):
     NONE = 'Default (Layer 0)'
     COLLECTION = 'Collection'
     OBJECT_NAME = 'Object Name'
@@ -19,15 +19,14 @@ class entity_layer(Enum):
 class LayerSettings(PropertyGroup):
     entity_layer_to: EnumProperty(
         name="Object Layer",
-        default=entity_layer.COLLECTION.value,
+        default=EntityLayer.COLLECTION.value,
         description="Entity LAYER assigned to ?",
-        items=[(e_l.value,)*3 for e_l in entity_layer])
+        items=[(e_l.value,)*3 for e_l in EntityLayer])
 
-    entity_layer_separate: BoolVectorProperty(
-        name="Face, Edge and Vertex Sub-Layers",
-        description="Faces, Lines and Points are drawn on separate sub-layers",
-        # TODO : Add customization in addonprefs
-        default=(False, False, False)
+    entity_layer_separate: BoolProperty(
+        name="Export Entities on Sub-Layers",
+        description="Different Entity Types (MESH, POINT, MTEXT...) are drawn on separate sub-layers",
+        default=True,
     )
 
     entity_layer_color: BoolProperty(
@@ -60,21 +59,9 @@ class LayerSettings(PropertyGroup):
         layer_box = layout.box()
         layer_box.prop(self, "entity_layer_to", text="")
         layer_color_split = layer_box.split(factor=0.5)
-        layer_color_split.prop(self, "entity_layer_color", toggle=True)
+        layer_color_split.prop(self, "entity_layer_color")
         layer_setting = layer_color_split.row()
-        if self.entity_layer_to == entity_layer.COLLECTION.value:
-            layer_setting.prop(self, "entity_layer_color_parent", toggle=True)
-            layer_setting.enabled = self.entity_layer_color
-        else:
-            layer_setting.prop(self, "entity_layer_transparency", toggle=True)
-            layer_setting.enabled = self.entity_layer_color and self.entity_layer_to in (
-                entity_layer.OBJECT_NAME.value, entity_layer.MATERIAL.value)
-        layer_separate = layer_box.column(heading="Sub Layers", align=True)
-        layer_separate.use_property_split = True
-        layer_separate.use_property_decorate = False
-        for i, text in enumerate(("Faces", "Lines", "Points")):
-            split = layer_separate.split(factor=0.9, align=True)
-            split.prop(self, "entity_layer_separate",
-                       index=i, toggle=True, text=text)
-            split.prop(self, "entity_layer_links", index=i, text="",
-                       icon='LINKED' if self.entity_layer_links[i] else 'UNLINKED')
+        layer_setting.prop(self, "entity_layer_transparency")
+        layer_setting.active = self.entity_layer_color and self.entity_layer_to in (
+            EntityLayer.OBJECT_NAME.value, EntityLayer.MATERIAL.value)
+        layer_box.prop(self, "entity_layer_separate")

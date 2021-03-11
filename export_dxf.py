@@ -1,7 +1,10 @@
 from .settings.data_settings import (
-    empty_type,
-    text_type,
-    camera_type,
+    FaceType,
+    LineType,
+    PointType,
+    EmptyType,
+    TextType,
+    CameraType,
 )
 import ezdxf
 from .managers import (
@@ -21,9 +24,9 @@ class DXFExporter:
 
     def update_supported_types(self):
         for attr, _enum, _type in (
-            ("empties_export", empty_type, 'EMPTY'),
-            ("texts_export", text_type, 'FONT'),
-            ("cameras_export", camera_type, 'CAMERA'),
+            ("empties_export", EmptyType, 'EMPTY'),
+            ("texts_export", TextType, 'FONT'),
+            ("cameras_export", CameraType, 'CAMERA'),
         ):        
             if getattr(self.settings.data_settings, attr, 'No Export') == _enum.NONE.value:
                 self.supported_types.discard(_type)
@@ -52,9 +55,20 @@ class DXFExporter:
         self.camera_mgr = camera_manager.CameraManager(self)
 
         self.objects = [o for o in objects if o.type in self.supported_types]
-        self.objects_text = self.text_mgr.select_text_objects()
-        self.objects_empty_blocks = self.block_mgr.select_empty_objects()
-        self.objects_camera = self.camera_mgr.select_camera_objects()
+
+        self.objects_text = []
+        self.objects_empty_blocks = []
+        self.objects_camera = []
+
+        for attr, value, _type, container in (
+            ("texts_export", TextType.MESH.value, 'FONT', self.objects_text),
+            ("empties_export", EmptyType.POINT.value, 'EMPTY', self.objects_empty_blocks),
+            ("cameras_export", CameraType.NONE.value, 'CAMERA', self.objects_camera),
+        ):
+            export_as = getattr(self.settings.data_settings, attr) == value
+            for i in range(len(self.objects) - 1, -1, -1):
+                if self.objects[i].type == _type and not export_as:
+                    container.append(self.objects.pop(i))
 
         self.coll_parents = coll_parents
 
@@ -70,10 +84,10 @@ class DXFExporter:
         except (PermissionError, FileNotFoundError):
             return False
 
-    def get_dxf_attribs(self, obj):
+    def get_dxf_attribs(self, obj, entity_type=None):
         dxfattribs = {}
         for mgr in (self.color_mgr, self.layer_mgr):
-            mgr.populate_dxfattribs(obj, dxfattribs)
+            mgr.populate_dxfattribs(obj, dxfattribs, entity_type=entity_type)
         return dxfattribs
 
     def write_objects(self):
@@ -83,14 +97,14 @@ class DXFExporter:
                 text,
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
-                self.get_dxf_attribs(text))
+                self.get_dxf_attribs(text, TextType))
 
         if self.objects_empty_blocks:
             empty_block = self.block_mgr.initialize_block("Empty")
             self.mesh_mgr.create_mesh_point(empty_block, (0, 0, 0))
             # TODO : Add custom properties as Block attributes
             for empty in self.objects_empty_blocks:
-                self.write_block(empty_block, empty)
+                self.write_block(empty_block, empty, EmptyType)
 
         if self.settings.data_settings.use_blocks:
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
@@ -113,18 +127,18 @@ class DXFExporter:
             layout = self.msp
         dxfattribs = {}
         settings = self.settings
+        data_settings = settings.data_settings
 
         if obj.type == 'EMPTY':
-            self.mesh_mgr.create_mesh_point(self.msp, obj.location, self.get_dxf_attribs(obj))
+            self.mesh_mgr.create_mesh_point(self.msp, obj.location, self.get_dxf_attribs(obj, EmptyType))
         else:
             self.color_mgr.populate_dxfattribs(obj, dxfattribs)
             evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
             i = -1
-            for suffix, mesh_setting in zip(
-                ("_POINTS", "_LINES", "_FACES"),
-                (settings.data_settings.points_export,
-                settings.data_settings.lines_export, 
-                settings.data_settings.faces_export)
+            for mesh_type, mesh_setting in (
+                (PointType, data_settings.points_export),
+                (LineType, data_settings.lines_export),
+                (FaceType, data_settings.faces_export),
             ):
                 i += 1
                 mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
@@ -134,7 +148,7 @@ class DXFExporter:
                 self.layer_mgr.populate_dxfattribs(
                     obj,
                     dxfattribs,
-                    suffix=suffix if settings.layer_settings.entity_layer_separate[2 - i] else "",
+                    entity_type=mesh_type,
                     override=settings.layer_settings.entity_layer_links[2 - i])
                 if i == 2:
                     # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
@@ -149,13 +163,13 @@ class DXFExporter:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
-    def write_block(self, block, obj):
+    def write_block(self, block, obj, entity_type=None):
         self.block_mgr.instantiate_block(
             block,
             obj,
             self.transform_mgr.get_matrix(obj),
             self.transform_mgr.get_rotation_axis_angle(obj),
-            self.get_dxf_attribs(obj))
+            self.get_dxf_attribs(obj, entity_type))
 
     def write_dimensions(self, strokes):
         for s in strokes:

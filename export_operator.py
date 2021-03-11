@@ -17,7 +17,7 @@ from .shared_maths import(
 )
 from .settings.layer_settings import (
     LayerSettings,
-    entity_layer,
+    EntityLayer,
 )
 from .settings.data_settings import DataSettings
 from .settings.color_settings import ColorSettings
@@ -75,7 +75,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             settings=self,
             objects=self.get_objects(context),
             coll_parents=parent_lookup(context.scene.collection)
-            if self.layer_settings.entity_layer_to == entity_layer.COLLECTION.value
+            if self.layer_settings.entity_layer_to == EntityLayer.COLLECTION.value
             and self.layer_settings.entity_layer_color
             else None
         )

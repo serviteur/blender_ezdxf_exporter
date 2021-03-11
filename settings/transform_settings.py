@@ -3,7 +3,7 @@ from bpy.props import (
     FloatVectorProperty,
     BoolProperty,
 )
-from ..settings.layer_settings import entity_layer
+from ..settings.layer_settings import EntityLayer
 
 
 def update_export_scale(self, context):
