@@ -29,6 +29,13 @@ class text_type(Enum):
     MESH = 'Mesh'
 
 
+class camera_type(Enum):
+    NONE = 'No Export'
+    VIEWPORT = 'VIEWPORT (Paperspace)'
+    VPORT = 'VPORT (Modelspace)'
+    VIEW = 'VIEW (Modelspace)'
+
+
 class DataSettings(PropertyGroup):
     faces_export: EnumProperty(
         name="Export Faces",
@@ -50,29 +57,52 @@ class DataSettings(PropertyGroup):
         default=text_type.MTEXT.value,
         items=[(t_t.value,)*3 for t_t in text_type])
 
+    
+    cameras_export: EnumProperty(
+        name="Export Cameras",
+        default=camera_type.VIEWPORT.value,
+        items=[(c_t.value,)*3 for c_t in camera_type])
+
     use_blocks: BoolProperty(
         name="Linked objects as Blocks",
         description="Export objects that share the same mesh data as Block entities",
         default=True,
     )
 
-    def draw(self, layout):
+    def draw(self, layout, objects):
         layout.label(text="Export Data")
         geometry_box = layout.box()
-        for prop, name in zip(
+        lookup_type_dic = {}
+        for obj in objects:
+            lookup_type_dic[obj.type] = True
+        for prop, name, _type in zip(
                 (
                     "faces_export", 
                     "lines_export", 
                     "points_export",
                     "texts_export",
+                    "empties_export",
+                    "cameras_export",
                 ),
                 (
                     "Faces", 
                     "Edges", 
                     "Vertices",
                     "Texts",
+                    "Empties",
+                    "Cameras",
+                ),
+                (
+                    'MESH',
+                    'MESH',
+                    'MESH',
+                    'FONT',
+                    'EMPTY',
+                    'CAMERA',
                 )
         ):
+            if lookup_type_dic.get(_type) is None:
+                continue
             geom_split = geometry_box.split(factor=0.3, align=True)
             geom_split.label(text=name)
             geom_split.prop(self, prop, text="")

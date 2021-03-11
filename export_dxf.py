@@ -1,3 +1,6 @@
+from .settings.data_settings import (
+    camera_type,
+)
 import ezdxf
 from .managers import (
     block_manager,
@@ -6,15 +9,26 @@ from .managers import (
     layer_manager,
     mesh_manager,
     transform_manager,
-    text_manager
+    text_manager,
+    camera_manager,
 )
 
 
 class DXFExporter:
-    supported_types = ('MESH', 'CURVE', 'META', 'SURFACE', 'FONT') 
+    supported_types = {'MESH', 'CURVE', 'META', 'SURFACE', 'FONT', 'EMPTY', 'CAMERA'}
+
+    def update_supported_types(self):
+        for attr, _enum, _type in (
+            ("cameras_export", camera_type, 'CAMERA'),
+        ):        
+            if getattr(self.settings.data_settings, attr, 'No Export') == _enum.NONE.value:
+                self.supported_types.discard(_type)
+            else:
+                self.supported_types.add(_type)
 
     def __init__(self, context, settings, objects, coll_parents):
-        self.doc = ezdxf.new(dxfversion="R2010", setup=True)  # Create new document
+        # Create new document
+        self.doc = ezdxf.new(dxfversion="R2010")
         self.doc.header['$INSUNITS'] = 6  # Insertion units : Meters
         self.doc.header['$MEASUREMENT'] = 1  # Metric system
         # See https://ezdxf.readthedocs.io/en/stable/concepts/units.html
@@ -22,6 +36,7 @@ class DXFExporter:
 
         self.context = context
         self.settings = settings
+        self.update_supported_types()
 
         self.block_mgr = block_manager.BlockManager(self)
         self.mesh_mgr = mesh_manager.MeshManager(self)
@@ -30,9 +45,12 @@ class DXFExporter:
         self.dimension_mgr = dimension_manager.DimensionManager(self)
         self.transform_mgr = transform_manager.TransformManager(self)
         self.text_mgr = text_manager.TextManager(self)
+        self.camera_mgr = camera_manager.CameraManager(self)
 
         self.objects = [o for o in objects if o.type in self.supported_types]
         self.objects_text = self.text_mgr.select_text_objects()
+        self.objects_camera = self.camera_mgr.select_camera_objects()
+
         self.coll_parents = coll_parents
 
         self.debug_mode = settings.verbose
@@ -44,7 +62,7 @@ class DXFExporter:
         try:
             self.doc.saveas(path)
             return True
-        except PermissionError:
+        except (PermissionError, FileNotFoundError):
             return False
         except FileNotFoundError:
             return False
@@ -69,6 +87,10 @@ class DXFExporter:
                 [self.write_block(block, obj) for obj in objs]
         else:
             [self.write_object(obj) for obj in self.objects]
+
+        for camera in self.objects_camera:
+            self.camera_mgr.initialize_camera(camera)
+
         if self.debug_mode:
             self.log.append(f"Exported {self.exported_objects} Objects")
 
