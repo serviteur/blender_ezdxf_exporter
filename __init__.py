@@ -20,6 +20,16 @@ bl_info = {
     "category": "Import-Export"
 }
 
+""" TODO
+    Export Camera as Vport and View
+    Use Blocks to retain Parenting
+    Visibility Status for objects
+    Frozen Status for objects
+    Frozen Status for Viewport in paperspace
+    Locked Status (Need to find which property)
+
+    Export Curve objects as Curve : Support added, butcan't replicate exact geometry in Spline entities
+"""
 
 def ensure_ezdxf():
     # Check if module is installed : https://stackoverflow.com/a/44210735/7092409
