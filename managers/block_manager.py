@@ -29,13 +29,16 @@ class BlockManager(Manager):
         for data, objs in self.get_data_users().items():
             if not objs:
                 continue
-            if len(objs) == 1:
+            elif len(objs) == 1:
                 not_blocks.append(objs[0])
+            elif data is None:
+            # Linked Empties. TODO : create blocks with linked empties
+                not_blocks.extend(objs)
             else:
                 blocks_dic[objs[0]] = (self.initialize_block(data.name), objs)
         return blocks_dic, not_blocks
 
-    def instantiate_block(self, block, obj, matrix, raa, dxfattribs):
+    def instantiate_block(self, block, obj, matrix, raa, dxfattribs, callback=None):
         exp = self.exporter
         scale = matrix.to_scale()
         dxfattribs.update({
@@ -50,6 +53,6 @@ class BlockManager(Manager):
         blockref.transform(ucs.matrix)
         dx, dy, dz = exp.settings.transform_settings.delta_xyz
         blockref.translate(dx, dy, dz)
-
-        if exp.debug_mode:
-            exp.log.append(f"{obj.name} was added as a Block")
+    
+        if callback:
+            callback(blockref)

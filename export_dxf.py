@@ -106,7 +106,11 @@ class DXFExporter:
             mgr.populate_dxfattribs(obj, dxfattribs, entity_type=entity_type)
         return dxfattribs
 
-    def write_objects(self):
+    def on_entity_created(self, base_obj, entity):
+        "Callback called when a new GFX entity is created"
+        pass
+
+    def export_curves(self):
         # Export CURVE Objects as Spline
         for curve in self.objects_curve:
             self.spline_mgr.write_curve(
@@ -114,8 +118,10 @@ class DXFExporter:
                 curve,
                 self.transform_mgr.get_matrix(curve),
                 self.transform_mgr.get_rotation_axis_angle(curve),
-                self.get_dxf_attribs(curve, CurveType))
+                self.get_dxf_attribs(curve, CurveType),
+                callback=lambda e: self.on_entity_created(curve, e))
 
+    def export_texts(self):
         # Export FONT Objects as MTEXT or TEXT
         for text in self.objects_text:
             self.text_mgr.write_text(
@@ -123,8 +129,11 @@ class DXFExporter:
                 text,
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
-                self.get_dxf_attribs(text, TextType))
+                self.get_dxf_attribs(text, TextType),
+                callback=lambda e: self.on_entity_created(text, e),
+            )
 
+    def export_empty_blocks(self):
         # Export EMPTY objects as BLOCK with 1 point entity (Else you can't select it)
         if self.objects_empty_blocks:
             empty_block = self.block_mgr.initialize_block("Empty")
@@ -133,8 +142,8 @@ class DXFExporter:
             for empty in self.objects_empty_blocks:
                 self.write_block(empty_block, empty, EmptyType)
 
-        # Export Linked Objects as multiple BLOCK
-        if self.settings.data_settings.use_blocks:
+    def export_linked_objects(self):
+        # Export Linked Objects as multiple BLOCKs
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
             [self.instantiate_mesh_object(obj) for obj in not_blocks]
             for obj, (block, _) in blocks_dic.items():
@@ -144,13 +153,23 @@ class DXFExporter:
             for block, objs in blocks_dic.values():
                 # Instantiate all linked objects from block definition
                 [self.write_block(block, obj) for obj in objs]
-        else:
-            # Export objects as MESH and/or LINES and/or POINTS
-            [self.instantiate_mesh_object(obj) for obj in self.objects]
 
+    def export_cameras(self):
         for camera in self.objects_camera:
             # Initialize viewports from Camera (WIP)
             self.camera_mgr.initialize_camera(camera)
+
+    def write_objects(self):
+        self.export_curves()
+        self.export_texts()
+        self.export_empty_blocks()
+
+        if self.settings.data_settings.use_blocks:
+            self.export_linked_objects()
+        else:
+            # Export objects as MESH and/or LINES and/or POINTS
+            [self.instantiate_mesh_object(obj) for obj in self.objects]
+        self.export_cameras()
 
         if self.debug_mode:
             self.log.append(f"Exported {self.exported_objects} Objects")
@@ -164,7 +183,10 @@ class DXFExporter:
 
         if obj.type == 'EMPTY':
             self.mesh_mgr.create_mesh_point(
-                self.msp, obj.location, self.get_dxf_attribs(obj, EmptyType))
+                self.msp,
+                obj.location,
+                self.get_dxf_attribs(obj, EmptyType),
+                callback=lambda e: self.on_entity_created(obj, e))
         else:
             self.color_mgr.populate_dxfattribs(obj, dxfattribs)
             evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
@@ -195,7 +217,8 @@ class DXFExporter:
                     evaluated_mesh,
                     self.transform_mgr.get_matrix(obj, use_matrix),
                     use_matrix,
-                    dxfattribs.copy())
+                    dxfattribs.copy(),
+                    callback=lambda e: self.on_entity_created(obj, e))
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
@@ -206,15 +229,22 @@ class DXFExporter:
             obj,
             self.transform_mgr.get_matrix(obj),
             self.transform_mgr.get_rotation_axis_angle(obj),
-            self.get_dxf_attribs(obj, entity_type))
+            self.get_dxf_attribs(obj, entity_type),
+            callback=lambda e: self.on_entity_created(obj, e))
+
+        if self.debug_mode:
+            self.log.append(f"{obj.name} was added as a Block")
 
     def write_dimensions(self, strokes):
+        # TODO : Add dimensions if annotation layer is hidden in blend file
         for s in strokes:
             # TODO : Angle dimensions
             if len(s.points) != 2:
                 continue
             self.dimension_mgr.add_aligned_dim(
-                s.points[0].co, s.points[1].co, 5)
+                s.points[0].co,
+                s.points[1].co,
+                5)
     
     def export_materials_as_layers(self):
         layer_settings = self.settings.layer_settings
@@ -222,8 +252,8 @@ class DXFExporter:
             return
         mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects
         for mats in [o.data.materials for o in mat_objects if o.data and hasattr(o.data, "materials") and o.data.materials]:
-            [self.layer_mgr.get_or_create_layer_from_material(mat) for mat in mats]
-
+            [self.layer_mgr.get_or_create_layer_from_material(
+                mat) for mat in mats]
 
     def export_file(self, path):
         self.doc.entitydb.purge()

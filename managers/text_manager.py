@@ -16,7 +16,7 @@ class TextManager(Manager):
         'MTEXT_BOTTOM_RIGHT' : 9,
     }
 
-    def write_text(self, layout, text_obj, matrix, raa, dxfattribs):
+    def write_text(self, layout, text_obj, matrix, raa, dxfattribs, callback):
         text = text_obj.data
         align_x, align_y = text.align_x, text.align_y
 
@@ -68,4 +68,6 @@ class TextManager(Manager):
         self.create_and_transform_entity(
             entity_func_mtext if self.exporter.settings.data_settings.texts_export == TextType.MTEXT.value else entity_func_text,
             True,
-            dxfattribs)
+            dxfattribs,
+            callback,
+            )

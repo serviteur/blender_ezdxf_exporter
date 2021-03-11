@@ -103,8 +103,8 @@ class DataSettings(PropertyGroup):
     entity_link: BoolVectorProperty(
         name="Use Exporter settings",
         description="Use Exporter settings for exported entities if ON, else use default ones",
-        size=6,
-        default=(True,) * 6
+        size=len(sub_layers_suffixes),
+        default=(True,) * len(sub_layers_suffixes)
     )
 
     use_blocks: BoolProperty(

@@ -3,7 +3,7 @@ from .manager import Manager
 
 
 class SplineManager(Manager):
-    def write_curve(self, layout, curve_obj, matrix, raa, dxfattribs):
+    def write_curve(self, layout, curve_obj, matrix, raa, dxfattribs, callback):
         curve = curve_obj.data
         def func_spline(spl):
             if len(spl.points) > 0:
@@ -12,4 +12,4 @@ class SplineManager(Manager):
                 return layout.add_spline([matrix @ p.co for p in spl.bezier_points])
 
         for spline in curve.splines:
-            self.create_and_transform_entity(lambda: func_spline(spline), True, dxfattribs)
+            self.create_and_transform_entity(lambda: func_spline(spline), True, dxfattribs, callback)

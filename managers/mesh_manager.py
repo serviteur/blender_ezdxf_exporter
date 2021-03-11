@@ -33,38 +33,48 @@ class MeshManager(Manager):
             bm.to_mesh(mesh)
             bm.free()
     
-    def create_mesh_point(self, layout, position, dxfattribs=None):
+    def create_mesh_point(self, layout, position, dxfattribs=None, callback=None):
         if dxfattribs is None:
             dxfattribs = {}
-        layout.add_point(position, dxfattribs=dxfattribs)
+        point = layout.add_point(position, dxfattribs=dxfattribs)
+        if callback is not None:
+            callback(point)
 
-    def _create_mesh_points(self, layout, mesh, matrix, use_matrix, dxfattribs):
+    def _create_mesh_points(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
         for v in mesh.vertices:
             self.create_and_transform_entity(
                 lambda: layout.add_point(
                     matrix @ v.co,
                     dxfattribs=dxfattribs),
-                use_matrix, dxfattribs)
+                use_matrix, 
+                dxfattribs,
+                callback,
+                )
 
-    def _create_mesh_lines(self, layout, mesh, matrix, use_matrix, dxfattribs):
+    def _create_mesh_lines(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
         for e in mesh.edges:
             self.create_and_transform_entity(
                 lambda: layout.add_line(
                     matrix @ mesh.vertices[e.vertices[0]].co,
                     matrix @ mesh.vertices[e.vertices[1]].co,
                     dxfattribs=dxfattribs),
-                use_matrix, dxfattribs)
+                use_matrix, 
+                dxfattribs,
+                callback,)
 
-    def _create_mesh_polylines(self, layout, mesh, matrix, use_matrix, dxfattribs):
+    def _create_mesh_polylines(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
         for e in mesh.edges:
             self.create_and_transform_entity(
                 lambda: layout.add_polyline3d(
                     (matrix @ mesh.vertices[e.vertices[0]].co,
                      matrix @ mesh.vertices[e.vertices[1]].co,),
                     dxfattribs=dxfattribs),
-                use_matrix, dxfattribs)
+                use_matrix, 
+                dxfattribs,
+                callback,
+                )
 
-    def _create_mesh_polyface(self, layout, mesh, matrix, use_matrix, dxfattribs):
+    def _create_mesh_polyface(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
         def entity_func():
             if len(mesh.polygons) > 0:
                 polyface = layout.add_polyface(dxfattribs=dxfattribs)
@@ -73,17 +83,19 @@ class MeshManager(Manager):
                         for f in mesh.polygons],
                     dxfattribs=dxfattribs)
                 return polyface
-        self.create_and_transform_entity(entity_func, use_matrix, dxfattribs)
+        self.create_and_transform_entity(entity_func, use_matrix, dxfattribs, callback)
 
-    def _create_mesh_3dfaces(self, layout, mesh, matrix, use_matrix, dxfattribs):
+    def _create_mesh_3dfaces(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
         for f in mesh.polygons:
             self.create_and_transform_entity(
                 lambda: layout.add_3dface(
                     [matrix @ mesh.vertices[v].co for v in f.vertices],
                     dxfattribs=dxfattribs),
-                use_matrix, dxfattribs)
-
-    def _create_mesh_mesh(self, layout, mesh, matrix, use_matrix, dxfattribs):
+                use_matrix, 
+                dxfattribs,
+                callback,
+                )
+    def _create_mesh_mesh(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
         def entity_func():
             if len(mesh.polygons) > 0:
                 dxf_mesh = layout.add_mesh(dxfattribs)
@@ -91,7 +103,7 @@ class MeshManager(Manager):
                     mesh_data.vertices = [matrix @ v.co for v in mesh.vertices]
                     mesh_data.faces = [f.vertices for f in mesh.polygons]
                 return dxf_mesh
-        self.create_and_transform_entity(entity_func, use_matrix, dxfattribs)
+        self.create_and_transform_entity(entity_func, use_matrix, dxfattribs, callback)
 
     def get_evaluated_mesh(self, obj):
         return obj.evaluated_get(self.exporter.context.evaluated_depsgraph_get()).to_mesh()
