@@ -19,7 +19,7 @@ class TextManager(Manager):
     def select_text_objects(self):
         "If Text objects are not set to render as Mesh, returns them.\nElse returns an empty List"
         exp = self.exporter
-        export_as_mesh = exp.settings.data_settings.texts_export == text_type.MESH
+        export_as_mesh = exp.settings.data_settings.texts_export == text_type.MESH.value
         text_objects = []
         for i in range(len(exp.objects) - 1, -1, -1):
             if exp.objects[i].type == 'FONT' and not export_as_mesh:
@@ -65,8 +65,6 @@ class TextManager(Manager):
                 align_dxf += align_x
             else:
                 align_dxf += "CENTER"
-            print(self.MTEXT_ATTACHMENT_POINTS_DIC)
-            print(align_dxf)
             align_dxf = self.MTEXT_ATTACHMENT_POINTS_DIC.get(align_dxf, 1)
 
             ucs = UCS(origin=matrix.to_translation()).rotate(
@@ -74,7 +72,6 @@ class TextManager(Manager):
             text_dxf = layout.add_mtext(text.body, dxfattribs)
             text_dxf.dxf.char_height = text.size / 2 * (sum(scale) / len(scale))
             text_dxf.set_location((0, 0, 0), attachment_point=align_dxf)
-            print(text_dxf.dxf.attachment_point)
             text_dxf.transform(ucs.matrix)
             return text_dxf
 

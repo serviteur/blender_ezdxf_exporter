@@ -1,9 +1,11 @@
 from ezdxf.math import UCS
 from .manager import Manager
+from ..settings.data_settings import empty_type
 
 
 class BlockManager(Manager):
     "Methods for block creation and instantation"
+
     def get_data_users(self) -> dict:
         "Returns a dict with data as key and object users a values"
         data_obj_dict = {}
@@ -14,6 +16,9 @@ class BlockManager(Manager):
             else:
                 data_obj_dict[data] = [obj]
         return data_obj_dict
+
+    def initialize_block(self, name):
+        return self.exporter.doc.blocks.new(name=name)
 
     def initialize_blocks(self):
         """Initialize objects that share the same data as Blocks. 
@@ -28,18 +33,17 @@ class BlockManager(Manager):
             if len(objs) == 1:
                 not_blocks.append(objs[0])
             else:
-                blocks_dic[objs[0]] = (self.exporter.doc.blocks.new(name=data.name), objs)
+                blocks_dic[objs[0]] = (self.initialize_block(data.name), objs)
         return blocks_dic, not_blocks
 
-
-    def instantiate_block(self, block, obj, matrix, raa):
+    def instantiate_block(self, block, obj, matrix, raa, dxfattribs):
         exp = self.exporter
         scale = matrix.to_scale()
-        dxfattribs = {
+        dxfattribs.update({
             'xscale': scale[0],
             'yscale': scale[1],
             'zscale': scale[2],
-        }
+        })
         ucs = UCS(origin=matrix.to_translation()).rotate(
             (raa[1], raa[2], raa[3]), raa[0])
         blockref = exp.msp.add_blockref(

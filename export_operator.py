@@ -65,12 +65,15 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         default=False,
         description="Run the exporter in debug mode.  Check the console for output")
 
+    def get_objects(self, context):
+        return context.selected_objects if self.only_selected else context.scene.objects
+
     def execute(self, context):
         start_time = time()
         exporter = DXFExporter(
             context=context,
             settings=self,
-            objects=context.selected_objects if self.only_selected else context.scene.objects,
+            objects=self.get_objects(context),
             coll_parents=parent_lookup(context.scene.collection)
             if self.layer_settings.entity_layer_to == entity_layer.COLLECTION.value
             and self.layer_settings.entity_layer_color
@@ -114,7 +117,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         if not dimensions_available:
             self.use_dimensions = False
 
-        self.data_settings.draw(layout)
+        self.data_settings.draw(layout, self.get_objects(context))
         self.layer_settings.draw(layout)
         self.color_settings.draw(layout)
         self.transform_settings.draw(layout)

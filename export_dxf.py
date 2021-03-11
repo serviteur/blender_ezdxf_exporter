@@ -64,20 +64,21 @@ class DXFExporter:
             return True
         except (PermissionError, FileNotFoundError):
             return False
-        except FileNotFoundError:
-            return False
+
+    def get_dxf_attribs(self, obj):
+            dxfattribs = {}
+            for mgr in (self.color_mgr, self.layer_mgr):
+            mgr.populate_dxfattribs(obj, dxfattribs)
+        return dxfattribs
 
     def write_objects(self):
         for text in self.objects_text:
-            dxfattribs = {}
-            for mgr in (self.color_mgr, self.layer_mgr):
-                mgr.populate_dxfattribs(text, dxfattribs)
             self.text_mgr.write_text(
                 self.msp,
                 text, 
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
-                dxfattribs)
+                self.get_dxf_attribs(text))
         if self.settings.data_settings.use_blocks:
             blocks_dic, not_blocks = self.block_mgr.initialize_blocks()
             [self.write_object(obj) for obj in not_blocks]
