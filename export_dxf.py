@@ -1,5 +1,6 @@
 from .settings.data_settings import (
     empty_type,
+    text_type,
     camera_type,
 )
 import ezdxf
@@ -21,6 +22,7 @@ class DXFExporter:
     def update_supported_types(self):
         for attr, _enum, _type in (
             ("empties_export", empty_type, 'EMPTY'),
+            ("texts_export", text_type, 'FONT'),
             ("cameras_export", camera_type, 'CAMERA'),
         ):        
             if getattr(self.settings.data_settings, attr, 'No Export') == _enum.NONE.value:
@@ -69,8 +71,8 @@ class DXFExporter:
             return False
 
     def get_dxf_attribs(self, obj):
-            dxfattribs = {}
-            for mgr in (self.color_mgr, self.layer_mgr):
+        dxfattribs = {}
+        for mgr in (self.color_mgr, self.layer_mgr):
             mgr.populate_dxfattribs(obj, dxfattribs)
         return dxfattribs
 
@@ -78,7 +80,7 @@ class DXFExporter:
         for text in self.objects_text:
             self.text_mgr.write_text(
                 self.msp,
-                text, 
+                text,
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
                 self.get_dxf_attribs(text))
@@ -115,41 +117,41 @@ class DXFExporter:
         if obj.type == 'EMPTY':
             self.mesh_mgr.create_mesh_point(self.msp, obj.location, self.get_dxf_attribs(obj))
         else:
-        self.color_mgr.populate_dxfattribs(obj, dxfattribs)
-        evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
-        i = -1
-        for suffix, mesh_setting in zip(
-            ("_POINTS", "_LINES", "_FACES"),
+            self.color_mgr.populate_dxfattribs(obj, dxfattribs)
+            evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj)
+            i = -1
+            for suffix, mesh_setting in zip(
+                ("_POINTS", "_LINES", "_FACES"),
                 (settings.data_settings.points_export,
                 settings.data_settings.lines_export, 
                 settings.data_settings.faces_export)
-        ):
-            i += 1
-            mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
-                mesh_setting)
-            if mesh_method is None:
-                continue
-            self.layer_mgr.populate_dxfattribs(
-                obj,
-                dxfattribs,
-                suffix=suffix if settings.layer_settings.entity_layer_separate[2 - i] else "",
-                override=settings.layer_settings.entity_layer_links[2 - i])
-            if i == 2:
-                # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
-                self.mesh_mgr.triangulate_if_needed(evaluated_mesh, obj.type)
-            mesh_method(
-                self.msp if layout is None else layout,
-                evaluated_mesh,
-                self.transform_mgr.get_matrix(obj, use_matrix),
-                use_matrix,
-                dxfattribs.copy())
+            ):
+                i += 1
+                mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
+                    mesh_setting)
+                if mesh_method is None:
+                    continue
+                self.layer_mgr.populate_dxfattribs(
+                    obj,
+                    dxfattribs,
+                    suffix=suffix if settings.layer_settings.entity_layer_separate[2 - i] else "",
+                    override=settings.layer_settings.entity_layer_links[2 - i])
+                if i == 2:
+                    # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
+                    self.mesh_mgr.triangulate_if_needed(evaluated_mesh, obj.type)
+                mesh_method(
+                    self.msp if layout is None else layout,
+                    evaluated_mesh,
+                    self.transform_mgr.get_matrix(obj, use_matrix),
+                    use_matrix,
+                    dxfattribs.copy())
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
 
     def write_block(self, block, obj):
         self.block_mgr.instantiate_block(
-            block, 
+            block,
             obj,
             self.transform_mgr.get_matrix(obj),
             self.transform_mgr.get_rotation_axis_angle(obj),

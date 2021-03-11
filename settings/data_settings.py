@@ -24,6 +24,7 @@ class dxf_point_type(Enum):
 
 
 class text_type(Enum):
+    NONE = 'No Export'
     MTEXT = 'MText'
     TEXT = 'Text'
     MESH = 'Mesh'
