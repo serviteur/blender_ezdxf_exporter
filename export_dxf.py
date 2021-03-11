@@ -103,7 +103,8 @@ class DXFExporter:
         """
         dxfattribs = {}
         for mgr in (self.color_mgr, self.layer_mgr):
-            mgr.populate_dxfattribs(obj, dxfattribs, entity_type=entity_type)
+            if not mgr.populate_dxfattribs(obj, dxfattribs, entity_type=entity_type):
+                return False
         return dxfattribs
 
     def on_entity_created(self, base_obj, entity):
@@ -113,23 +114,29 @@ class DXFExporter:
     def export_curves(self):
         # Export CURVE Objects as Spline
         for curve in self.objects_curve:
+            dxfattribs = self.get_dxf_attribs(curve, CurveType)
+            if not dxfattribs:
+                continue
             self.spline_mgr.write_curve(
                 self.msp,
                 curve,
                 self.transform_mgr.get_matrix(curve),
                 self.transform_mgr.get_rotation_axis_angle(curve),
-                self.get_dxf_attribs(curve, CurveType),
+                dxfattribs,
                 callback=lambda e: self.on_entity_created(curve, e))
 
     def export_texts(self):
         # Export FONT Objects as MTEXT or TEXT
         for text in self.objects_text:
+            dxfattribs = self.get_dxf_attribs(text, TextType)
+            if not dxfattribs:
+                continue
             self.text_mgr.write_text(
                 self.msp,
                 text,
                 self.transform_mgr.get_matrix(text),
                 self.transform_mgr.get_rotation_axis_angle(text),
-                self.get_dxf_attribs(text, TextType),
+                dxfattribs,
                 callback=lambda e: self.on_entity_created(text, e),
             )
 
@@ -182,10 +189,13 @@ class DXFExporter:
         data_settings = settings.data_settings
 
         if obj.type == 'EMPTY':
+            dxfattribs = self.get_dxf_attribs(obj, EmptyType)
+            if not dxfattribs:
+                return
             self.mesh_mgr.create_mesh_point(
                 self.msp,
                 obj.location,
-                self.get_dxf_attribs(obj, EmptyType),
+                dxfattribs,
                 callback=lambda e: self.on_entity_created(obj, e))
         else:
             self.color_mgr.populate_dxfattribs(obj, dxfattribs)
@@ -203,11 +213,12 @@ class DXFExporter:
                     mesh_setting)
                 if mesh_method is None:
                     continue
-                self.layer_mgr.populate_dxfattribs(
+                if not self.layer_mgr.populate_dxfattribs(
                     obj,
                     dxfattribs,
                     entity_type=mesh_type,
-                    override=settings.layer_settings.entity_layer_links[2 - i])
+                    override=settings.layer_settings.entity_layer_links[2 - i]):
+                    continue
                 if i == 2:
                     # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
                     self.mesh_mgr.triangulate_if_needed(
@@ -224,12 +235,15 @@ class DXFExporter:
             self.exported_objects += 1
 
     def write_block(self, block, obj, entity_type=None):
+        dxfattribs = self.get_dxf_attribs(obj, entity_type)
+        if not dxfattribs:
+            return        
         self.block_mgr.instantiate_block(
             block,
             obj,
             self.transform_mgr.get_matrix(obj),
             self.transform_mgr.get_rotation_axis_angle(obj),
-            self.get_dxf_attribs(obj, entity_type),
+            dxfattribs,
             callback=lambda e: self.on_entity_created(obj, e))
 
         if self.debug_mode:

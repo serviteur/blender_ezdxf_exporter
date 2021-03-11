@@ -15,6 +15,7 @@ class ColorManager(Manager):
             dxfattribs['transparency'] = 1 - obj_alpha        
         if obj_color and dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
+        return True
 
     def get_ACI_color(self):
         "Returns the color as Autocad Color Index"

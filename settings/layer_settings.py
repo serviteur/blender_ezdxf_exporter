@@ -16,6 +16,12 @@ class EntityLayer(Enum):
     MATERIAL = 'Object 1st Material'
 
 
+class ExcludedObject(Enum):
+    NONE = "No Export"
+    THAWED = "Thawed"
+    FROZEN = "Frozen"
+
+
 class LayerSettings(PropertyGroup):
     entity_layer_to: EnumProperty(
         name="Object Layer",
@@ -30,7 +36,7 @@ class LayerSettings(PropertyGroup):
     )
 
     entity_layer_color: BoolProperty(
-        name="Use Color",
+        name="Color",
         description="Set layer color if available in source",
         default=True,
     )
@@ -49,7 +55,7 @@ class LayerSettings(PropertyGroup):
     )
 
     entity_layer_transparency: BoolProperty(
-        name="Use Transparency",
+        name="Transparency",
         description="Set layer transparency if available in source Color",
         default=False,
     )
@@ -66,10 +72,24 @@ class LayerSettings(PropertyGroup):
         default=True,
     )
 
-    def draw(self, layout):
+    layer_excluded_export: EnumProperty(
+        name="Export Excluded as",
+        description="If collections are excluded from current view_layer, choose how to export them",
+        default=ExcludedObject.FROZEN.value,
+        items=[(e_c_t.value,) * 3 for e_c_t in ExcludedObject],
+    )
+
+    def draw(self, layout, only_selected):
         layout.label(text="Object Layer")
         layer_box = layout.box()
         layer_box.prop(self, "entity_layer_to", text="")
+        if not only_selected and self.entity_layer_to in (
+                EntityLayer.COLLECTION.value,
+                EntityLayer.OBJECT_NAME.value,
+        ):
+            split = layer_box.split(factor=0.5)
+            split.label(text="Export Excluded as")
+            split.prop(self, "layer_excluded_export", text="")
         layer_color_split = layer_box.split(factor=0.5)
         layer_color_split.prop(self, "entity_layer_color")
         layer_setting = layer_color_split.row()

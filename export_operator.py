@@ -53,6 +53,12 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         name="Export Only Selected Objects",
         default=True,
         description="What object will be exported? Only selected / All objects")
+    
+    export_excluded: BoolProperty(
+        name="Export Excluded / Hidden Objects",
+        description="Export Objects inside Collections which are Excluded from View Layer",
+        default=True,
+    )
 
     use_dimensions: BoolProperty(
         name="Export Dimensions",
@@ -66,7 +72,13 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         description="Run the exporter in debug mode.  Check the console for output")
 
     def get_objects(self, context):
-        return context.selected_objects if self.only_selected else context.scene.objects
+        if self.only_selected:
+            return context.selected_objects
+        else:
+            if self.export_excluded:
+                return context.scene.objects
+            else:
+                return [o for o in context.scene.objects if not context.view_layer.layer_collection.children[o.users_collection[0].name].exclude]
 
     def execute(self, context):
         start_time = time()
@@ -112,6 +124,8 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
         layout.label(text="Miscellaneous")
         misc_box = layout.box()
         misc_box.prop(self, "only_selected")
+        if not self.only_selected:
+            misc_box.prop(self, "export_excluded")
         dimensions_available = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils[
             "Annotations"].layers
         dim_row = misc_box.row()
@@ -121,7 +135,7 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
             self.use_dimensions = False
 
         self.data_settings.draw(layout, self.get_objects(context))
-        self.layer_settings.draw(layout)
+        self.layer_settings.draw(layout, self.only_selected)
         self.color_settings.draw(layout)
         self.transform_settings.draw(layout)
 
