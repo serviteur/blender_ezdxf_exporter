@@ -40,70 +40,57 @@ class MeshManager(Manager):
         if callback is not None:
             callback(point)
 
-    def _create_mesh_points(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
+    def _create_mesh_points(self, layout, mesh, dxfattribs, callback=None):
         for v in mesh.vertices:
-            self.create_and_transform_entity(
-                lambda: layout.add_point(
-                    matrix @ v.co,
-                    dxfattribs=dxfattribs),
-                use_matrix, 
-                dxfattribs,
-                callback,
-                )
+            point = layout.add_point(v.co, dxfattribs=dxfattribs)
+            if callback is not None:
+                callback(point)
 
-    def _create_mesh_lines(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
+    def _create_mesh_lines(self, layout, mesh, dxfattribs, callback=None):
         for e in mesh.edges:
-            self.create_and_transform_entity(
-                lambda: layout.add_line(
-                    matrix @ mesh.vertices[e.vertices[0]].co,
-                    matrix @ mesh.vertices[e.vertices[1]].co,
-                    dxfattribs=dxfattribs),
-                use_matrix, 
-                dxfattribs,
-                callback,)
-
-    def _create_mesh_polylines(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
-        for e in mesh.edges:
-            self.create_and_transform_entity(
-                lambda: layout.add_polyline3d(
-                    (matrix @ mesh.vertices[e.vertices[0]].co,
-                     matrix @ mesh.vertices[e.vertices[1]].co,),
-                    dxfattribs=dxfattribs),
-                use_matrix, 
-                dxfattribs,
-                callback,
-                )
-
-    def _create_mesh_polyface(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
-        def entity_func():
-            if len(mesh.polygons) > 0:
-                polyface = layout.add_polyface(dxfattribs=dxfattribs)
-                polyface.append_faces(
-                    [[matrix @ mesh.vertices[v].co for v in f.vertices]
-                        for f in mesh.polygons],
+            line = layout.add_line(
+                    mesh.vertices[e.vertices[0]].co,
+                    mesh.vertices[e.vertices[1]].co,
                     dxfattribs=dxfattribs)
-                return polyface
-        self.create_and_transform_entity(entity_func, use_matrix, dxfattribs, callback)
+            if callback is not None:
+                callback(line)
 
-    def _create_mesh_3dfaces(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
+    def _create_mesh_polylines(self, layout, mesh, dxfattribs, callback=None):
+        for e in mesh.edges:
+            polyline = layout.add_polyline3d(
+                    (mesh.vertices[e.vertices[0]].co,
+                     mesh.vertices[e.vertices[1]].co,),
+                    dxfattribs=dxfattribs)
+            if callback is not None:
+                callback(polyline)
+
+    def _create_mesh_polyface(self, layout, mesh, dxfattribs, callback=None):
+        if len(mesh.polygons) > 0:
+            polyface = layout.add_polyface(dxfattribs=dxfattribs)
+            polyface.append_faces(
+                [[mesh.vertices[v].co for v in f.vertices]
+                    for f in mesh.polygons],
+                dxfattribs=dxfattribs)
+            if callback is not None:
+                callback(polyface)
+
+    def _create_mesh_3dfaces(self, layout, mesh, dxfattribs, callback=None):
         for f in mesh.polygons:
-            self.create_and_transform_entity(
-                lambda: layout.add_3dface(
-                    [matrix @ mesh.vertices[v].co for v in f.vertices],
-                    dxfattribs=dxfattribs),
-                use_matrix, 
-                dxfattribs,
-                callback,
-                )
-    def _create_mesh_mesh(self, layout, mesh, matrix, use_matrix, dxfattribs, callback=None):
-        def entity_func():
-            if len(mesh.polygons) > 0:
-                dxf_mesh = layout.add_mesh(dxfattribs)
-                with dxf_mesh.edit_data() as mesh_data:
-                    mesh_data.vertices = [matrix @ v.co for v in mesh.vertices]
-                    mesh_data.faces = [f.vertices for f in mesh.polygons]
-                return dxf_mesh
-        self.create_and_transform_entity(entity_func, use_matrix, dxfattribs, callback)
+            face_3D = layout.add_3dface(
+                    [mesh.vertices[v].co for v in f.vertices],
+                    dxfattribs=dxfattribs)
+            if callback is not None:
+                callback(face_3D)
 
-    def get_evaluated_mesh(self, obj):
-        return obj.evaluated_get(self.exporter.context.evaluated_depsgraph_get()).to_mesh()
+    def _create_mesh_mesh(self, layout, mesh, dxfattribs, callback=None):
+        if len(mesh.polygons) > 0:
+            dxf_mesh = layout.add_mesh(dxfattribs)
+            with dxf_mesh.edit_data() as mesh_data:
+                mesh_data.vertices = [v.co for v in mesh.vertices]
+                mesh_data.faces = [f.vertices for f in mesh.polygons]
+            if callback is not None:
+                callback(dxf_mesh)
+
+    @classmethod
+    def get_evaluated_mesh(cls, obj, context):
+        return obj.evaluated_get(context.evaluated_depsgraph_get()).to_mesh()

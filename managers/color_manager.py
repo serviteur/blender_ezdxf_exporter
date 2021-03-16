@@ -37,7 +37,7 @@ class ColorManager(Manager):
             return self._get_object_color(obj)
         elif settings.entity_color_to == entity_color.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
             return self._get_material_color(obj.data.materials[0])
-        return False, False
+        return None, None
 
     def _get_collection_color(self, coll):
         "Returns the color tag of collection or of first parent that has one if setting is selected"
@@ -53,7 +53,7 @@ class ColorManager(Manager):
                     if parent.color_tag != 'NONE':
                         return get_256_rgb_a(coll_colors[int(parent.color_tag[-2:])-1].color)
                     parent = exp.coll_parents.get(parent)
-        return False, False
+        return None, None
 
     @classmethod
     def _get_object_color(cls, obj):
