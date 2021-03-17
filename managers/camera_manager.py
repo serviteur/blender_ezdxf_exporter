@@ -25,8 +25,7 @@ class CameraManager(Manager):
         render = self.exporter.context.scene.render
         dim_x, dim_y = render.resolution_x / 10, render.resolution_y / 10 # TODO Silently clamp values
         doc = exp.doc
-        doc.views.new(camera_obj.name)
-        doc.viewports.new(camera_obj.name)
+        cam_data = camera_obj.data
 
         activeObjMatrix = camera_obj.matrix_world
         x_local = Vec3(activeObjMatrix[0][0], activeObjMatrix[1][0], activeObjMatrix[2][0]).normalize()
@@ -38,7 +37,16 @@ class CameraManager(Manager):
         ucs.dxf.xaxis = x_local
         ucs.dxf.yaxis = y_local
 
-        cam_data = camera_obj.data
+        # MSP Viewport - Didn't manage to make it working
+        # https://ezdxf.readthedocs.io/en/stable/tables/vport_table_entry.html?highlight=vport   
+        # vport = doc.viewports.new(camera_obj.name)
+        # vport.dxf.target_point = camera_obj.location # Doesnt work. Why ??!
+
+        # View - Didn't manage to make it working
+        # https://ezdxf.readthedocs.io/en/stable/tables/view_table_entry.html?highlight=view
+        # view = doc.views.new(camera_obj.name)
+
+        # PP Layout
         pp_layout = doc.new_layout(camera_obj.name)
         pp_layout.page_setup()
         pp_viewport = pp_layout.add_viewport(

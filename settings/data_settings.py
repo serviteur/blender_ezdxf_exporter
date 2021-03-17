@@ -50,8 +50,8 @@ class EmptyType(Enum):
 class CameraType(Enum):
     NONE = NO_EXPORT
     VIEWPORT = 'VIEWPORT (Paperspace)'
-    VPORT = 'VPORT (Modelspace)'
-    VIEW = 'VIEW (Modelspace)'
+    # VPORT = 'VPORT (Modelspace)'
+    # VIEW = 'VIEW (Modelspace)'
 
 
 class DataSettings(PropertyGroup):
