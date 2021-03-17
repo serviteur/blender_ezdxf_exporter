@@ -1,6 +1,7 @@
 from time import time
 import bpy
 
+from bl_operators.presets import AddPresetBase
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
     PointerProperty, 
@@ -9,6 +10,7 @@ from bpy.props import (
 )
 from bpy.types import (
     Operator,
+    Menu,
 )
 
 from .export_dxf import DXFExporter
@@ -24,7 +26,7 @@ from .settings.color_settings import ColorSettings
 from .settings.transform_settings import TransformSettings
 
 
-class DXFExporter_OT_Export(Operator, ExportHelper):
+class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     """File selection operator to export objects in DXF file"""
     bl_idname = "dxf_exporter.export"
     bl_label = "Export As DXF"
@@ -121,6 +123,9 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
     def draw(self, context):
         layout = self.layout
+
+        draw_preset(self, context)
+
         layout.label(text="Miscellaneous")
         misc_box = layout.box()
         misc_box.prop(self, "only_selected")
@@ -143,8 +148,49 @@ class DXFExporter_OT_Export(Operator, ExportHelper):
 
 
 def menu_func_export(self, context):
-    self.layout.operator(DXFExporter_OT_Export.bl_idname,
+    self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
                          text="Drawing Interchange File (.dxf)")
+
+
+# Preset System courtesy
+# https://blender.stackexchange.com/questions/209877/preset-system-error
+# https://sinestesia.co/blog/tutorials/using-blenders-presets-in-python/
+class DXFEXPORTER_MT_Preset(Menu):
+    bl_label = "DXF Export"
+    preset_subdir = DXFEXPORTER_OT_Export.bl_idname
+    preset_operator = "script.execute_preset"
+    def draw(self, context):
+        self.draw_preset(context)
+
+
+class DXFEXPORTER_OT_Preset(AddPresetBase, Operator):
+    """Save DXF Export Settings"""
+    bl_idname = "dxf_exporter.preset"
+    bl_label = "DXF Export Settings"
+    preset_menu = DXFEXPORTER_MT_Preset.__name__
+
+    # Variable used for all preset values
+    preset_defines = [
+        "op  = bpy.context.active_operator"
+    ]
+    
+    # Properties to store in the preset
+    preset_values = [ 
+        f"op.{k}" 
+        for k in DXFEXPORTER_OT_Export.__annotations__.keys()
+    ]
+
+    # Where to store the preset
+    preset_subdir = DXFEXPORTER_OT_Export.bl_idname
+
+
+def draw_preset(self, context):
+    layout = self.layout    
+    
+    row = layout.row(align=True)
+    row.menu(DXFEXPORTER_MT_Preset.__name__, text=DXFEXPORTER_MT_Preset.bl_label) 
+    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon='ZOOM_IN')
+    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon='ZOOM_OUT').remove_active = True
 
 
 def register():
