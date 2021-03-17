@@ -36,7 +36,7 @@ class TextType(Enum):
 
 class CurveType(Enum):
     NONE = NO_EXPORT
-    SPLINE = 'Spline'
+    # SPLINE = 'Spline'
     MESH = 'Mesh'
 
 

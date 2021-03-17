@@ -1,9 +1,10 @@
-from mathutils import Vector
 from .manager import Manager
 
 
 class SplineManager(Manager):
     def write_curve(self, layout, curve_obj, matrix, raa, dxfattribs, callback):
+        "Export curve object as Spline"
+        # This is mostly not working
         curve = curve_obj.data
         for spline in curve.splines:
             if len(spline.points) > 0:
