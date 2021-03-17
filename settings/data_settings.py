@@ -1,13 +1,13 @@
 from enum import Enum
+import bpy
 from bpy.types import PropertyGroup
 from bpy.props import (
     EnumProperty,
     BoolProperty,
     BoolVectorProperty,
 )
+from .__init__ import NO_EXPORT
 
-
-NO_EXPORT = 'No Export'
 
 class FaceType(Enum):
     NONE = NO_EXPORT
@@ -52,6 +52,11 @@ class CameraType(Enum):
     VIEWPORT = 'VIEWPORT (Paperspace)'
     # VPORT = 'VPORT (Modelspace)'
     # VIEW = 'VIEW (Modelspace)'
+
+
+class DimensionType(Enum):
+    NONE = NO_EXPORT
+    DIM = 'DIMENSION'
 
 
 class DataSettings(PropertyGroup):
@@ -99,6 +104,17 @@ class DataSettings(PropertyGroup):
         name="Export Cameras",
         default=CameraType.VIEWPORT.value,
         items=[(c_t.value,)*3 for c_t in CameraType])
+    
+    dimensions_export: EnumProperty(
+        name="Export Dimensions",
+        description="Export Dimensions extracted from the built-in Measure Tool\nWarning : Works only with XY Planar dimensions",
+        default=DimensionType.DIM.value,
+        items=[(d_t.value,)*3 for d_t in DimensionType])
+    
+    use_dimensions:BoolProperty(
+        name="Export Dimensions",
+        default=False,
+    )
 
     entity_link: BoolVectorProperty(
         name="Use Exporter settings",
@@ -138,7 +154,7 @@ class DataSettings(PropertyGroup):
                     break
             if not mesh_type_supported:
                 continue
-            geom_split = col.split(factor=0.25, align=True)
+            geom_split = col.split(factor=0.3, align=True)
             geom_split.label(text=name)
             geom_split = geom_split.split(factor=0.9, align=True)
             geom_split.prop(self, prop, text="")
@@ -147,6 +163,14 @@ class DataSettings(PropertyGroup):
                       icon='LINKED' if self.entity_link[i] else 'UNLINKED')
             # NONE.value is the same for all entity enums
             link.active = getattr(self, prop) != TextType.NONE.value
+        
+        self.use_dimensions = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils[
+            "Annotations"].layers
+        if self.use_dimensions:
+            dim_row = col.split(factor= 0.3, align=True)
+            dim_row.label(text="Measures")
+            dim_row.prop(self, "dimensions_export", text="")
+        
         geometry_box.prop(self, "use_blocks")
 
     def get_sub_layer_suffix(self, entity_type):
