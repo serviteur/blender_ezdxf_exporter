@@ -18,7 +18,7 @@ def rotate(origin, point, angle):
 def get_256_rgb_a(color):
     rgb = [int(channel * 255) for channel in color[0:3]]
     if len(color) > 3:
-        return rgb, color[3]
+        return rgb, (color[3] * 255)
     else:
         return rgb, 1
 
