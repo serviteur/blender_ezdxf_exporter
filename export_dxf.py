@@ -272,7 +272,7 @@ class DXFExporter:
         mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects
         for mats in [o.data.materials for o in mat_objects if o.data and hasattr(o.data, "materials") and o.data.materials]:
             [self.layer_mgr.get_or_create_layer_from_material(
-                mat) for mat in mats]
+                mat,prefix="MATERIAL_") for mat in mats]
 
     def export_file(self, path):
         self.doc.entitydb.purge()

@@ -22,12 +22,16 @@ class LayerManager(Manager):
             layer.freeze()
         return layer
 
-    def get_or_create_layer_from_material(self, mat):
+    def get_or_create_layer_from_material(self, mat: Material, prefix=None, suffix=None) -> str:
+        if prefix is None:
+            prefix = ""
+        if suffix is None:
+            suffix = ""
         if mat is None:
-            return
+            return None
         exp = self.exporter
         layers = exp.doc.layers
-        layer_name = "MATERIAL_" + mat.name
+        layer_name = prefix + mat.name + suffix
         if layer_name not in layers:
             rgb, a = exp.color_mgr._get_material_color(mat)
             self.create_layer(
@@ -36,17 +40,13 @@ class LayerManager(Manager):
                 1 - a if exp.settings.layer_settings.entity_layer_transparency else 0)
         return layer_name
 
-    def get_or_create_layer(self, obj, entity_type, override=True):
-        "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
+    def get_or_create_layer_from_collection(self, coll: Collection, suffix: str, override: bool):
         exp = self.exporter
-        layers = exp.doc.layers
         context = exp.context
-        layer_to = exp.settings.layer_settings.entity_layer_to
-        suffix = exp.settings.data_settings.get_sub_layer_suffix(entity_type)
-        if layer_to == EntityLayer.COLLECTION.value:
-            coll = obj.users_collection[0]
+        layers = exp.doc.layers
             layer_name = coll.name + suffix
-            excluded_from_view_layer = context.view_layer.layer_collection.children[coll.name].exclude
+        excluded_from_view_layer = context.view_layer.layer_collection.children[
+            coll.name].exclude
             col_exclude_state = exp.settings.layer_settings.layer_excluded_export
             if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
                 return None
@@ -56,9 +56,10 @@ class LayerManager(Manager):
                     rgb=exp.color_mgr._get_collection_color(coll)[0],
                     freeze=col_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer)
             return layer_name
-        elif layer_to == EntityLayer.DATA_NAME.value:
-            return obj.data.name + suffix
-        elif layer_to == EntityLayer.OBJECT_NAME.value:
+    
+    def get_or_create_layer_from_object(self, obj, suffix, override):        
+        exp = self.exporter
+        layers = exp.doc.layers
             layer_name = obj.name + suffix            
             excluded_from_view_layer = obj.hide_get() or obj.hide_viewport
             obj_exclude_state = exp.settings.layer_settings.layer_excluded_export
@@ -72,16 +73,20 @@ class LayerManager(Manager):
                     transparency=1 - a if exp.settings.layer_settings.entity_layer_transparency else 0,
                     freeze=obj_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer)
             return layer_name
+
+    def get_or_create_layer(self, obj: Object, entity_type: Enum, override: bool = True):
+        "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
+        exp = self.exporter
+        layer_to = exp.settings.layer_settings.entity_layer_to
+        suffix = exp.settings.data_settings.get_sub_layer_suffix(entity_type)
+        if layer_to == EntityLayer.COLLECTION.value:
+            return self.get_or_create_layer_from_collection(obj.users_collection[0], suffix, override)
+        elif layer_to == EntityLayer.DATA_NAME.value:
+            return obj.data.name + suffix
+        elif layer_to == EntityLayer.OBJECT_NAME.value:
+            return self.get_or_create_layer_from_object(obj, suffix, override)
         elif layer_to == EntityLayer.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
-            mat = obj.data.materials[0]
-            layer_name = mat.name + suffix
-            if override and layer_name not in layers:
-                rgb, a = exp.color_mgr._get_material_color(mat)
-                self.create_layer(
-                    layer_name,
-                    rgb=rgb,
-                    transparency=1 - a if exp.settings.layer_settings.entity_layer_transparency else 0)
-            return layer_name
+            return self.get_or_create_layer_from_material(obj.data.materials[0], suffix=suffix)
         elif layer_to == EntityLayer.SCENE_NAME.value:
-            return context.scene.name + suffix
+            return exp.context.scene.name + suffix
         return '0' + suffix
