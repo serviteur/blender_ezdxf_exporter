@@ -246,11 +246,10 @@ class DXFExporter:
             return
         self.block_mgr.instantiate_block(
             block,
-            obj,
             self.transform_mgr.get_matrix(obj),
             self.transform_mgr.get_rotation_axis_angle(obj),
             dxfattribs,
-            callback=lambda e: self.on_entity_created(obj, e, dxfattribs, is_block=True))
+            callback=lambda e: self.on_entity_created(obj, e, dxfattribs))
 
         if self.debug_mode:
             self.log.append(f"{obj.name} was added as a Block")
