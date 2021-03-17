@@ -69,9 +69,9 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     )
 
     verbose: BoolProperty(
-        name="Verbose",
+        name="Debug",
         default=False,
-        description="Run the exporter in debug mode.  Check the console for output")
+        description="Run the exporter in debug mode.\nCheck the console for output")
 
     def get_objects(self, context):
         if self.only_selected:
