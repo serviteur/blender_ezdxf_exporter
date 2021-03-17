@@ -1,3 +1,12 @@
+from typing import Dict
+from enum import Enum
+from bpy.types import (
+    Material,
+    Object,
+    Collection,
+    Context,
+)
+import ezdxf
 from ..settings.layer_settings import (
     EntityLayer,
     ExcludedObject,
@@ -6,13 +15,14 @@ from .manager import Manager
 
 
 class LayerManager(Manager):
-    def populate_dxfattribs(self, obj, dxfattribs, entity_type, override=True):
+    def populate_dxfattribs(self, obj: Object, dxfattribs: Dict[str, any], entity_type: Enum, override: bool = True) -> bool:
         "Populates the 'Layer' key of dxfattribs dict, returns False if no layer should be created"
         dxfattribs['layer'] = self.get_or_create_layer(
             obj, entity_type, override)
         return dxfattribs['layer'] is not None
 
-    def create_layer(self, name, rgb=None, transparency=None, freeze=False):
+    def create_layer(self, name: str, rgb=None, transparency: float = None, freeze: bool = False) -> ezdxf.entities.layer.Layer:
+        "Create Layer and set properties if passed as parameters"
         layer = self.exporter.doc.layers.new(name)
         if rgb is not None:
             layer.rgb = rgb
@@ -44,34 +54,34 @@ class LayerManager(Manager):
         exp = self.exporter
         context = exp.context
         layers = exp.doc.layers
-            layer_name = coll.name + suffix
+        layer_name = coll.name + suffix
         excluded_from_view_layer = context.view_layer.layer_collection.children[
             coll.name].exclude
-            col_exclude_state = exp.settings.layer_settings.layer_excluded_export
-            if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
-                return None
-            if override and layer_name not in layers:
-                self.create_layer(
-                    layer_name,
-                    rgb=exp.color_mgr._get_collection_color(coll)[0],
-                    freeze=col_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer)
-            return layer_name
+        col_exclude_state = exp.settings.layer_settings.layer_excluded_export
+        if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
+            return None
+        if override and layer_name not in layers:
+            self.create_layer(
+                layer_name,
+                rgb=exp.color_mgr._get_collection_color(coll)[0],
+                freeze=col_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer)
+        return layer_name
     
     def get_or_create_layer_from_object(self, obj, suffix, override):        
         exp = self.exporter
         layers = exp.doc.layers
-            layer_name = obj.name + suffix            
-            excluded_from_view_layer = obj.hide_get() or obj.hide_viewport
-            obj_exclude_state = exp.settings.layer_settings.layer_excluded_export
-            if excluded_from_view_layer and obj_exclude_state == ExcludedObject.NONE.value:
-                return None
-            if override and layer_name not in layers:
-                rgb, a = exp.color_mgr._get_object_color(obj)
-                self.create_layer(
-                    layer_name,
-                    rgb=rgb,
-                    transparency=1 - a if exp.settings.layer_settings.entity_layer_transparency else 0,
-                    freeze=obj_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer)
+        layer_name = obj.name + suffix
+        excluded_from_view_layer = obj.hide_get() or obj.hide_viewport
+        obj_exclude_state = exp.settings.layer_settings.layer_excluded_export
+        if excluded_from_view_layer and obj_exclude_state == ExcludedObject.NONE.value:
+            return None
+        if override and layer_name not in layers:
+            rgb, a = exp.color_mgr._get_object_color(obj)
+            self.create_layer(
+                layer_name,
+                rgb=rgb,
+                transparency=1 - a if exp.settings.layer_settings.entity_layer_transparency else 0,
+                freeze=obj_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer)
             return layer_name
 
     def get_or_create_layer(self, obj: Object, entity_type: Enum, override: bool = True):

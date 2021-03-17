@@ -20,7 +20,7 @@ class MeshManager(Manager):
         }
 
     def triangulate_if_needed(self, mesh, obj_type):
-        # Make sure there is no N-Gon (not supported in DXF Faces)
+        "Make sure there is no N-Gon (not supported in DXF Faces)"
         if obj_type != 'MESH' or self.exporter.settings.data_settings.faces_export not in (
                 FaceType.FACES3D.value,
                 FaceType.POLYFACE.value,
@@ -42,9 +42,7 @@ class MeshManager(Manager):
 
     def _create_mesh_points(self, layout, mesh, dxfattribs, callback=None):
         for v in mesh.vertices:
-            point = layout.add_point(v.co, dxfattribs=dxfattribs)
-            if callback is not None:
-                callback(point)
+            self.create_mesh_point(layout, v.co, dxfattribs, callback)
 
     def _create_mesh_lines(self, layout, mesh, dxfattribs, callback=None):
         for e in mesh.edges:

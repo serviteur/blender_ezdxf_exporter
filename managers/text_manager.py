@@ -39,6 +39,7 @@ class TextManager(Manager):
                 align_dxf += "CENTER"
             align_dxf = self.MTEXT_ATTACHMENT_POINTS_DIC.get(align_dxf, 1)
 
+            # Need to recreate a matrix for 3D location and rotation
             ucs = UCS(origin=matrix.to_translation()).rotate(
                 (raa[1], raa[2], raa[3]), raa[0])
             text_dxf = layout.add_mtext(text.body, dxfattribs)
@@ -57,6 +58,8 @@ class TextManager(Manager):
             else:
                 align_dxf += "CENTER"
             dxfattribs ['height'] = text.size / 2 * (sum(scale) / len(scale))
+
+            # Need to recreate a matrix for 3D location and rotation
             ucs = UCS(origin=matrix.to_translation()).rotate(
                 (raa[1], raa[2], raa[3]), raa[0])
             text_dxf = layout.add_text(text.body, dxfattribs)

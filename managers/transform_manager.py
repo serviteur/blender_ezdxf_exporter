@@ -1,8 +1,10 @@
 from mathutils import Matrix
 from .manager import Manager
+from bpy.types import Object
+
 
 class TransformManager(Manager):
-    def get_matrix(self, obj, is_block=False):
+    def get_matrix(self, obj: Object, is_block: bool = False) -> Matrix:
         if is_block:
             return Matrix()
         else:
@@ -14,9 +16,9 @@ class TransformManager(Manager):
                 mz = Matrix.Scale(settings.export_scale[2], 4, (0, 0, 1))
                 matrix = mx @ my @ mz @ matrix
             return matrix
-    
-    def get_rotation_axis_angle(self, obj):        
+
+    def get_rotation_axis_angle(self, obj: Object):
         proxy_obj = obj.evaluated_get(
-        self.exporter.context.evaluated_depsgraph_get())
+            self.exporter.context.evaluated_depsgraph_get())
         proxy_obj.rotation_mode = 'AXIS_ANGLE'
         return proxy_obj.rotation_axis_angle
