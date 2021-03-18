@@ -4,7 +4,7 @@ import bpy
 from bl_operators.presets import AddPresetBase
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
-    PointerProperty, 
+    PointerProperty,
     StringProperty,
     BoolProperty,
     CollectionProperty,
@@ -28,6 +28,11 @@ from .settings.layer_settings import (
 from .settings.data_settings import DataSettings
 from .settings.color_settings import ColorSettings
 from .settings.transform_settings import TransformSettings
+from .settings.misc_settings import (
+    MiscSettings,
+    ExportObjects,
+    ExcludedObject,
+)
 
 
 class EntityProperties(PropertyGroup):
@@ -72,24 +77,8 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     layer_global_settings: PointerProperty(type=GlobalLayerSettings)
     data_settings: PointerProperty(type=DataSettings)
     transform_settings: PointerProperty(type=TransformSettings)
+    misc_settings: PointerProperty(type=MiscSettings)
     entities_settings: CollectionProperty(type=EntityProperties)
-
-    only_selected: BoolProperty(
-        name="Export Only Selected Objects",
-        default=True,
-        description="What object will be exported? Only selected / All objects")
-    
-    export_excluded: BoolProperty(
-        name="Export Excluded / Hidden Objects",
-        description="Export Objects inside Collections which are Excluded from View Layer",
-        default=True,
-    )
-
-    use_dimensions: BoolProperty(
-        name="Export Dimensions",
-        description="Export Dimensions extracted from the built-in Measure Tool\nWarning : Works only with XY Planar dimensions",
-        default=True,
-    )
 
     verbose: BoolProperty(
         name="Debug",
@@ -97,13 +86,23 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
         description="Run the exporter in debug mode.\nCheck the console for output")
 
     def get_objects(self, context):
-        if self.only_selected:
+        export_setting = self.misc_settings.export_objects
+        exclude_setting = self.misc_settings.export_excluded
+        if export_setting == ExportObjects.SELECTED.value:
             return context.selected_objects
-        else:
-            if self.export_excluded:
-                return context.scene.objects
+        elif export_setting == ExportObjects.SCENE.value:
+            if exclude_setting == ExcludedObject.NONE:
+                return [o for o in context.scene.objects
+                        if not context.view_layer.layer_collection.children[o.users_collection[0].name].exclude
+                        and not o.hide_viewport
+                        and not o.hide_get()]
             else:
-                return [o for o in context.scene.objects if not context.view_layer.layer_collection.children[o.users_collection[0].name].exclude]
+                return context.scene.objects
+        elif export_setting == ExportObjects.ALL.value:
+            if exclude_setting == ExcludedObject.NONE:
+                return [o for o in bpy.data.objects if not o.hide_viewport and not o.hide_get()]
+            else:
+                return bpy.data.objects
 
     def execute(self, context):
         start_time = time()
@@ -148,6 +147,7 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
         layout = self.layout
 
         draw_preset(self, context)
+        self.misc_settings.draw(layout)
         self.data_settings.draw(layout, self.get_objects(
             context), self.entities_settings)
         layer_box = self.default_layer_settings.draw(layout)
@@ -156,7 +156,7 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
         self.transform_settings.draw(layout)
 
         layout.prop(self, "verbose")
-
+    
     @property
     def default_layer_settings(self):
         return self.entities_settings[0].layer_settings
@@ -164,11 +164,11 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     @property
     def default_color_settings(self):
         return self.entities_settings[0].color_settings
-
+    
     @property
     def default_entity_settings(self):
         return self.entities_settings[0]
-
+    
     def get_entity_settings(self, entity_type):
         if hasattr(entity_type, "__name__"):
             for setting in self.entities_settings:
@@ -180,7 +180,7 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
 
 def menu_func_export(self, context):
     op = self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
-                         text="Drawing Interchange File (.dxf)")
+                              text="Drawing Interchange File (.dxf)")
     # Inefficient. Couldn't find a way to run this only once when the operator is called :
     op.entities_settings.add()  # First one will be the "Default" properties
     for customizable_entity_prop in DataSettings.sub_layers_suffixes:
@@ -208,10 +208,10 @@ class DXFEXPORTER_OT_Preset(AddPresetBase, Operator):
     preset_defines = [
         "op  = bpy.context.active_operator"
     ]
-    
+
     # Properties to store in the preset
-    preset_values = [ 
-        f"op.{k}" 
+    preset_values = [
+        f"op.{k}"
         for k in DXFEXPORTER_OT_Export.__annotations__.keys()
     ]
 
@@ -220,8 +220,8 @@ class DXFEXPORTER_OT_Preset(AddPresetBase, Operator):
 
 
 def draw_preset(self, context):
-    layout = self.layout    
-    
+    layout = self.layout
+
     row = layout.row(align=True)
     row.menu(DXFEXPORTER_MT_Preset.__name__,
              text=DXFEXPORTER_MT_Preset.bl_label)
