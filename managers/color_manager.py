@@ -1,4 +1,4 @@
-from ..settings.color_settings import entity_color
+from ..settings.color_settings import EntityColor
 from ..shared_maths import (
     get_256_rgb_a,
     rgb_to_hex,
@@ -8,35 +8,36 @@ from .manager import Manager
 
 class ColorManager(Manager):
     "Methods for object color access and modification"
-    def populate_dxfattribs(self, obj, dxfattribs, entity_type=None):  # Keep entity_type parameter even if not used here
+    def populate_dxfattribs(self, obj, dxfattribs, entity_type):
         "Sets color properties of the internal dictionary according to object properties"
-        dxfattribs ['color'] = self.get_ACI_color() # Set Bylayer, Byblock, or other color on entity
-        obj_color, obj_alpha = self.get_color(obj)
-        if (obj_alpha or obj_alpha == 0) and self.exporter.settings.color_settings.entity_color_use_transparency:
+        color_settings = self.exporter.settings.get_entity_settings(entity_type).color_settings
+        dxfattribs ['color'] = self.get_ACI_color(color_settings) # Set Bylayer, Byblock, or other color on entity
+        obj_color, obj_alpha = self.get_color(obj, color_settings)
+        if (obj_alpha or obj_alpha == 0) and color_settings.entity_color_use_transparency:
             dxfattribs['transparency'] = 1 - obj_alpha        
         if obj_color and dxfattribs['color'] == 257:
             dxfattribs['true_color'] = int(rgb_to_hex(obj_color, 256), 16)
         return True
 
-    def get_ACI_color(self):
+    def get_ACI_color(self, color_settings):
         "Returns the color as Autocad Color Index"
-        settings = self.exporter.settings.color_settings
-        if settings.entity_color_to == entity_color.BYLAYER.value:
+        if color_settings.entity_color_to == EntityColor.BYLAYER.value:
             return 256
-        elif settings.entity_color_to == entity_color.BYBLOCK.value:
+        elif color_settings.entity_color_to == EntityColor.BYBLOCK.value:
             return 0
-        elif settings.entity_color_to == entity_color.ACI.value:
-            return int(settings.entity_color_aci)
+        elif color_settings.entity_color_to == EntityColor.ACI.value:
+            return int(color_settings.entity_color_aci)
         return 257
 
-    def get_color(self, obj):
+    def get_color(self, obj, color_settings):
         "Return the relevant color information. Depends on the type of object passed as parameter"
-        settings = self.exporter.settings.color_settings
-        if settings.entity_color_to == entity_color.COLLECTION.value:
+        if color_settings.entity_color_to == EntityColor.COLLECTION.value:
             return self._get_collection_color(obj.users_collection[0])
-        elif settings.entity_color_to == entity_color.OBJECT.value:
+        elif color_settings.entity_color_to == EntityColor.OBJECT.value:
             return self._get_object_color(obj)
-        elif settings.entity_color_to == entity_color.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
+        elif color_settings.entity_color_to == EntityColor.CUSTOM.value:
+            return get_256_rgb_a(color_settings.entity_color_custom)
+        elif color_settings.entity_color_to == EntityColor.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
             return self._get_material_color(obj.data.materials[0])
         return None, None
 

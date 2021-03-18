@@ -204,7 +204,6 @@ class DXFExporter:
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(obj, e, dxfattribs))
         else:
-            self.color_mgr.populate_dxfattribs(obj, dxfattribs)
             evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj, self.context)
             evaluated_mesh.transform(
                 self.transform_mgr.get_matrix(obj, is_block))
@@ -221,11 +220,12 @@ class DXFExporter:
                     mesh_setting)
                 if mesh_method is None:
                     continue
+                self.color_mgr.populate_dxfattribs(obj, dxfattribs, mesh_type)
                 if not self.layer_mgr.populate_dxfattribs(
                         obj,
                         dxfattribs,
                         entity_type=mesh_type,
-                        override=settings.layer_settings.entity_layer_links[2 - i]):
+                        override=True):
                     continue
                 if i == 2:
                     # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
@@ -266,7 +266,7 @@ class DXFExporter:
                 5)
 
     def export_materials_as_layers(self):
-        layer_settings = self.settings.layer_settings
+        layer_settings = self.settings.layer_global_settings
         if not layer_settings.material_layer_export:
             return
         mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects

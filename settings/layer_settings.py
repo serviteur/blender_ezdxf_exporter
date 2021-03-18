@@ -16,10 +16,24 @@ class EntityLayer(Enum):
     MATERIAL = 'Object 1st Material'
 
 
-class ExcludedObject(Enum):
-    NONE = "No Export"
-    THAWED = "Thawed"
-    FROZEN = "Frozen"
+class GlobalLayerSettings(PropertyGroup):
+    material_layer_export: BoolProperty(        
+        name="Export Materials as Layers",
+        description="Export Materials as Layers",
+        default=False,
+    )
+    
+    material_layer_export_only_selected: BoolProperty(        
+        name="Only Exported",
+        description="Export Only Materials linked to exported objects\nUncheck to import all materials in current scene",
+        default=True,
+    )
+    def draw(self, layout):
+        mat_layer = layout.split(factor=0.9, align=True)
+        mat_layer.prop(self, "material_layer_export")
+        mat_layer_link = mat_layer.row()
+        mat_layer_link.prop(self, "material_layer_export_only_selected", text="", icon='LINKED' if self.material_layer_export_only_selected else 'UNLINKED')
+        mat_layer_link.active = self.material_layer_export
 
 
 class LayerSettings(PropertyGroup):
@@ -30,7 +44,7 @@ class LayerSettings(PropertyGroup):
         items=[(e_l.value,)*3 for e_l in EntityLayer])
 
     entity_layer_separate: BoolProperty(
-        name="Export Entities on Sub-Layers",
+        name="Export Entities on Sub-Layer",
         description="Different Entity Types (MESH, POINT, MTEXT...) are drawn on separate sub-layers",
         default=True,
     )
@@ -39,13 +53,6 @@ class LayerSettings(PropertyGroup):
         name="Color",
         description="Set layer color if available in source",
         default=True,
-    )
-
-    entity_layer_links: BoolVectorProperty(
-        name="Link Layer",
-        description="Link layer to source color.\nIf set to false, layer will take default values",
-        size=3,
-        default=(True, True, True),
     )
 
     entity_layer_color_parent: BoolProperty(
@@ -59,37 +66,12 @@ class LayerSettings(PropertyGroup):
         description="Set layer transparency if available in source Color",
         default=False,
     )
-
-    material_layer_export: BoolProperty(        
-        name="Materials as Layers",
-        description="Export Materials as Layers",
-        default=False,
-    )
-    
-    material_layer_export_only_selected: BoolProperty(        
-        name="Only Exported",
-        description="Export Only Materials linked to exported objects\nUncheck to import all materials in current scene",
-        default=True,
-    )
-
-    layer_excluded_export: EnumProperty(
-        name="Export Excluded as",
-        description="If collections are excluded from current view_layer, choose how to export them",
-        default=ExcludedObject.FROZEN.value,
-        items=[(e_c_t.value,) * 3 for e_c_t in ExcludedObject],
-    )
-
-    def draw(self, layout, only_selected):
-        layout.label(text="Object Layer")
+    def draw(self, layout, obj_name=None):
+        if obj_name is None:
+            obj_name = "Default Object"
+        layout.label(text=obj_name + " Layer")
         layer_box = layout.box()
         layer_box.prop(self, "entity_layer_to", text="")
-        if not only_selected and self.entity_layer_to in (
-                EntityLayer.COLLECTION.value,
-                EntityLayer.OBJECT_NAME.value,
-        ):
-            split = layer_box.split(factor=0.5)
-            split.label(text="Export Excluded as")
-            split.prop(self, "layer_excluded_export", text="")
         layer_color_split = layer_box.split(factor=0.5)
         layer_color_split.prop(self, "entity_layer_color")
         layer_setting = layer_color_split.row()
@@ -97,8 +79,5 @@ class LayerSettings(PropertyGroup):
         layer_setting.active = self.entity_layer_color and self.entity_layer_to in (
             EntityLayer.OBJECT_NAME.value, EntityLayer.MATERIAL.value)
         layer_box.prop(self, "entity_layer_separate")
-        mat_layer = layer_box.split(factor=0.9, align=True)
-        mat_layer.prop(self, "material_layer_export")
-        mat_layer_link = mat_layer.row()
-        mat_layer_link.prop(self, "material_layer_export_only_selected", text="", icon='LINKED' if self.material_layer_export_only_selected else 'UNLINKED')
-        mat_layer_link.active = self.material_layer_export
+
+        return layer_box

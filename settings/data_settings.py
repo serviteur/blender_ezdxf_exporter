@@ -68,6 +68,7 @@ class DataSettings(PropertyGroup):
         EmptyType: "EMPTIES",
         CameraType: "VIEW",
         CurveType: "CURVES",
+        DimensionType: "DIMENSIONS",
     }
 
     faces_export: EnumProperty(
@@ -116,35 +117,31 @@ class DataSettings(PropertyGroup):
         default=False,
     )
 
-    entity_link: BoolVectorProperty(
-        name="Use Exporter settings",
-        description="Use Exporter settings for exported entities if ON, else use default ones",
-        size=len(sub_layers_suffixes),
-        default=(True,) * len(sub_layers_suffixes)
-    )
-
     use_blocks: BoolProperty(
         name="Linked objects as Blocks",
         description="Export objects that share the same mesh data as Block entities",
         default=True,
     )
 
-    def draw(self, layout, objects):
+    def draw(self, layout, objects, entities_properties):
         layout.label(text="Export Data")
         geometry_box = layout.box()
         col = geometry_box.column(align=True)
         lookup_type_dic = {}
         for obj in objects:
             lookup_type_dic[obj.type] = True
+        entities_settings_dic = {}
+        for entity_settings in entities_properties:
+            entities_settings_dic[entity_settings.id] = entity_settings
         i = -1
-        for prop, name, _types in (
-            ("faces_export", "Faces", ('MESH', 'CURVE', 'FONT')),
-            ("lines_export", "Edges", ('MESH', 'CURVE', 'FONT')),
-            ("points_export", "Vertices", ('MESH', 'CURVE', 'FONT')),
-            ("curves_export", "Curves", ('CURVE',)),
-            ("texts_export", "Texts", ('FONT',)),
-            ("empties_export", "Empties", ('EMPTY',)),
-            ("cameras_export", "Cameras", ('CAMERA',)),
+        for prop, name, _types, entity_type in (
+            ("faces_export", "Faces", ('MESH', 'CURVE', 'FONT'), FaceType),
+            ("lines_export", "Edges", ('MESH', 'CURVE', 'FONT'), LineType),
+            ("points_export", "Vertices", ('MESH', 'CURVE', 'FONT'), PointType),
+            ("curves_export", "Curves", ('CURVE',), CurveType),
+            ("texts_export", "Texts", ('FONT',), TextType),
+            ("empties_export", "Empties", ('EMPTY',), EmptyType),
+            ("cameras_export", "Cameras", ('CAMERA',), CameraType),
         ):
             i += 1
             mesh_type_supported = False
@@ -158,12 +155,23 @@ class DataSettings(PropertyGroup):
             geom_split.label(text=name)
             geom_split = geom_split.split(factor=0.9, align=True)
             geom_split.prop(self, prop, text="")
-            link = geom_split.row(align=True)
-            link.prop(self, "entity_link", index=i, text="",
-                      icon='LINKED' if self.entity_link[i] else 'UNLINKED')
-            # NONE.value is the same for all entity enums
-            link.active = getattr(self, prop) != TextType.NONE.value
-        
+            settings = entities_settings_dic.get(entity_type.__name__)
+            if not settings:
+                continue
+            link_row = geom_split.row(align=True)
+            link_row.prop(settings, "use_default", text="",
+                      icon='LINKED' if settings.use_default else 'UNLINKED')
+            # NO_EXPORT is the same for all entity enums
+            is_export = getattr(self, prop) != NO_EXPORT
+            link_row.active = is_export
+            if is_export and not settings.use_default:
+                split = col.split(factor=0.02)
+                split.label(text="")
+                box = split.box()                
+                if settings:
+                    settings.layer_settings.draw(box, obj_name=name)
+                    settings.color_settings.draw(box, obj_name=name)
+        # TODO Add custom settings for dimensions
         self.use_dimensions = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils[
             "Annotations"].layers
         if self.use_dimensions:

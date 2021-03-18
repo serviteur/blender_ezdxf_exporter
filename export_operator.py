@@ -7,10 +7,13 @@ from bpy.props import (
     PointerProperty, 
     StringProperty,
     BoolProperty,
+    CollectionProperty,
 )
 from bpy.types import (
     Operator,
     Menu,
+
+    PropertyGroup,
 )
 
 from .export_dxf import DXFExporter
@@ -19,11 +22,31 @@ from .shared_maths import(
 )
 from .settings.layer_settings import (
     LayerSettings,
+    GlobalLayerSettings,
     EntityLayer,
 )
 from .settings.data_settings import DataSettings
 from .settings.color_settings import ColorSettings
 from .settings.transform_settings import TransformSettings
+
+
+class EntityProperties(PropertyGroup):
+    layer_settings: PointerProperty(
+        name="Layer Props",
+        type=LayerSettings,
+    )
+    color_settings: PointerProperty(
+        name="Color Props",
+        type=ColorSettings,
+    )
+    id: StringProperty(
+        name="Data identifier",
+        description="Unique string identifier (enum class __name__)",
+    )
+    use_default: BoolProperty(
+        name="Use default settings",
+        default=True,
+    )
 
 
 class DXFEXPORTER_OT_Export(Operator, ExportHelper):
@@ -46,10 +69,10 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
                              options={'ANIMATABLE'},
                              subtype='NONE')
 
-    layer_settings: PointerProperty(type=LayerSettings)
+    layer_global_settings: PointerProperty(type=GlobalLayerSettings)
     data_settings: PointerProperty(type=DataSettings)
-    color_settings: PointerProperty(type=ColorSettings)
     transform_settings: PointerProperty(type=TransformSettings)
+    entities_settings: CollectionProperty(type=EntityProperties)
 
     only_selected: BoolProperty(
         name="Export Only Selected Objects",
@@ -89,8 +112,8 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
             settings=self,
             objects=self.get_objects(context),
             coll_parents=parent_lookup(context.scene.collection)
-            if self.layer_settings.entity_layer_to == EntityLayer.COLLECTION.value
-            and self.layer_settings.entity_layer_color
+            if self.default_layer_settings.entity_layer_to == EntityLayer.COLLECTION.value
+            and self.default_layer_settings.entity_layer_color
             else None
         )
         if not exporter.write_file(self.filepath):
@@ -125,32 +148,43 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
         layout = self.layout
 
         draw_preset(self, context)
-
-        layout.label(text="Miscellaneous")
-        misc_box = layout.box()
-        misc_box.prop(self, "only_selected")
-        if not self.only_selected:
-            misc_box.prop(self, "export_excluded")
-        dimensions_available = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils[
-            "Annotations"].layers
-        dim_row = misc_box.row()
-        dim_row.prop(self, "use_dimensions")
-        dim_row.enabled = dimensions_available
-        if not dimensions_available:
-            self.use_dimensions = False
-
-        self.data_settings.draw(layout, self.get_objects(context))
-        self.layer_settings.draw(layout, self.only_selected)
-        self.color_settings.draw(layout)
+        self.data_settings.draw(layout, self.get_objects(
+            context), self.entities_settings)
+        layer_box = self.default_layer_settings.draw(layout)
+        self.layer_global_settings.draw(layer_box)
+        self.default_color_settings.draw(layout)
         self.transform_settings.draw(layout)
 
         layout.prop(self, "verbose")
 
+    @property
+    def default_layer_settings(self):
+        return self.entities_settings[0].layer_settings
+
+    @property
+    def default_color_settings(self):
+        return self.entities_settings[0].color_settings
+
+    @property
+    def default_entity_settings(self):
+        return self.entities_settings[0]
+
+    def get_entity_settings(self, entity_type):
+        if hasattr(entity_type, "__name__"):
+            for setting in self.entities_settings:
+                if setting.id == entity_type.__name__:
+                    if setting.use_default:
+                        return self.default_entity_settings
+                    return setting
+        return self.default_entity_settings
 
 def menu_func_export(self, context):
-    self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
+    op = self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
                          text="Drawing Interchange File (.dxf)")
-
+    # Inefficient. Couldn't find a way to run this only once when the operator is called :
+    op.entities_settings.add()  # First one will be the "Default" properties
+    for customizable_entity_prop in DataSettings.sub_layers_suffixes:
+        op.entities_settings.add().id = customizable_entity_prop.__name__
 
 # Preset System courtesy
 # https://blender.stackexchange.com/questions/209877/preset-system-error
@@ -159,6 +193,7 @@ class DXFEXPORTER_MT_Preset(Menu):
     bl_label = "DXF Export"
     preset_subdir = DXFEXPORTER_OT_Export.bl_idname
     preset_operator = "script.execute_preset"
+
     def draw(self, context):
         self.draw_preset(context)
 
