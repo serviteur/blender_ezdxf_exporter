@@ -223,9 +223,11 @@ def draw_preset(self, context):
     layout = self.layout    
     
     row = layout.row(align=True)
-    row.menu(DXFEXPORTER_MT_Preset.__name__, text=DXFEXPORTER_MT_Preset.bl_label) 
-    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon='ZOOM_IN')
-    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon='ZOOM_OUT').remove_active = True
+    row.menu(DXFEXPORTER_MT_Preset.__name__,
+             text=DXFEXPORTER_MT_Preset.bl_label)
+    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon='ADD')
+    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="",
+                 icon='REMOVE').remove_active = True
 
 
 def register():
