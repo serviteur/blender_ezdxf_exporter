@@ -102,7 +102,7 @@ class LayerManager(Manager):
         layer_settings = exp.settings.get_entity_settings(
             entity_type).layer_settings
         layer_to = layer_settings.entity_layer_to
-        suffix = exp.settings.data_settings.get_sub_layer_suffix(entity_type)
+        suffix = exp.settings.data_settings.get_sub_layer_suffix(entity_type) if layer_settings.entity_layer_separate else ""
         if layer_to == EntityLayer.COLLECTION.value:
             return self.get_or_create_layer_from_collection(obj.users_collection[0], suffix, override)
         elif layer_to == EntityLayer.DATA_NAME.value:
