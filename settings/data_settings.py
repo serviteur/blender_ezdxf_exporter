@@ -119,7 +119,7 @@ class DataSettings(PropertyGroup):
 
     use_blocks: BoolProperty(
         name="Linked objects as Blocks",
-        description="Export objects that share the same mesh data as Block entities",
+        description="Export objects that share the same mesh data as Block entities, unless the object has an active modifier.",
         default=True,
     )
 

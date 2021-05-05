@@ -46,7 +46,7 @@ class LayerSettings(PropertyGroup):
     entity_layer_separate: BoolProperty(
         name="Export Entities on Sub-Layer",
         description="Different Entity Types (MESH, POINT, MTEXT...) are drawn on separate sub-layers",
-        default=True,
+        default=False,
     )
 
     entity_layer_color: BoolProperty(
