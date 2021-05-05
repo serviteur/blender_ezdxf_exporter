@@ -52,13 +52,23 @@ class LayerManager(Manager):
                 1 - a if layer_settings.entity_layer_transparency else 0)
         return layer_name
 
+    @staticmethod
+    def get_layer_collection(parent_col, search_name):
+        found = None
+        if (parent_col.name == search_name):
+            return parent_col
+        for layer in parent_col.children:
+            found = LayerManager.get_layer_collection(layer, search_name)
+            if found:
+                return found
+
     def get_or_create_layer_from_collection(self, coll: Collection, suffix: str, override: bool):
         exp = self.exporter
         context = exp.context
         layers = exp.doc.layers
         layer_name = coll.name + suffix
-        excluded_from_view_layer = context.view_layer.layer_collection.children[
-            coll.name].exclude
+        layer_coll = self.get_layer_collection(context.view_layer.layer_collection, coll.name)
+        excluded_from_view_layer = layer_coll.exclude if layer_coll is not None else False
         col_exclude_state = exp.settings.misc_settings.export_excluded
         if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
             return None
