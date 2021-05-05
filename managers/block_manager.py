@@ -33,6 +33,11 @@ class BlockManager(Manager):
         blocks_dic = {}
         not_blocks = []
         for data, objs in self.get_data_users().items():
+            for i in range(len(objs)):
+                # Do not export linked objects as blocks if they have a modifier because the evaluated mesh may or may not be different for every linked object
+                # TODO check if some have the exact same modifiers and put them in their own group
+                if objs[0].modifiers:
+                    not_blocks.append(objs.pop(0))
             if not objs:
                 continue
             elif len(objs) == 1:
