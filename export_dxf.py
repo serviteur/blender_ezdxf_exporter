@@ -127,7 +127,7 @@ class DXFExporter:
                 self.msp,
                 curve,
                 self.transform_mgr.get_matrix(curve),
-                self.transform_mgr.get_rotation_axis_angle(curve),
+                self.transform_mgr.get_rotation_axis_angle(curve), # TODO : like texts, derive raa from matrix_world
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(curve, e, dxfattribs))
 
@@ -141,7 +141,7 @@ class DXFExporter:
                 self.msp,
                 text,
                 self.transform_mgr.get_matrix(text),
-                self.transform_mgr.get_rotation_axis_angle(text),
+                # self.transform_mgr.get_rotation_axis_angle(text), : Can be derived from matrix_world
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(text, e, dxfattribs),
             )
