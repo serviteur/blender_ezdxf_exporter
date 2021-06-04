@@ -13,8 +13,8 @@ bl_info = {
     "author": "Gorgious",
     "description":
         """Multifunction DXf exporter""",
-    "blender": (2, 80, 0),
-    "version": (0, 0, 1),
+    "blender": (2, 93, 0),
+    "version": (0, 0, 2),
     "location": "",
     "warning": "",
     "category": "Import-Export"
@@ -45,11 +45,11 @@ def ensure_ezdxf():
             print(" - DXF Exporter : ezdxf installed. Good to go !")
 
 ensure_ezdxf()
-al = auto_load.AutoLoad()
 
 def register():
-    al.register()
+    auto_load.init()
+    auto_load.register()
 
 
 def unregister():
-    al.unregister()
+    auto_load.unregister()
