@@ -21,7 +21,7 @@ class CameraManager(Manager):
         HIDE_PLOT = 2048
         ZOOM_LOCKING = 16384
 
-    def initialize_camera(self, camera_obj):
+    def initialize_camera(self, camera_obj, callback):
         "Place camera according to world coordinates in Blender. Automatically converts to Orthographic mode"
         exp = self.exporter
         render = self.exporter.context.scene.render
@@ -68,3 +68,5 @@ class CameraManager(Manager):
         # Rotate the camera
         pp_viewport.dxf.view_direction_vector = z_local        
         pp_viewport.dxf.ucs_handle = ucs
+
+        callback(ucs.dxf)

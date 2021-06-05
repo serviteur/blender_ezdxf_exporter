@@ -21,6 +21,7 @@ from .managers import (
     camera_manager,
     spline_manager,
 )
+from ezdxf.math import Vec3
 
 
 class DXFExporter:
@@ -109,10 +110,14 @@ class DXFExporter:
         return dxfattribs
 
     def on_entity_created(self, base_obj, entity, dxfattribs, is_block=False):
-        "Callback called when a new GFX entity is created"
+        "Callback called when a new entity is created"
         if entity:
+            dx, dy, dz = self.settings.transform_settings.delta_xyz
+            # FIXME : Workaround for camera creation callback. Translate doesn't work on ucs
+            if dxfattribs is None: 
+                entity.origin += Vec3(dx, dy, dz)
+                return
             if not is_block:
-                dx, dy, dz = self.settings.transform_settings.delta_xyz
                 entity.translate(dx, dy, dz)
             if dxfattribs.get("transparency"):
                 entity.transparency = dxfattribs.get("transparency") / 10
@@ -142,7 +147,6 @@ class DXFExporter:
                 self.msp,
                 text,
                 self.transform_mgr.get_matrix(text),
-                # self.transform_mgr.get_rotation_axis_angle(text), : Can be derived from matrix_world
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(text, e, dxfattribs),
             )
@@ -171,7 +175,10 @@ class DXFExporter:
     def export_cameras(self):
         for camera in self.objects_camera:
             # Initialize viewports from Camera (WIP)
-            self.camera_mgr.initialize_camera(camera)
+            self.camera_mgr.initialize_camera(
+                camera,
+                callback=lambda ucs: self.on_entity_created(camera, ucs, None),
+                )
 
     def write_objects(self):
         self.export_curves()
