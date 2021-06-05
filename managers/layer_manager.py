@@ -40,7 +40,11 @@ class LayerManager(Manager):
 
     def create_layer(self, name: str, rgb=None, transparency: float = None, freeze: bool = False) -> ezdxf.entities.layer.Layer:
         "Create Layer and set properties if passed as parameters"
-        layer = self.exporter.doc.layers.new(name)
+        layers = self.exporter.doc.layers
+        if name in layers:
+            layer = layers.get(name)
+        else:
+            layer = self.exporter.doc.layers.new(name)
         if rgb is not None:
             layer.rgb = rgb
         if transparency is not None:
