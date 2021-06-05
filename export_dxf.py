@@ -113,7 +113,7 @@ class DXFExporter:
         if entity:
             if not is_block:
                 dx, dy, dz = self.settings.transform_settings.delta_xyz
-                entity.translate(dx, dy, dz)            
+                entity.translate(dx, dy, dz)
             if dxfattribs.get("transparency"):
                 entity.transparency = dxfattribs.get("transparency") / 10
 
@@ -127,7 +127,8 @@ class DXFExporter:
                 self.msp,
                 curve,
                 self.transform_mgr.get_matrix(curve),
-                self.transform_mgr.get_rotation_axis_angle(curve), # TODO : like texts, derive raa from matrix_world
+                # TODO : like texts, derive raa from matrix_world
+                self.transform_mgr.get_rotation_axis_angle(curve),
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(curve, e, dxfattribs))
 
@@ -204,7 +205,8 @@ class DXFExporter:
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(obj, e, dxfattribs))
         else:
-            evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj, self.context)
+            evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(
+                obj, self.context)
             evaluated_mesh.transform(
                 self.transform_mgr.get_matrix(obj, is_block))
             # Since Mesh Objects can be exported as Faces, Edges and Vertices
