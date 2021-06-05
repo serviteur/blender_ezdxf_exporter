@@ -1,5 +1,6 @@
 from ezdxf.math import UCS
 from ..settings.data_settings import TextType
+from ..settings.text_settings import FillColor
 from .manager import Manager
 
 
@@ -25,7 +26,7 @@ class TextManager(Manager):
         
         # Is there no way to directly get an axis angle from matrix ??
         raa = matrix.to_euler().to_quaternion().to_axis_angle()
-        
+
         if self.exporter.settings.data_settings.texts_export == TextType.MTEXT.value:
             align_dxf = "MTEXT_"
             if align_y in ('TOP', 'BOTTOM'):
@@ -48,11 +49,14 @@ class TextManager(Manager):
                 (raa[0][0], raa[0][1], raa[0][2]), raa[1])
             # TODO : put this in math utils :
             
-            
             text_dxf = layout.add_mtext(text.body, dxfattribs)
             text_dxf.dxf.char_height = text.size / 2 * (sum(scale) / len(scale))
             text_dxf.set_location((0, 0, 0), attachment_point=align_dxf)
-            text_dxf.transform(ucs.matrix)
+
+            # Set Fill in accordance with text settings
+            fill_settings = self.exporter.settings.text_settings
+            if fill_settings.fill_type != FillColor.NONE.value:
+                text_dxf.set_bg_color(fill_settings.get_color_value(), scale=fill_settings.fill_scale)
 
         else:
             align_dxf = ""
@@ -71,6 +75,6 @@ class TextManager(Manager):
                 (raa[0][0], raa[0][1], raa[0][2]), raa[1])
             text_dxf = layout.add_text(text.body, dxfattribs)
             text_dxf.set_pos((0, 0, 0), align=align_dxf)
-            text_dxf.transform(ucs.matrix)
+        text_dxf.transform(ucs.matrix)
         
         callback(text_dxf)

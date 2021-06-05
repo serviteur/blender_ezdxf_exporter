@@ -7,6 +7,7 @@ from bpy.props import (
     BoolVectorProperty,
 )
 from .__init__ import NO_EXPORT
+from .text_settings import TextType
 
 
 class FaceType(Enum):
@@ -25,13 +26,6 @@ class LineType(Enum):
 class PointType(Enum):
     NONE = NO_EXPORT
     POINTS = 'POINTs'
-
-
-class TextType(Enum):
-    NONE = NO_EXPORT
-    MTEXT = 'MText'
-    TEXT = 'Text'
-    MESH = 'Mesh'
 
 
 class CurveType(Enum):
@@ -123,7 +117,7 @@ class DataSettings(PropertyGroup):
         default=True,
     )
 
-    def draw(self, layout, objects, entities_properties):
+    def draw(self, layout, objects, entities_properties, text_settings):
         layout.label(text="Export Data")
         geometry_box = layout.box()
         col = geometry_box.column(align=True)
@@ -151,10 +145,12 @@ class DataSettings(PropertyGroup):
                     break
             if not mesh_type_supported:
                 continue
+
             geom_split = col.split(factor=0.3, align=True)
             geom_split.label(text=name)
             geom_split = geom_split.split(factor=0.9, align=True)
             geom_split.prop(self, prop, text="")
+
             settings = entities_settings_dic.get(entity_type.__name__)
             if not settings:
                 continue
@@ -164,6 +160,11 @@ class DataSettings(PropertyGroup):
             # NO_EXPORT is the same for all entity enums
             is_export = getattr(self, prop) != NO_EXPORT
             link_row.active = is_export
+            
+            # Draw text settings if exporting MTEXT
+            if prop == "texts_export" and getattr(self, prop) == TextType.MTEXT.value:
+                text_settings.draw(col)
+
             if is_export and not settings.use_default:
                 split = col.split(factor=0.02)
                 split.label(text="")
@@ -171,6 +172,8 @@ class DataSettings(PropertyGroup):
                 if settings:
                     settings.layer_settings.draw(box, obj_name=name)
                     settings.color_settings.draw(box, obj_name=name)
+            
+
         # TODO Add custom settings for dimensions
         self.use_dimensions = 'Annotations' in bpy.data.grease_pencils and 'RulerData3D' in bpy.data.grease_pencils[
             "Annotations"].layers

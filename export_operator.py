@@ -33,6 +33,7 @@ from .settings.misc_settings import (
     ExportObjects,
     ExcludedObject,
 )
+from .settings.text_settings import TextSettings
 
 
 class EntityProperties(PropertyGroup):
@@ -78,7 +79,9 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     data_settings: PointerProperty(type=DataSettings)
     transform_settings: PointerProperty(type=TransformSettings)
     misc_settings: PointerProperty(type=MiscSettings)
-    entities_settings: CollectionProperty(type=EntityProperties) # Note : The 1st element is the default settings if no entity overrides it
+    # Note : The 1st element is the default settings if no entity overrides it
+    entities_settings: CollectionProperty(type=EntityProperties)
+    text_settings: PointerProperty(type=TextSettings)
 
     verbose: BoolProperty(
         name="Debug",
@@ -148,15 +151,18 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
 
         draw_preset(self, context)
         self.misc_settings.draw(layout)
-        self.data_settings.draw(layout, self.get_objects(
-            context), self.entities_settings)
+        self.data_settings.draw(
+            layout, 
+            self.get_objects(context), 
+            self.entities_settings,
+            self.text_settings)
         layer_box = self.default_layer_settings.draw(layout)
         self.layer_global_settings.draw(layer_box)
         self.default_color_settings.draw(layout)
         self.transform_settings.draw(layout)
 
         layout.prop(self, "verbose")
-    
+
     @property
     def default_layer_settings(self):
         return self.entities_settings[0].layer_settings
@@ -164,11 +170,11 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     @property
     def default_color_settings(self):
         return self.entities_settings[0].color_settings
-    
+
     @property
     def default_entity_settings(self):
         return self.entities_settings[0]
-    
+
     def get_entity_settings(self, entity_type):
         if hasattr(entity_type, "__name__"):
             for setting in self.entities_settings:
@@ -177,6 +183,7 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
                         return self.default_entity_settings
                     return setting
         return self.default_entity_settings
+
 
 def menu_func_export(self, context):
     op = self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
@@ -189,6 +196,8 @@ def menu_func_export(self, context):
 # Preset System courtesy
 # https://blender.stackexchange.com/questions/209877/preset-system-error
 # https://sinestesia.co/blog/tutorials/using-blenders-presets-in-python/
+
+
 class DXFEXPORTER_MT_Preset(Menu):
     bl_label = "DXF Export"
     preset_subdir = DXFEXPORTER_OT_Export.bl_idname
