@@ -107,6 +107,13 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
             else:
                 return bpy.data.objects
 
+    def invoke(self, context, event):
+        self.entities_settings.add()  # First one will be the "Default" properties
+        for customizable_entity_prop in DataSettings.sub_layers_suffixes:
+            self.entities_settings.add().id = customizable_entity_prop.__name__
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
     def execute(self, context):
         start_time = time()
         exporter = DXFExporter(
@@ -188,10 +195,6 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
 def menu_func_export(self, context):
     op = self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
                               text="Drawing Interchange File (.dxf)")
-    # Inefficient. Couldn't find a way to run this only once when the operator is called :
-    op.entities_settings.add()  # First one will be the "Default" properties
-    for customizable_entity_prop in DataSettings.sub_layers_suffixes:
-        op.entities_settings.add().id = customizable_entity_prop.__name__
 
 # Preset System courtesy
 # https://blender.stackexchange.com/questions/209877/preset-system-error
@@ -215,7 +218,7 @@ class DXFEXPORTER_OT_Preset(AddPresetBase, Operator):
 
     # Variable used for all preset values
     preset_defines = [
-        "op  = bpy.context.active_operator"
+        "op = bpy.context.active_operator"
     ]
 
     # Properties to store in the preset
