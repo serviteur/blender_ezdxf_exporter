@@ -2,8 +2,8 @@ from enum import Enum
 from bpy.types import PropertyGroup
 from bpy.props import (
     EnumProperty,
-    BoolVectorProperty,
-    BoolProperty
+    BoolProperty,
+    StringProperty,
 )
 
 
@@ -17,26 +17,40 @@ class EntityLayer(Enum):
 
 
 class GlobalLayerSettings(PropertyGroup):
-    material_layer_export: BoolProperty(        
+    material_layer_export: BoolProperty(
         name="Export Materials as Layers",
         description="Export Materials as Layers",
         default=False,
     )
-    
-    material_layer_export_only_selected: BoolProperty(        
+
+    material_layer_export_only_selected: BoolProperty(
         name="Only Exported",
         description="Export Only Materials linked to exported objects\nUncheck to import all materials in current scene",
         default=True,
     )
+
     def draw(self, layout):
         mat_layer = layout.split(factor=0.9, align=True)
         mat_layer.prop(self, "material_layer_export")
         mat_layer_link = mat_layer.row()
-        mat_layer_link.prop(self, "material_layer_export_only_selected", text="", icon='LINKED' if self.material_layer_export_only_selected else 'UNLINKED')
+        mat_layer_link.prop(self, "material_layer_export_only_selected", text="",
+                            icon='LINKED' if self.material_layer_export_only_selected else 'UNLINKED')
         mat_layer_link.active = self.material_layer_export
 
 
 class LayerSettings(PropertyGroup):
+    entity_layer_prefix: StringProperty(
+        name="Layer Prefix",
+        default="",
+        description="Prefix layer with this",
+    )    
+    
+    entity_layer_suffix: StringProperty(
+        name="Layer Suffix",
+        default="",
+        description="Suffix layer with this",
+    )
+
     entity_layer_to: EnumProperty(
         name="Object Layer",
         default=EntityLayer.COLLECTION.value,
@@ -66,12 +80,16 @@ class LayerSettings(PropertyGroup):
         description="Set layer transparency if available in source Color",
         default=False,
     )
+
     def draw(self, layout, obj_name=None):
         if obj_name is None:
             obj_name = "Default Object"
         layout.label(text=obj_name + " Layer")
         layer_box = layout.box()
         layer_box.prop(self, "entity_layer_to", text="")
+        row = layer_box.row()
+        row.prop(self, "entity_layer_prefix", text="Prefix")
+        row.prop(self, "entity_layer_suffix", text="Suffix")
         layer_color_split = layer_box.split(factor=0.5)
         layer_color_split.prop(self, "entity_layer_color")
         layer_setting = layer_color_split.row()

@@ -78,7 +78,7 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     data_settings: PointerProperty(type=DataSettings)
     transform_settings: PointerProperty(type=TransformSettings)
     misc_settings: PointerProperty(type=MiscSettings)
-    entities_settings: CollectionProperty(type=EntityProperties)
+    entities_settings: CollectionProperty(type=EntityProperties) # Note : The 1st element is the default settings if no entity overrides it
 
     verbose: BoolProperty(
         name="Debug",
