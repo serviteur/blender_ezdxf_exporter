@@ -112,12 +112,8 @@ class DXFExporter:
     def on_entity_created(self, base_obj, entity, dxfattribs, is_block=False):
         "Callback called when a new entity is created"
         if entity:
-            dx, dy, dz = self.settings.transform_settings.delta_xyz
-            # FIXME : Workaround for camera creation callback. Translate doesn't work on ucs
-            if dxfattribs is None: 
-                entity.origin += Vec3(dx, dy, dz)
-                return
             if not is_block:
+                dx, dy, dz = self.settings.transform_settings.delta_xyz
                 entity.translate(dx, dy, dz)
             if dxfattribs.get("transparency"):
                 entity.transparency = dxfattribs.get("transparency") / 10
@@ -177,8 +173,8 @@ class DXFExporter:
             # Initialize viewports from Camera (WIP)
             self.camera_mgr.initialize_camera(
                 camera,
-                callback=lambda ucs: self.on_entity_created(camera, ucs, None),
-                )
+                self.settings.transform_settings.delta_xyz,
+            )
 
     def write_objects(self):
         self.export_curves()
