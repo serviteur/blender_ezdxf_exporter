@@ -14,7 +14,7 @@ bl_info = {
     "description":
         """Multifunction DXf exporter""",
     "blender": (2, 93, 0),
-    "version": (0, 0, 2),
+    "version": (0, 0, 3),
     "location": "",
     "warning": "",
     "category": "Import-Export"
