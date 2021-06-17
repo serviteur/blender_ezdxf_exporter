@@ -1,12 +1,15 @@
 from enum import Enum
+from os import listdir
+from os.path import isfile, join, splitext
 
 from bpy.types import (
     PropertyGroup,
 )
 from bpy.props import (
+    BoolProperty,
     FloatProperty,
     FloatVectorProperty,
-    EnumProperty
+    EnumProperty,
 )
 
 from .__init__ import NO_EXPORT
@@ -28,6 +31,9 @@ class FillColor(Enum):
     BACKGROUND = "Background Color"
 
 
+FONTS_TTF = [(f, splitext(f)[0].capitalize(), "") for f in listdir("C:/Windows/Fonts") if isfile(join("C:/Windows/Fonts", f)) if splitext(f)[1] == '.ttf']
+
+
 class TextSettings(PropertyGroup):
     fill_type: EnumProperty(
         name="Fill",
@@ -44,9 +50,19 @@ class TextSettings(PropertyGroup):
     fill_scale: FloatProperty(
         name="Fill Scale",
         description="1=Exact Fit, 1.5 = default, 5=Max",
-        default=1.5, 
-        min=1, 
+        default=1.5,
+        min=1,
         max=5)
+    font_name: EnumProperty(
+        name="Font",
+        description="Default font to use (Bfont is automatically set to this)",
+        items=FONTS_TTF,
+    )
+    font_override: BoolProperty(
+        name="Override Font",
+        description="Override Font on all Text objects (Bfont is automatically overriden)",
+        default=False,
+    )
 
     def get_color_value(self):
         if self.fill_type == FillColor.CUSTOM.value:
@@ -57,15 +73,19 @@ class TextSettings(PropertyGroup):
             return 'canvas'
         return None
 
-
     def draw(self, layout):
         box = layout.box()
         box.prop(self, "fill_type")
 
-        row = box.row()
-        if self.fill_type == FillColor.CUSTOM.value:
-            row.prop(self, "fill_color_rgb", text="")
-        if self.fill_type == FillColor.ACI.value:
-            row.prop(self, "fill_color_aci", text="")
         if self.fill_type != FillColor.NONE.value:
-            row.prop(self, "fill_scale", text="Scale")
+            fill_row = box.row()
+            if self.fill_type == FillColor.CUSTOM.value:
+                fill_row.prop(self, "fill_color_rgb", text="")
+            if self.fill_type == FillColor.ACI.value:
+                fill_row.prop(self, "fill_color_aci", text="")
+            if self.fill_type != FillColor.NONE.value:
+                fill_row.prop(self, "fill_scale", text="Scale")
+
+        font_row = box.split(factor=0.65, align=True)
+        font_row.prop(self, "font_name")
+        font_row.prop(self, "font_override", text="Override", toggle=True)
