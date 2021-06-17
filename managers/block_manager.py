@@ -43,7 +43,7 @@ class BlockManager(Manager):
             elif len(objs) == 1:
                 not_blocks.append(objs[0])
             elif data is None:
-            # Linked Empties. TODO : create blocks with linked empties. For now they are instantiated as regular objects
+                # Linked Empties. TODO : create blocks with linked empties. For now they are instantiated as regular objects
                 not_blocks.extend(objs)
             else:
                 blocks_dic[objs[0]] = (self.initialize_block(data.name), objs)
@@ -65,6 +65,6 @@ class BlockManager(Manager):
         ucs = UCS(origin=matrix.to_translation()).rotate(
             (raa[1], raa[2], raa[3]), raa[0])
         blockref.transform(ucs.matrix)
-    
+
         if callback:
             callback(blockref)

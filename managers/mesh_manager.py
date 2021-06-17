@@ -34,7 +34,7 @@ class MeshManager(Manager):
                 FaceType.POLYFACE.value,
                 FaceType.MESH.value):
             return
-        if any([len(p.vertices) > 4 for p in mesh.polygons]):
+        if any(len(p.vertices) > 4 for p in mesh.polygons):
             bm = bmesh.new()
             bm.from_mesh(mesh)
             bmesh.ops.triangulate(bm, faces=bm.faces[:])

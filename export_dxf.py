@@ -1,4 +1,5 @@
 from typing import Dict
+import ezdxf
 from .settings.data_settings import (
     CurveType,
     FaceType,
@@ -9,7 +10,6 @@ from .settings.data_settings import (
     CameraType,
     NO_EXPORT
 )
-import ezdxf
 from .managers import (
     block_manager,
     color_manager,
@@ -109,7 +109,7 @@ class DXFExporter:
         return dxfattribs
 
     def on_entity_created(self, base_obj, entity, dxfattribs, is_block=False):
-        "Callback called when a new GFX entity is created"
+        "Callback called when a new entity is created"
         if entity:
             if not is_block:
                 dx, dy, dz = self.settings.transform_settings.delta_xyz
@@ -127,7 +127,8 @@ class DXFExporter:
                 self.msp,
                 curve,
                 self.transform_mgr.get_matrix(curve),
-                self.transform_mgr.get_rotation_axis_angle(curve), # TODO : like texts, derive raa from matrix_world
+                # TODO : like texts, derive raa from matrix_world
+                self.transform_mgr.get_rotation_axis_angle(curve),
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(curve, e, dxfattribs))
 
@@ -141,7 +142,6 @@ class DXFExporter:
                 self.msp,
                 text,
                 self.transform_mgr.get_matrix(text),
-                # self.transform_mgr.get_rotation_axis_angle(text), : Can be derived from matrix_world
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(text, e, dxfattribs),
             )
@@ -170,7 +170,10 @@ class DXFExporter:
     def export_cameras(self):
         for camera in self.objects_camera:
             # Initialize viewports from Camera (WIP)
-            self.camera_mgr.initialize_camera(camera)
+            self.camera_mgr.initialize_camera(
+                camera,
+                self.settings.transform_settings.delta_xyz,
+            )
 
     def write_objects(self):
         self.export_curves()
@@ -204,7 +207,8 @@ class DXFExporter:
                 dxfattribs,
                 callback=lambda e: self.on_entity_created(obj, e, dxfattribs))
         else:
-            evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(obj, self.context)
+            evaluated_mesh = self.mesh_mgr.get_evaluated_mesh(
+                obj, self.context)
             evaluated_mesh.transform(
                 self.transform_mgr.get_matrix(obj, is_block))
             # Since Mesh Objects can be exported as Faces, Edges and Vertices

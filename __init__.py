@@ -4,7 +4,6 @@ Base module required for Blender registration
 
 import subprocess
 import pkg_resources
-import bpy
 import sys
 from . import auto_load
 
@@ -28,8 +27,12 @@ bl_info = {
     Frozen Status for Viewport in paperspace
     Locked Status (Need to find which property)
 
-    Export Curve objects as Curve : Support added, butcan't replicate exact geometry in Spline entities
+    Choose Layout size 
+    Center layout on cam view 
+
+    Possibility to choose all ACI values
 """
+
 
 def ensure_ezdxf():
     # Check if module is installed : https://stackoverflow.com/a/44210735/7092409
@@ -40,11 +43,13 @@ def ensure_ezdxf():
         # ensure pip is installed & update
         subprocess.call([str(py_exec), "-m", "ensurepip", "--user"])
         subprocess.call([str(py_exec), "-m", "pip", "install", "--upgrade", "pip"])
-        subprocess.call([str(py_exec),"-m", "pip", "install", f"--target={str(py_exec)[:-14]}" + "lib", "ezdxf"])
+        subprocess.call([str(py_exec), "-m", "pip", "install", f"--target={str(py_exec)[:-14]}" + "lib", "ezdxf"])
         if "ezdxf" in {pkg.key for pkg in pkg_resources.working_set}:
             print(" - DXF Exporter : ezdxf installed. Good to go !")
 
+
 ensure_ezdxf()
+
 
 def register():
     auto_load.init()

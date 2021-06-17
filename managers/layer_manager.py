@@ -1,10 +1,7 @@
 from typing import Dict
 from enum import Enum
 from bpy.types import (
-    Material,
     Object,
-    Collection,
-    Context,
 )
 import ezdxf
 from ..settings.layer_settings import (
