@@ -10,7 +10,7 @@ from .manager import Manager
 class MeshManager(Manager):
     def __init__(self, exporter) -> None:
         super().__init__(exporter)
-        self.mesh_creation_methods_dic = {
+        self._mesh_creation_methods_dic = {
             FaceType.FACES3D.value: self._create_mesh_3dfaces,
             FaceType.MESH.value: self._create_mesh_mesh,
             FaceType.POLYFACE.value: self._create_mesh_polyface,
@@ -18,6 +18,14 @@ class MeshManager(Manager):
             LineType.LINES.value: self._create_mesh_lines,
             PointType.POINTS.value: self._create_mesh_points,
         }
+    
+    def get_mesh_method(self, mesh_setting, mesh):
+        # DXF Mesh object must(?) have faces (=polygons)
+        # This switches the method to polylines if input mesh doesn't have any polygon
+        mesh_method = self._mesh_creation_methods_dic.get(mesh_setting)
+        if mesh_method == self._create_mesh_mesh and len(mesh.polygons) == 0:
+            mesh_method =  self._create_mesh_polylines
+        return mesh_method
 
     def triangulate_if_needed(self, mesh, obj_type):
         "Make sure there is no N-Gon (not supported in DXF Faces)"
