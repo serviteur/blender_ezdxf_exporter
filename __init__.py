@@ -31,6 +31,8 @@ bl_info = {
     Center layout on cam view 
 
     Possibility to choose all ACI values
+    
+    Prevent user from initializing layers with unauthorized characters (example : /)
 """
 
 
