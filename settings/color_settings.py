@@ -266,6 +266,7 @@ __ACI_RGB_MAPPING = (
 
 
 class ACIColor(Enum):
+    WHITE = ("7", "White", "Default Value (7)")
     BLACK = ("0", "Black", "0")
     RED = ("1", "Red", "1")
     YELLOW = ("2", "Yellow", "2")
@@ -273,7 +274,15 @@ class ACIColor(Enum):
     CYAN = ("4", "Cyan", "4")
     BLUE = ("5", "Blue", "5")
     MAGENTA = ("6", "Magenta", "6")
-    WHITE = ("7", "White", "Default Value (7)")
+
+
+def get_aci_colors(self, context):
+    if not hasattr(get_aci_colors, "colors"):
+        setattr(get_aci_colors, "colors", [])
+    if not get_aci_colors.colors:
+        get_aci_colors.colors = [aci.value for aci in ACIColor]
+        get_aci_colors.colors.extend(((str(i), str(i), str(__ACI_RGB_MAPPING[i])) for i in range(8, 256)))
+    return get_aci_colors.colors
 
 
 class EntityColor(Enum):
@@ -325,8 +334,8 @@ class ColorSettings(PropertyGroup):
     entity_color_aci: EnumProperty(
         name="ACI",
         description="Autocad Color Index - Color as an integer [0:255]",
-        default=ACIColor.WHITE.value[0],
-        items=[aci.value for aci in ACIColor],
+        # default=ACIColor.WHITE.value[0],
+        items=get_aci_colors,
     )
 
     entity_color_custom: FloatVectorProperty(
