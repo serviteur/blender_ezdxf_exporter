@@ -1,4 +1,5 @@
 from typing import Dict
+import ezdxf
 from .settings.data_settings import (
     CurveType,
     FaceType,
@@ -9,7 +10,6 @@ from .settings.data_settings import (
     CameraType,
     NO_EXPORT
 )
-import ezdxf
 from .managers import (
     block_manager,
     color_manager,
@@ -221,8 +221,7 @@ class DXFExporter:
                 (FaceType, data_settings.faces_export),
             ):
                 i += 1
-                mesh_method = self.mesh_mgr.mesh_creation_methods_dic.get(
-                    mesh_setting)
+                mesh_method = self.mesh_mgr.get_mesh_method(mesh_setting, evaluated_mesh)
                 if mesh_method is None:
                     continue
                 self.color_mgr.populate_dxfattribs(obj, dxfattribs, mesh_type)

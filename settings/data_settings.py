@@ -4,7 +4,6 @@ from bpy.types import PropertyGroup
 from bpy.props import (
     EnumProperty,
     BoolProperty,
-    BoolVectorProperty,
 )
 from .__init__ import NO_EXPORT
 from .text_settings import TextType
