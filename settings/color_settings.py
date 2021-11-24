@@ -357,6 +357,7 @@ class ColorSettings(PropertyGroup):
         if self.entity_color_to == EntityColor.ACI.value:
             row = color_box.row()
             row.prop(self, "entity_color_aci")
+            color_box.label(text="Find Palette in Preferences", icon="INFO")
         elif self.entity_color_to == EntityColor.CUSTOM.value:
             row = color_box.row()
             row.prop(self, "entity_color_custom")
