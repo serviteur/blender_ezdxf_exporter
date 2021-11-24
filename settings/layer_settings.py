@@ -8,12 +8,12 @@ from bpy.props import (
 
 
 class EntityLayer(Enum):
-    NONE = 'Default (Layer 0)'
-    COLLECTION = 'Collection'
-    OBJECT_NAME = 'Object Name'
-    DATA_NAME = 'Data/Mesh Name'
-    SCENE_NAME = 'Current Scene Name'
-    MATERIAL = 'Object 1st Material'
+    NONE = "Default (Layer 0)"
+    COLLECTION = "Collection"
+    OBJECT_NAME = "Object Name"
+    DATA_NAME = "Data/Mesh Name"
+    SCENE_NAME = "Current Scene Name"
+    MATERIAL = "Object 1st Material"
 
 
 class GlobalLayerSettings(PropertyGroup):
@@ -33,8 +33,12 @@ class GlobalLayerSettings(PropertyGroup):
         mat_layer = layout.split(factor=0.9, align=True)
         mat_layer.prop(self, "material_layer_export")
         mat_layer_link = mat_layer.row()
-        mat_layer_link.prop(self, "material_layer_export_only_selected", text="",
-                            icon='LINKED' if self.material_layer_export_only_selected else 'UNLINKED')
+        mat_layer_link.prop(
+            self,
+            "material_layer_export_only_selected",
+            text="",
+            icon="LINKED" if self.material_layer_export_only_selected else "UNLINKED",
+        )
         mat_layer_link.active = self.material_layer_export
 
 
@@ -43,8 +47,8 @@ class LayerSettings(PropertyGroup):
         name="Layer Prefix",
         default="",
         description="Prefix layer with this",
-    )    
-    
+    )
+
     entity_layer_suffix: StringProperty(
         name="Layer Suffix",
         default="",
@@ -55,7 +59,8 @@ class LayerSettings(PropertyGroup):
         name="Object Layer",
         default=EntityLayer.COLLECTION.value,
         description="Entity LAYER assigned to ?",
-        items=[(e_l.value,)*3 for e_l in EntityLayer])
+        items=[(e_l.value,) * 3 for e_l in EntityLayer],
+    )
 
     entity_layer_separate: BoolProperty(
         name="Export Entities on Sub-Layer",

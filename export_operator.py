@@ -12,12 +12,11 @@ from bpy.props import (
 from bpy.types import (
     Operator,
     Menu,
-
     PropertyGroup,
 )
 
 from .export_dxf import DXFExporter
-from .shared_maths import(
+from .shared_maths import (
     parent_lookup,
 )
 from .settings.layer_settings import (
@@ -57,6 +56,7 @@ class EntityProperties(PropertyGroup):
 
 class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     """File selection operator to export objects in DXF file"""
+
     bl_idname = "dxf_exporter.export"
     bl_label = "Export As DXF"
 
@@ -64,16 +64,13 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
 
     filter_glob: StringProperty(
         default="*.dxf",
-        options={'HIDDEN'},
+        options={"HIDDEN"},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )
 
-    filepath: StringProperty(name="File Name",
-                             description="filepath",
-                             default="",
-                             maxlen=1024,
-                             options={'ANIMATABLE'},
-                             subtype='NONE')
+    filepath: StringProperty(
+        name="File Name", description="filepath", default="", maxlen=1024, options={"ANIMATABLE"}, subtype="NONE"
+    )
 
     layer_global_settings: PointerProperty(type=GlobalLayerSettings)
     data_settings: PointerProperty(type=DataSettings)
@@ -84,9 +81,8 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
     text_settings: PointerProperty(type=TextSettings)
 
     verbose: BoolProperty(
-        name="Debug",
-        default=False,
-        description="Run the exporter in debug mode.\nCheck the console for output")
+        name="Debug", default=False, description="Run the exporter in debug mode.\nCheck the console for output"
+    )
 
     def get_objects(self, context):
         export_setting = self.misc_settings.export_objects
@@ -95,10 +91,13 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
             return context.selected_objects
         elif export_setting == ExportObjects.SCENE.value:
             if exclude_setting == ExcludedObject.NONE:
-                return [o for o in context.scene.objects
-                        if not context.view_layer.layer_collection.children[o.users_collection[0].name].exclude
-                        and not o.hide_viewport
-                        and not o.hide_get()]
+                return [
+                    o
+                    for o in context.scene.objects
+                    if not context.view_layer.layer_collection.children[o.users_collection[0].name].exclude
+                    and not o.hide_viewport
+                    and not o.hide_get()
+                ]
             else:
                 return context.scene.objects
         elif export_setting == ExportObjects.ALL.value:
@@ -112,7 +111,7 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
         for customizable_entity_prop in DataSettings.sub_layers_suffixes:
             self.entities_settings.add().id = customizable_entity_prop.__name__
         context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
+        return {"RUNNING_MODAL"}
 
     def execute(self, context):
         start_time = time()
@@ -122,13 +121,15 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
             objects=self.get_objects(context),
             coll_parents=parent_lookup(context.scene.collection)
             if self.default_layer_settings.entity_layer_to == EntityLayer.COLLECTION.value
-            and self.default_layer_settings.entity_layer_color
-            else None
+            and self.default_layer_settings.entity_layer_color != "2"
+            else None,
         )
         if not exporter.write_file(self.filepath):
             self.report(
-                {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
-            return {'FINISHED'}
+                {"ERROR"},
+                f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)",
+            )
+            return {"FINISHED"}
 
         exporter.export_materials_as_layers()
         exporter.filter_objects()
@@ -136,33 +137,32 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
         if self.data_settings.use_dimensions:
             try:
                 exporter.write_dimensions(
-                    bpy.data.grease_pencils["Annotations"].layers['RulerData3D'].frames[0].strokes)
+                    bpy.data.grease_pencils["Annotations"].layers["RulerData3D"].frames[0].strokes
+                )
             except KeyError:
                 self.report(
-                    {'ERROR'}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers")
+                    {"ERROR"}, "Could not export Dimensions. Layer 'RulerData3D' not found in Annotations Layers"
+                )
 
         if exporter.export_file(self.filepath):
-            self.report(
-                {'INFO'}, f"Export Succesful : {self.filepath} in {round(time() - start_time, 2)} sec.")
+            self.report({"INFO"}, f"Export Succesful : {self.filepath} in {round(time() - start_time, 2)} sec.")
         else:
             self.report(
-                {'ERROR'}, f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)")
+                {"ERROR"},
+                f"Permission Error : File {self.filepath} can't be modified (Close the file in your CAD software and check if you have write permission)",
+            )
         if self.verbose:
             for line in exporter.log:
                 print(line)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
     def draw(self, context):
         layout = self.layout
 
         draw_preset(self, context)
         self.misc_settings.draw(layout)
-        self.data_settings.draw(
-            layout, 
-            self.get_objects(context), 
-            self.entities_settings,
-            self.text_settings)
+        self.data_settings.draw(layout, self.get_objects(context), self.entities_settings, self.text_settings)
         layer_box = self.default_layer_settings.draw(layout)
         self.layer_global_settings.draw(layer_box)
         self.default_color_settings.draw(layout)
@@ -193,8 +193,8 @@ class DXFEXPORTER_OT_Export(Operator, ExportHelper):
 
 
 def menu_func_export(self, context):
-    op = self.layout.operator(DXFEXPORTER_OT_Export.bl_idname,
-                              text="Drawing Interchange File (.dxf)")
+    op = self.layout.operator(DXFEXPORTER_OT_Export.bl_idname, text="Drawing Interchange File (.dxf)")
+
 
 # Preset System courtesy
 # https://blender.stackexchange.com/questions/209877/preset-system-error
@@ -212,20 +212,16 @@ class DXFEXPORTER_MT_Preset(Menu):
 
 class DXFEXPORTER_OT_Preset(AddPresetBase, Operator):
     """Save DXF Export Settings"""
+
     bl_idname = "dxf_exporter.preset"
     bl_label = "DXF Export Settings"
     preset_menu = DXFEXPORTER_MT_Preset.__name__
 
     # Variable used for all preset values
-    preset_defines = [
-        "op = bpy.context.active_operator"
-    ]
+    preset_defines = ["op = bpy.context.active_operator"]
 
     # Properties to store in the preset
-    preset_values = [
-        f"op.{k}"
-        for k in DXFEXPORTER_OT_Export.__annotations__.keys()
-    ]
+    preset_values = [f"op.{k}" for k in DXFEXPORTER_OT_Export.__annotations__.keys()]
 
     # Where to store the preset
     preset_subdir = DXFEXPORTER_OT_Export.bl_idname
@@ -235,11 +231,9 @@ def draw_preset(self, context):
     layout = self.layout
 
     row = layout.row(align=True)
-    row.menu(DXFEXPORTER_MT_Preset.__name__,
-             text=DXFEXPORTER_MT_Preset.bl_label)
-    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon='ADD')
-    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="",
-                 icon='REMOVE').remove_active = True
+    row.menu(DXFEXPORTER_MT_Preset.__name__, text=DXFEXPORTER_MT_Preset.bl_label)
+    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon="ADD")
+    row.operator(DXFEXPORTER_OT_Preset.bl_idname, text="", icon="REMOVE").remove_active = True
 
 
 def register():
