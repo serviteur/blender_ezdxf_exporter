@@ -5,7 +5,7 @@ from bpy.types import (
 from bpy.props import EnumProperty, BoolProperty, FloatVectorProperty, IntProperty
 
 
-__ACI_RGB_MAPPING = (
+ACI_RGB_MAPPING = (
     (0, 0, 0),
     (1.0, 0.0, 0.0),
     (1.0, 1.0, 0.0),
@@ -281,7 +281,7 @@ def get_aci_colors(self, context):
         setattr(get_aci_colors, "colors", [])
     if not get_aci_colors.colors:
         get_aci_colors.colors = [aci.value for aci in ACIColor]
-        get_aci_colors.colors.extend(((str(i), str(i), str(__ACI_RGB_MAPPING[i])) for i in range(8, 256)))
+        get_aci_colors.colors.extend(((str(i), str(i), str(ACI_RGB_MAPPING[i])) for i in range(8, 256)))
     return get_aci_colors.colors
 
 
