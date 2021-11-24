@@ -49,8 +49,19 @@ class ColorManager(Manager):
 
     def get_color_from_custom_prop(self, obj, prop_name):
         prop = obj.get(prop_name)
-        if isinstance(prop, (int, float)):  # ACI color
+        if isinstance(prop, str):
+            return
+        elif isinstance(prop, (int, float)):  # ACI color
             return max(0, min(255, int(prop)))
+        elif len(prop) > 2:            
+            if len(prop) == 3:
+                prop = [prop[0], prop[1], prop[2], 1 if isinstance(prop[0], float) else 255]
+            if isinstance(prop[0], float):
+                prop = [min(255, int(c * 255)) for c in prop[0:3]] + [prop[3]]
+            else:
+                prop = [c for c in prop[0:3]] + [prop[3] / 255] 
+            return prop
+
     def _get_collection_color(self, coll):
         "Returns the color tag of collection or of first parent that has one if setting is selected"
         exp = self.exporter

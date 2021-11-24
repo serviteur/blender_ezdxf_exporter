@@ -75,6 +75,17 @@ class LayerManager(Manager):
         suffix += layer_settings.entity_layer_suffix
 
         settings = {}
+
+        def update_settings_with_custom_props(obj):
+            color = exp.color_mgr.get_color_from_custom_prop(obj, layer_settings.entity_layer_color_custom_prop_name)
+            if color is None:
+                pass
+            elif isinstance(color, int):
+                settings[self.KW_COLOR] = color
+            else:
+                settings[self.KW_RGB] = color[0:3]
+                settings[self.KW_TRANSPARENCY] = 1 - color[3]
+
         if layer_to == EntityLayer.COLLECTION.value:
             coll = obj.users_collection[0]
             if coll is None:
@@ -89,46 +100,54 @@ class LayerManager(Manager):
             if layer_settings.entity_layer_color == "0":
                 settings[self.KW_RGB] = exp.color_mgr._get_collection_color(coll)[0]
             elif layer_settings.entity_layer_color == "1":
-                color = exp.color_mgr.get_color_from_custom_prop(
-                    coll, layer_settings.entity_layer_color_custom_prop_name
-                )
-                if color is None:
-                    pass
-                elif isinstance(color, int):
-                    settings[self.KW_COLOR] = color
+                update_settings_with_custom_props(coll)
             settings[self.KW_FREEZE] = col_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer
         elif layer_to == EntityLayer.DATA_NAME.value:
             settings[self.KW_NAME] = obj.data.name
+            if layer_settings.entity_layer_color == "1":
+                update_settings_with_custom_props(obj.data)
         elif layer_to == EntityLayer.OBJECT_NAME.value:
             excluded_from_view_layer = obj.hide_get() or obj.hide_viewport
             obj_exclude_state = exp_settings.misc_settings.export_excluded
             if excluded_from_view_layer and obj_exclude_state == ExcludedObject.NONE.value:
                 return None
-            rgb, a = exp.color_mgr._get_object_color(obj)
+                
+            if layer_settings.entity_layer_color == "0":
+                rgb, a = exp.color_mgr._get_object_color(obj)
 
-            settings.update(
-                {
-                    self.KW_NAME: obj.name,
-                    self.KW_RGB: rgb,
-                    self.KW_TRANSPARENCY: 1 - a if layer_settings.entity_layer_transparency else 0,
-                    self.KW_FREEZE: obj_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer,
-                }
-            )
+                settings.update(
+                    {
+                        self.KW_NAME: obj.name,
+                        self.KW_RGB: rgb,
+                        self.KW_TRANSPARENCY: 1 - a if layer_settings.entity_layer_transparency else 0,
+                        self.KW_FREEZE: obj_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer,
+                    }
+                )
+            elif layer_settings.entity_layer_color == "1":
+                update_settings_with_custom_props(obj)
+
         elif layer_to == EntityLayer.MATERIAL.value and obj.data.materials and obj.data.materials[0] is not None:
             mat = obj.data.materials[0]
             if mat is None:
                 return None
-            rgb, a = exp.color_mgr._get_material_color(mat)
 
-            settings.update(
-                {
-                    self.KW_NAME: mat.name,
-                    self.KW_RGB: rgb,
-                    self.KW_TRANSPARENCY: 1 - a if layer_settings.entity_layer_transparency else 0,
-                }
-            )
+            if layer_settings.entity_layer_color == "0":
+                rgb, a = exp.color_mgr._get_material_color(mat)
+
+                settings.update(
+                    {
+                        self.KW_NAME: mat.name,
+                        self.KW_RGB: rgb,
+                        self.KW_TRANSPARENCY: 1 - a if layer_settings.entity_layer_transparency else 0,
+                    }
+                )
+            elif layer_settings.entity_layer_color == "1":
+                update_settings_with_custom_props(mat)
+
         elif layer_to == EntityLayer.SCENE_NAME.value:
             settings[self.KW_NAME] = context.scene.name
+            if layer_settings.entity_layer_color == "1":
+                update_settings_with_custom_props(context.scene)
 
         layers = exp.doc.layers
         layer_name = self.sanitize_name(prefix + settings.get(self.KW_NAME, "0") + suffix)
