@@ -21,6 +21,7 @@ from .managers import (
     camera_manager,
     spline_manager,
 )
+from ezdxf.math import Vec3
 
 
 class DXFExporter:
@@ -113,7 +114,7 @@ class DXFExporter:
         if entity:
             if not is_block:
                 dx, dy, dz = self.settings.transform_settings.delta_xyz
-                entity.translate(dx, dy, dz)            
+                entity.translate(dx, dy, dz)
             if dxfattribs.get("transparency"):
                 entity.transparency = dxfattribs.get("transparency") / 10
 

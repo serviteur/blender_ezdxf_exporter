@@ -1,0 +1,33 @@
+{
+  "files.exclude": {
+    "**/.pyc": true,
+    "**/__pycache__": true,
+    "**/__pycache__.*": true,
+    "EMVP.code-workspace": true,
+    ".vscode": true,
+    ".gitignore": true,
+  },
+  "python.linting.flake8Args": [
+    "--disable=E501",
+    // "--disable=E302",
+  ],
+  "python.linting.pylintArgs": [
+    "--disable=invalid-name",
+    "--disable=missing-function-docstring",
+    "--disable=import-error",
+    // "--disable=bad-staticmethod-argument",
+    "--disable=unused-argument",
+    // "--disable=too-few-public-methods",
+    // "--disable=wildcard-import",
+    // "--disable=no-self-use",
+    "--disable=no-method-argument",
+    // "--disable=no-member"
+    "--disable=line-too-long",
+    "--disable=missing-class-docstring",
+    "--disable=missing-module-docstring",
+    "--disable=too-few-public-methods",
+  ],
+  "python.linting.flake8Enabled": true,
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+}
