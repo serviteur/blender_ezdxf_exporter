@@ -37,6 +37,11 @@ class LayerManager(Manager):
         dxfattribs["layer"] = self.get_or_create_layer(obj, entity_type, override)
         return dxfattribs["layer"] is not None
 
+    def sanitize_name(self, name):
+        for char in ("/", "<", ">", "\\", "“", ":", ";", "?", "*", "|", "=", "‘"):
+            name = name.replace(char, "_")
+        return name
+
     def create_layer(
         self, name: str, rgb=None, transparency: float = None, freeze: bool = False
     ) -> ezdxf.entities.layer.Layer:
@@ -117,7 +122,7 @@ class LayerManager(Manager):
             settings[self.KW_NAME] = context.scene.name
 
         layers = exp.doc.layers
-        layer_name = prefix + settings.get(self.KW_NAME, "0") + suffix
+        layer_name = self.sanitize_name(prefix + settings.get(self.KW_NAME, "0") + suffix)
         if override or layer_name not in layers:
             self.create_layer(
                 layer_name, settings.get(self.KW_RGB), settings.get(self.KW_TRANSPARENCY), settings.get(self.KW_FREEZE)
