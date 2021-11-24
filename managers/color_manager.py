@@ -47,6 +47,10 @@ class ColorManager(Manager):
             return self._get_material_color(obj.data.materials[0])
         return None, None
 
+    def get_color_from_custom_prop(self, obj, prop_name):
+        prop = obj.get(prop_name)
+        if isinstance(prop, (int, float)):  # ACI color
+            return max(0, min(255, int(prop)))
     def _get_collection_color(self, coll):
         "Returns the color tag of collection or of first parent that has one if setting is selected"
         exp = self.exporter

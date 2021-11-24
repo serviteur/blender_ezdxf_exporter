@@ -43,7 +43,7 @@ class LayerManager(Manager):
         return name
 
     def create_layer(
-        self, name: str, rgb=None, transparency: float = None, freeze: bool = False
+        self, name: str, rgb=None, color=None, transparency: float = None, freeze: bool = False
     ) -> ezdxf.entities.layer.Layer:
         "Create Layer and set properties if passed as parameters"
         layers = self.exporter.doc.layers
@@ -53,6 +53,8 @@ class LayerManager(Manager):
             layer = self.exporter.doc.layers.new(name)
         if rgb is not None:
             layer.rgb = rgb
+        elif color is not None:
+            layer.color = color
         if transparency is not None:
             layer.transparency = transparency
         if freeze:
@@ -83,11 +85,18 @@ class LayerManager(Manager):
             col_exclude_state = exp_settings.misc_settings.export_excluded
             if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
                 return None
-            settings.update({
-                self.KW_NAME: layer_name,
-                self.KW_RGB: exp.color_mgr._get_collection_color(coll)[0],
-                self.KW_FREEZE: col_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer
-            })
+            settings[self.KW_NAME] = layer_name
+            if layer_settings.entity_layer_color == "0":
+                settings[self.KW_RGB] = exp.color_mgr._get_collection_color(coll)[0]
+            elif layer_settings.entity_layer_color == "1":
+                color = exp.color_mgr.get_color_from_custom_prop(
+                    coll, layer_settings.entity_layer_color_custom_prop_name
+                )
+                if color is None:
+                    pass
+                elif isinstance(color, int):
+                    settings[self.KW_COLOR] = color
+            settings[self.KW_FREEZE] = col_exclude_state == ExcludedObject.FROZEN.value and excluded_from_view_layer
         elif layer_to == EntityLayer.DATA_NAME.value:
             settings[self.KW_NAME] = obj.data.name
         elif layer_to == EntityLayer.OBJECT_NAME.value:
@@ -125,6 +134,10 @@ class LayerManager(Manager):
         layer_name = self.sanitize_name(prefix + settings.get(self.KW_NAME, "0") + suffix)
         if override or layer_name not in layers:
             self.create_layer(
-                layer_name, settings.get(self.KW_RGB), settings.get(self.KW_TRANSPARENCY), settings.get(self.KW_FREEZE)
+                name=layer_name,
+                rgb=settings.get(self.KW_RGB),
+                color=settings.get(self.KW_COLOR),
+                transparency=settings.get(self.KW_TRANSPARENCY),
+                freeze=settings.get(self.KW_FREEZE),
             )
         return layer_name

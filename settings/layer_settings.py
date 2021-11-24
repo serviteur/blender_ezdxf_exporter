@@ -68,10 +68,20 @@ class LayerSettings(PropertyGroup):
         default=False,
     )
 
-    entity_layer_color: BoolProperty(
+    entity_layer_color: EnumProperty(
         name="Color",
-        description="Set layer color if available in source",
-        default=True,
+        description="Set layer color",
+        default="0",
+        items=(
+            ("0", "Source", "Collection>Tag\nObject>Object Color\nMaterial>Diffuse color\nOther>Default(white)"),
+            ("1", "Custom Property", ""),
+            ("2", "Default Color (White)", ""),
+        ),
+    )
+
+    entity_layer_color_custom_prop_name: StringProperty(
+        name="Name",
+        description="Custom Property which holds the RGB or RGBA or ACI value",
     )
 
     entity_layer_color_parent: BoolProperty(
@@ -99,8 +109,12 @@ class LayerSettings(PropertyGroup):
         layer_color_split.prop(self, "entity_layer_color")
         layer_setting = layer_color_split.row()
         layer_setting.prop(self, "entity_layer_transparency")
-        layer_setting.active = self.entity_layer_color and self.entity_layer_to in (
-            EntityLayer.OBJECT_NAME.value, EntityLayer.MATERIAL.value)
+        layer_setting.active = (self.entity_layer_color != "2" and self.entity_layer_to in (
+            EntityLayer.OBJECT_NAME.value,
+            EntityLayer.MATERIAL.value,
+        )) or self.entity_layer_color == "1"
+        if self.entity_layer_color == "1":
+            layer_box.prop(self, "entity_layer_color_custom_prop_name")
         layer_box.prop(self, "entity_layer_separate")
 
         return layer_box
