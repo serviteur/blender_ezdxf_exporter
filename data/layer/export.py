@@ -60,11 +60,11 @@ class LayerExporter(DataExporter):
         exp = self.exporter
         context = exp.context
         exp_settings = exp.settings
-        layer_settings = exp_settings.get_entity_settings(entity_type).layer_settings
+        layer_settings = exp_settings.get_entity_settings(entity_type).layer
         layer_to = layer_settings.entity_layer_to
         prefix = layer_settings.entity_layer_prefix
         suffix = (
-            exp_settings.data_settings.get_sub_layer_suffix(entity_type) if layer_settings.entity_layer_separate else ""
+            exp_settings.data.get_sub_layer_suffix(entity_type) if layer_settings.entity_layer_separate else ""
         )
         suffix += layer_settings.entity_layer_suffix
 
@@ -87,7 +87,7 @@ class LayerExporter(DataExporter):
             layer_name = coll.name
             layer_coll = get_layer_collection(context.view_layer.layer_collection, layer_name)
             excluded_from_view_layer = layer_coll.exclude if layer_coll is not None else False
-            col_exclude_state = exp_settings.misc_settings.export_excluded
+            col_exclude_state = exp_settings.filter.export_excluded
             if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
                 return None
             settings[self.KW_NAME] = layer_name
@@ -102,7 +102,7 @@ class LayerExporter(DataExporter):
                 update_settings_with_custom_props(obj.data)
         elif layer_to == EntityLayer.OBJECT_NAME.value:
             excluded_from_view_layer = obj.hide_get() or obj.hide_viewport
-            obj_exclude_state = exp_settings.misc_settings.export_excluded
+            obj_exclude_state = exp_settings.filter.export_excluded
             if excluded_from_view_layer and obj_exclude_state == ExcludedObject.NONE.value:
                 return None
 

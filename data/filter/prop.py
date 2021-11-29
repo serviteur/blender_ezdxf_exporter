@@ -3,7 +3,7 @@ import bpy
 from .constants import ExportObjects, ExcludedObject
 from .ui import draw
 
-class MiscSettings(bpy.types.PropertyGroup):
+class FilterSettings(bpy.types.PropertyGroup):
     export_objects: bpy.props.EnumProperty(
         name="Export",
         description="Choose which objects to export",

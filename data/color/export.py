@@ -11,7 +11,7 @@ class ColorExporter(DataExporter):
 
     def populate_dxfattribs(self, obj, dxfattribs, entity_type):
         "Sets color properties of the internal dictionary according to object properties"
-        color_settings = self.exporter.settings.get_entity_settings(entity_type).color_settings
+        color_settings = self.exporter.settings.get_entity_settings(entity_type).color
         dxfattribs["color"] = self.get_ACI_color(color_settings)  # Set Bylayer, Byblock, or other color on entity
         obj_color, obj_alpha = self.get_color(obj, color_settings)
         if (obj_alpha or obj_alpha == 0) and color_settings.entity_color_use_transparency:

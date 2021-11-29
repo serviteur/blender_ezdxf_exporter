@@ -26,7 +26,7 @@ class TextExporter(DataExporter):
         # Is there no way to directly get an axis angle from matrix ??
         raa = matrix.to_euler().to_quaternion().to_axis_angle()
 
-        if self.exporter.settings.data_settings.texts_export == TextType.MTEXT.value:
+        if self.exporter.settings.data.texts_export == TextType.MTEXT.value:
             align_dxf = "MTEXT_"
             if align_y in ("TOP", "BOTTOM"):
                 align_dxf += align_y + "_"
@@ -46,7 +46,7 @@ class TextExporter(DataExporter):
             # TODO : put this in math utils :
             ucs = UCS(origin=matrix.to_translation()).rotate((raa[0][0], raa[0][1], raa[0][2]), raa[1])
 
-            text_settings = self.exporter.settings.text_settings
+            text_settings = self.exporter.settings.text
             text_dxf = layout.add_mtext(text.body, dxfattribs)
             text_dxf.dxf.char_height = text.size / 2 * (sum(scale) / len(scale))
 

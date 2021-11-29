@@ -12,15 +12,8 @@ class DXFEXPORTER_MT_Preset(bpy.types.Menu):
 
 def draw_op(self, context):
     layout = self.layout
-
     draw_preset(self, context)
-    self.misc_settings.draw(layout)
-    self.data_settings.draw(layout, self.get_objects(context), self.entities_settings, self.text_settings)
-    layer_box = self.default_layer_settings.draw(layout)
-    self.layer_global_settings.draw(layer_box)
-    self.default_color_settings.draw(layout)
-    self.transform_settings.draw(layout)
-
+    self.settings.draw(layout, context)
     layout.prop(self, "verbose")
 
 

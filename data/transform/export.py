@@ -8,7 +8,7 @@ class TransformExporter(DataExporter):
         if is_block:
             return Matrix()
         else:
-            settings = self.exporter.settings.transform_settings
+            settings = self.exporter.settings.transform
             matrix = obj.matrix_world
             if settings.export_scale != (1, 1, 1):
                 mx = Matrix.Scale(settings.export_scale[0], 4, (1, 0, 0))

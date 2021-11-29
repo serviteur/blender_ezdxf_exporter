@@ -63,8 +63,8 @@ def draw(self, layout, objects, entities_properties, text_settings):
             split.label(text="")
             box = split.box()
             if settings:
-                settings.layer_settings.draw(box, obj_name=name)
-                settings.color_settings.draw(box, obj_name=name)
+                settings.layer.draw(box, obj_name=name)
+                settings.color.draw(box, obj_name=name)
 
     # TODO Add custom settings for dimensions
     self.use_dimensions = (

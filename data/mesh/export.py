@@ -25,7 +25,7 @@ class MeshExporter(DataExporter):
 
     def triangulate_if_needed(self, mesh, obj_type):
         "Make sure there is no N-Gon (not supported in DXF Faces)"
-        if obj_type != "MESH" or self.exporter.settings.data_settings.faces_export not in (
+        if obj_type != "MESH" or self.exporter.settings.data.faces_export not in (
             FaceType.FACES3D.value,
             FaceType.POLYFACE.value,
             FaceType.MESH.value,

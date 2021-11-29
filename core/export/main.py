@@ -57,7 +57,7 @@ class DXFExporter:
 
         self.coll_parents = coll_parents
 
-        self.debug_mode = settings.verbose
+        self.debug_mode = False  # TODO implement debug mode
         self.log = []
         self.exported_objects = 0
 
@@ -69,7 +69,7 @@ class DXFExporter:
             ("cameras_export", 'CAMERA'),
             ("curves_export", 'CURVE'),
         ):
-            if getattr(self.settings.data_settings, attr, NO_EXPORT) == NO_EXPORT:
+            if getattr(self.settings.data, attr, NO_EXPORT) == NO_EXPORT:
                 self.supported_types.discard(_type)
             else:
                 self.supported_types.add(_type)
@@ -91,7 +91,7 @@ class DXFExporter:
             ("cameras_export", CameraType.NONE.value, 'CAMERA', self.objects_camera),
             ("curves_export", CurveType.MESH.value, 'CURVE', self.objects_curve),
         ):
-            export_as = getattr(self.settings.data_settings, attr) == value
+            export_as = getattr(self.settings.data, attr) == value
             for i in range(len(self.objects) - 1, -1, -1):
                 if self.objects[i].type == _type and not export_as:
                     container.append(self.objects.pop(i))
@@ -111,7 +111,7 @@ class DXFExporter:
         "Callback called when a new entity is created"
         if entity:
             if not is_block:
-                dx, dy, dz = self.settings.transform_settings.delta_xyz
+                dx, dy, dz = self.settings.transform.delta_xyz
                 entity.translate(dx, dy, dz)
             if dxfattribs.get("transparency"):
                 entity.transparency = dxfattribs.get("transparency") / 10
@@ -171,7 +171,7 @@ class DXFExporter:
             # Initialize viewports from Camera (WIP)
             self.camera_exporter.initialize_camera(
                 camera,
-                self.settings.transform_settings.delta_xyz,
+                self.settings.transform.delta_xyz,
             )
 
     def write_objects(self):
@@ -179,7 +179,7 @@ class DXFExporter:
         self.export_texts()
         self.export_empty_blocks()
 
-        if self.settings.data_settings.use_blocks:
+        if self.settings.data.use_blocks:
             self.export_linked_objects()
         else:
             # Export objects as MESH and/or LINES and/or POINTS
@@ -194,7 +194,7 @@ class DXFExporter:
             layout = self.msp
         dxfattribs = {}
         settings = self.settings
-        data_settings = settings.data_settings
+        data_settings = settings.data
 
         if obj.type == 'EMPTY':
             dxfattribs = self.get_dxf_attribs(obj, EmptyType)
@@ -268,7 +268,7 @@ class DXFExporter:
                 5)
 
     def export_materials_as_layers(self):
-        layer_settings = self.settings.layer_global_settings
+        layer_settings = self.settings.layer_global
         if not layer_settings.material_layer_export:
             return
         mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects
@@ -276,7 +276,7 @@ class DXFExporter:
             for mat in mats:
                 rgb, a = self.color_exporter._get_material_color(mat)
                 self.layer_exporter.create_layer(name="MATERIAL_" + mat.name, rgb=rgb,
-                                            transparency=1 - a if self.settings.default_layer_settings.entity_layer_transparency else 0)
+                                            transparency=1 - a if self.settings.default_layer.entity_layer_transparency else 0)
 
     def export_file(self, path):
         self.doc.entitydb.purge()
