@@ -1,9 +1,9 @@
 import bpy
-from blender_ezdxf_exporter.preferences.prop import ColorPropertyGroup
+from ezdxf_exporter.preferences.prop import ColorPropertyGroup
 
 
 class DXFEXPORTERAddonPreferences(bpy.types.AddonPreferences):
-    bl_idname = "blender_ezdxf_exporter"
+    bl_idname = "ezdxf_exporter"
 
     aci_palette: bpy.props.CollectionProperty(type=ColorPropertyGroup)
     show_palette: bpy.props.BoolProperty(default=False, name="Show Palette")
