@@ -37,7 +37,6 @@ def draw(self, layout, obj_name=None):
 
 
 def draw_preferences(preferences, layout):
-    layout.operator("dxf_exporter.generate_aci_palette", text="Regenerate ACI Palette")
     if preferences.aci_palette:
         layout.prop(
             preferences,
@@ -53,3 +52,5 @@ def draw_preferences(preferences, layout):
                     grid_odd.prop(pg, "value", text=str(i))
                 else:
                     grid_even.prop(pg, "value", text=str(i))
+    else:
+        layout.operator("dxf_exporter.generate_aci_palette", text="Regenerate ACI Palette")

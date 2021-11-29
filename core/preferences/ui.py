@@ -7,20 +7,24 @@ from ezdxf_exporter.data.layer.prop import PreferencesSettings as LayerSettings
 from ezdxf_exporter.data.layer.ui import draw_preferences as draw_layer
 
 
-def theme_box(layout, header):
-    box = layout.box()
-    box.label(text=header)
-    return box
-
-
 class DXFEXPORTERAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = "ezdxf_exporter"
 
+    category: bpy.props.EnumProperty(
+        items=(
+            ("ACI Palette",) * 3,
+            ("Layers",) * 3,
+        )
+    )
     aci_palette: bpy.props.CollectionProperty(type=ColorPropertyGroup)
     show_palette: bpy.props.BoolProperty(default=False, name="Show Palette")
     layer_preferences: bpy.props.PointerProperty(type=LayerSettings)
 
     def draw(self, context):
         layout = self.layout
-        draw_palette(self, theme_box(layout, "ACI Palette"))
-        draw_layer(self.layer_preferences, theme_box(layout, "Layers"))
+        row = layout.row()
+        row.prop_tabs_enum(self, "category")
+        if self.category == "ACI Palette":
+            draw_palette(self, layout.box())
+        elif self.category == "Layers":
+            draw_layer(self.layer_preferences, layout.box())
