@@ -64,7 +64,7 @@ class LayerExporter(DataExporter):
         layer_to = layer_settings.entity_layer_to
         prefix = layer_settings.entity_layer_prefix
         suffix = (
-            exp_settings.data.get_sub_layer_suffix(entity_type) if layer_settings.entity_layer_separate else ""
+            exp_settings.choice.get_sub_layer_suffix(entity_type) if layer_settings.entity_layer_separate else ""
         )
         suffix += layer_settings.entity_layer_suffix
 

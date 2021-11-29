@@ -69,7 +69,7 @@ class DXFExporter:
             ("cameras_export", 'CAMERA'),
             ("curves_export", 'CURVE'),
         ):
-            if getattr(self.settings.data, attr, NO_EXPORT) == NO_EXPORT:
+            if getattr(self.settings.choice, attr, NO_EXPORT) == NO_EXPORT:
                 self.supported_types.discard(_type)
             else:
                 self.supported_types.add(_type)
@@ -91,7 +91,7 @@ class DXFExporter:
             ("cameras_export", CameraType.NONE.value, 'CAMERA', self.objects_camera),
             ("curves_export", CurveType.MESH.value, 'CURVE', self.objects_curve),
         ):
-            export_as = getattr(self.settings.data, attr) == value
+            export_as = getattr(self.settings.choice, attr) == value
             for i in range(len(self.objects) - 1, -1, -1):
                 if self.objects[i].type == _type and not export_as:
                     container.append(self.objects.pop(i))
@@ -179,7 +179,7 @@ class DXFExporter:
         self.export_texts()
         self.export_empty_blocks()
 
-        if self.settings.data.use_blocks:
+        if self.settings.choice.use_blocks:
             self.export_linked_objects()
         else:
             # Export objects as MESH and/or LINES and/or POINTS
@@ -194,7 +194,7 @@ class DXFExporter:
             layout = self.msp
         dxfattribs = {}
         settings = self.settings
-        data_settings = settings.data
+        data_settings = settings.choice
 
         if obj.type == 'EMPTY':
             dxfattribs = self.get_dxf_attribs(obj, EmptyType)

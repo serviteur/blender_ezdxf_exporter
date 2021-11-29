@@ -11,7 +11,7 @@ from ezdxf_exporter.data.camera.constants import CameraType
 from ezdxf_exporter.data.curve.constants import CurveType
 
 
-def draw(self, layout, objects, entities_properties, text_settings):
+    self = settings.choice
     layout.label(text="Export Data")
     geometry_box = layout.box()
     col = geometry_box.column(align=True)

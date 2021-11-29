@@ -65,7 +65,7 @@ class DXFEXPORTER_OT_Export(bpy.types.Operator, ExportHelper):
         exporter.export_materials_as_layers()
         exporter.filter_objects()
         exporter.write_objects()
-        if self.settings.data.use_dimensions:
+        if self.settings.choice.use_dimensions:
             try:
                 exporter.write_dimensions(
                     bpy.data.grease_pencils["Annotations"].layers["RulerData3D"].frames[0].strokes

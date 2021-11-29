@@ -36,7 +36,7 @@ class EntityProperties(bpy.types.PropertyGroup):
 
 class Settings(bpy.types.PropertyGroup):
     layer_global: PointerProperty(type=GlobalLayerSettings)
-    data: PointerProperty(type=DataSettings)
+    choice: PointerProperty(type=DataSettings)
     transform: PointerProperty(type=TransformSettings)
     filter: PointerProperty(type=FilterSettings)
     # Note : The 1st element is the default settings if no entity overrides it
