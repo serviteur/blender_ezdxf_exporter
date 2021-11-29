@@ -79,5 +79,12 @@ class LayerSettings(bpy.types.PropertyGroup):
         default=False,
     )
 
-    def draw(self, layout, obj_name=None):
-        return draw_local(self, layout, obj_name)
+
+class PreferencesSettings(bpy.types.PropertyGroup):
+    layer_prefix: bpy.props.StringProperty(name="Default Layer Prefix")
+    layer_suffix: bpy.props.StringProperty(name="Default Layer Suffix")
+    use_prefix_suffix_prefs: BoolProperty(
+        name="Use Default Layer Prefix and Suffix",
+        description="If enabled, this option will automatically add the preferences Prefix and Suffix in layer names",
+        default=False,
+    )

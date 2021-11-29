@@ -34,3 +34,22 @@ def draw(self, layout, obj_name=None):
     val.prop(self, "entity_color_transparency", text="")
     val.active = not self.entity_color_transparency_link or not link.active
     sub.active = self.entity_color_use_transparency
+
+
+def draw_preferences(preferences, layout):
+    layout.operator("dxf_exporter.generate_aci_palette", text="Regenerate ACI Palette")
+    if preferences.aci_palette:
+        layout.prop(
+            preferences,
+            "show_palette",
+            toggle=True,
+            text=("Hide" if preferences.show_palette else "Show") + " Palette",
+        )
+        if preferences.show_palette:
+            grid_even = layout.grid_flow(row_major=True, align=True, columns=10)
+            grid_odd = layout.grid_flow(row_major=True, align=True, columns=10)
+            for i, pg in enumerate(preferences.aci_palette):
+                if i > 10 and i % 2:
+                    grid_odd.prop(pg, "value", text=str(i))
+                else:
+                    grid_even.prop(pg, "value", text=str(i))

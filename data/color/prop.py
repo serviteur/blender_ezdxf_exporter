@@ -1,4 +1,3 @@
-from enum import Enum
 import bpy
 from bpy.props import EnumProperty, BoolProperty, FloatVectorProperty, IntProperty
 from .helper import get_aci_colors
@@ -53,3 +52,7 @@ class ColorSettings(bpy.types.PropertyGroup):
 
     def draw(self, layout, obj_name=None):
         draw(self, layout, obj_name)
+
+
+class ColorPropertyGroup(bpy.types.PropertyGroup):
+    value: bpy.props.FloatVectorProperty(subtype="COLOR", set=lambda s, c: None, get=lambda s: s["value"], min=0, max=1)

@@ -40,3 +40,9 @@ def draw_local(self, layout, obj_name=None):
     layer_box.prop(self, "entity_layer_separate")
 
     return layer_box
+
+
+def draw_preferences(settings, layout):
+    layout.prop(settings, "layer_prefix")
+    layout.prop(settings, "layer_suffix")
+    layout.prop(settings, "use_prefix_suffix_prefs")
