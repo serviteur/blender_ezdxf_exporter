@@ -2,9 +2,9 @@ from .constants import ExportObjects
 
 
 def draw(self, layout):
-    layout.label(text="Miscellaneous")
-    misc_box = layout.box()
-    col = misc_box.column(align=True)
+    layout.label(text="Filter")
+    filter_box_box = layout.box()
+    col = filter_box_box.column(align=True)
     split = col.split(factor=0.3)
     split.label(text="Export")
     split.prop(self, "export_objects", text="")
