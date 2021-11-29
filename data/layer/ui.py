@@ -55,3 +55,6 @@ def draw_preferences(settings, layout):
     layout.prop(settings, "layer_prefix")
     layout.prop(settings, "layer_suffix")
     layout.prop(settings, "use_prefix_suffix_prefs")
+    layout.label(text="Sub-layer suffixes :")
+    for attr in settings.sub_layers_suffixes_attrs.values():
+        layout.prop(settings, attr)

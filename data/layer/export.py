@@ -64,14 +64,20 @@ class LayerExporter(DataExporter):
         layer_to = layer_settings.entity_layer_to
         prefix = layer_settings.entity_layer_prefix
         suffix = (
-            exp_settings.choice.get_sub_layer_suffix(entity_type) if layer_settings.entity_layer_separate else ""
+            bpy.context.preferences.addons["ezdxf_exporter"].preferences.layer_preferences.get_sub_layer_suffix(
+                entity_type
+            )
+            if layer_settings.entity_layer_separate
+            else ""
         )
         suffix += layer_settings.entity_layer_suffix
 
         settings = {}
 
         def update_settings_with_custom_props(obj):
-            color = exp.color_exporter.get_color_from_custom_prop(obj, layer_settings.entity_layer_color_custom_prop_name)
+            color = exp.color_exporter.get_color_from_custom_prop(
+                obj, layer_settings.entity_layer_color_custom_prop_name
+            )
             if color is None:
                 pass
             elif isinstance(color, int):

@@ -17,17 +17,6 @@ from ezdxf_exporter.data.dimension.constants import DimensionType
 
 
 class DataSettings(bpy.types.PropertyGroup):
-    sub_layers_suffixes = {
-        FaceType: "FACES",
-        LineType: "EDGES",
-        PointType: "VERTICES",
-        TextType: "TEXTS",
-        EmptyType: "EMPTIES",
-        CameraType: "VIEW",
-        CurveType: "CURVES",
-        DimensionType: "DIMENSIONS",
-    }
-
     faces_export: EnumProperty(
         name="Export Faces", default=FaceType.MESH.value, items=[(f_t.value,) * 3 for f_t in FaceType]
     )
@@ -73,8 +62,3 @@ class DataSettings(bpy.types.PropertyGroup):
         description="Export objects that share the same mesh data as Block entities, unless the object has an active modifier.",
         default=True,
     )
-
-    def get_sub_layer_suffix(self, entity_type):
-        # TODO : Add customization in addonprefs
-        suffix = self.sub_layers_suffixes.get(entity_type, "")
-        return suffix if suffix == "" else ("_" + suffix)

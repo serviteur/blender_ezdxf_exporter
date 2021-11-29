@@ -4,9 +4,20 @@ from bpy.props import (
     BoolProperty,
     StringProperty,
 )
+
+from ezdxf_exporter.data.text.constants import TextType
+from ezdxf_exporter.data.mesh.constants import (
+    FaceType,
+    LineType,
+    PointType,
+)
+from ezdxf_exporter.data.empty.constants import EmptyType
+from ezdxf_exporter.data.camera.constants import CameraType
+from ezdxf_exporter.data.curve.constants import CurveType
+from ezdxf_exporter.data.dimension.constants import DimensionType
+
 from .ui import draw_global
 from .constants import EntityLayer
-
 
 class GlobalLayerSettings(bpy.types.PropertyGroup):
     material_layer_export: BoolProperty(
@@ -94,3 +105,31 @@ class PreferencesSettings(bpy.types.PropertyGroup):
         description="If enabled, this option will automatically add the preferences Prefix and Suffix in layer names",
         default=False,
     )
+    face_suffix: bpy.props.StringProperty(default="FACES", name="Faces Suffix")
+    line_suffix: bpy.props.StringProperty(default="EDGES", name="Edges Suffix")
+    point_suffix: bpy.props.StringProperty(default="VERTICES", name="Vertices Suffix")
+    text_suffix: bpy.props.StringProperty(default="TEXTS", name="Texts Suffix")
+    empty_suffix: bpy.props.StringProperty(default="EMPTIES", name="Empties Suffix")
+    camera_suffix: bpy.props.StringProperty(default="VIEW", name="Cameras Suffix")
+    curve_suffix: bpy.props.StringProperty(default="CURVES", name="Curves Suffix")
+    dimension_suffix: bpy.props.StringProperty(default="DIMENSIONS", name="Dimensions Suffix")
+    
+    sub_layers_suffixes_attrs = {
+        FaceType: "face_suffix",
+        LineType: "line_suffix",
+        PointType: "point_suffix",
+        TextType: "text_suffix",
+        EmptyType: "empty_suffix",
+        CameraType: "camera_suffix",
+        CurveType: "curve_suffix",
+        DimensionType: "dimension_suffix",
+    }
+
+    def get_sub_layer_suffix(self, entity_type):
+        attr = self.sub_layers_suffixes_attrs.get(entity_type, "")
+        if not attr:
+            return ""
+        else:
+            return getattr(self, attr)
+
+

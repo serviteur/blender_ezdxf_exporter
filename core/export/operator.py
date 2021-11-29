@@ -9,7 +9,7 @@ from bpy.props import (
 from .main import DXFExporter
 from ezdxf_exporter.core.shared_maths import parent_lookup
 from ezdxf_exporter.data.layer.constants import EntityLayer
-from ezdxf_exporter.data.choice.prop import DataSettings
+from ezdxf_exporter.data.layer.prop import PreferencesSettings
 from ezdxf_exporter.core.settings.prop import Settings
 from .ui import draw_op
 
@@ -39,7 +39,7 @@ class DXFEXPORTER_OT_Export(bpy.types.Operator, ExportHelper):
 
     def invoke(self, context, event):
         self.settings.entities.add()  # First one will be the "Default" properties
-        for customizable_entity_prop in DataSettings.sub_layers_suffixes:
+        for customizable_entity_prop in PreferencesSettings.sub_layers_suffixes_attrs:
             self.settings.entities.add().id = customizable_entity_prop.__name__
         for entity_settings in self.settings.entities:
             entity_settings.set_default(context)
