@@ -10,16 +10,19 @@ from ezdxf_exporter.data.empty.constants import EmptyType
 from ezdxf_exporter.data.camera.constants import CameraType
 from ezdxf_exporter.data.curve.constants import CurveType
 
+from ezdxf_exporter.data.layer.ui import draw_local as draw_local_layer
 
+
+def draw_choice_settings(settings, layout, context):
     self = settings.choice
     layout.label(text="Export Data")
     geometry_box = layout.box()
     col = geometry_box.column(align=True)
     lookup_type_dic = {}
-    for obj in objects:
+    for obj in settings.get_objects(context):
         lookup_type_dic[obj.type] = True
     entities_settings_dic = {}
-    for entity_settings in entities_properties:
+    for entity_settings in settings.entities:
         entities_settings_dic[entity_settings.id] = entity_settings
     i = -1
     for prop, name, _types, entity_type in (
@@ -56,14 +59,14 @@ from ezdxf_exporter.data.curve.constants import CurveType
 
         # Draw text settings if exporting MTEXT
         if prop == "texts_export" and getattr(self, prop) == TextType.MTEXT.value:
-            text_settings.draw(col)
+            settings.text.draw(col)
 
         if is_export and not settings.use_default:
             split = col.split(factor=0.02)
             split.label(text="")
             box = split.box()
             if settings:
-                settings.layer.draw(box, obj_name=name)
+                draw_local_layer(settings.layer, box, context, obj_name=name)
                 settings.color.draw(box, obj_name=name)
 
     # TODO Add custom settings for dimensions

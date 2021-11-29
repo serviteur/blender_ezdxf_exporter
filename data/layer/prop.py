@@ -4,7 +4,7 @@ from bpy.props import (
     BoolProperty,
     StringProperty,
 )
-from .ui import draw_global, draw_local
+from .ui import draw_global
 from .constants import EntityLayer
 
 
@@ -36,6 +36,12 @@ class LayerSettings(bpy.types.PropertyGroup):
         name="Layer Suffix",
         default="",
         description="Suffix layer with this",
+    )
+
+    entity_layer_preferences_prefix_suffix: BoolProperty(
+        name="Use Preferences Values",
+        description="Enable this to use Preferences Prefix and Suffix",
+        default=False,
     )
 
     entity_layer_to: EnumProperty(

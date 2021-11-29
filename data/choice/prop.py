@@ -3,7 +3,7 @@ from bpy.props import (
     EnumProperty,
     BoolProperty,
 )
-from ezdxf_exporter.core.constants import NO_EXPORT
+from ezdxf_exporter.core.constants import NO_EXPORT  # Keep that
 from ezdxf_exporter.data.text.constants import TextType
 from ezdxf_exporter.data.mesh.constants import (
     FaceType,
@@ -14,7 +14,6 @@ from ezdxf_exporter.data.empty.constants import EmptyType
 from ezdxf_exporter.data.camera.constants import CameraType
 from ezdxf_exporter.data.curve.constants import CurveType
 from ezdxf_exporter.data.dimension.constants import DimensionType
-from .ui import draw
 
 
 class DataSettings(bpy.types.PropertyGroup):
@@ -74,9 +73,6 @@ class DataSettings(bpy.types.PropertyGroup):
         description="Export objects that share the same mesh data as Block entities, unless the object has an active modifier.",
         default=True,
     )
-
-    def draw(self, layout, objects, entities_properties, text_settings):
-        draw(self, layout, objects, entities_properties, text_settings)
 
     def get_sub_layer_suffix(self, entity_type):
         # TODO : Add customization in addonprefs
