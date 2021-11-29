@@ -33,6 +33,10 @@ class EntityProperties(bpy.types.PropertyGroup):
         default=True,
     )
 
+    def set_default(self, context):
+        prefs = context.preferences.addons["ezdxf_exporter"].preferences.layer_preferences
+        self.layer.entity_layer_preferences_prefix_suffix = prefs.use_prefix_suffix_prefs
+
 
 class Settings(bpy.types.PropertyGroup):
     layer_global: PointerProperty(type=GlobalLayerSettings)
@@ -73,7 +77,7 @@ class Settings(bpy.types.PropertyGroup):
                         return self.default_entity
                     return setting
         return self.default_entity
-    
+
     def draw(self, layout, context):
         draw(self, layout, context)
 

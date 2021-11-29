@@ -41,6 +41,8 @@ class DXFEXPORTER_OT_Export(bpy.types.Operator, ExportHelper):
         self.settings.entities.add()  # First one will be the "Default" properties
         for customizable_entity_prop in DataSettings.sub_layers_suffixes:
             self.settings.entities.add().id = customizable_entity_prop.__name__
+        for entity_settings in self.settings.entities:
+            entity_settings.set_default(context)
         context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
