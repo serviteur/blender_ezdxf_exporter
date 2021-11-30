@@ -2,9 +2,11 @@
 Takes care of regular BLOCKs logic
 """
 
+from collections import defaultdict
 
 from ezdxf.math import UCS
 from ezdxf_exporter.core.export.prop import DataExporter
+
 
 
 class BlockExporter(DataExporter):
@@ -12,13 +14,9 @@ class BlockExporter(DataExporter):
 
     def get_data_users(self) -> dict:
         "Returns a dict with data as key and object users as values"
-        data_obj_dict = {}
+        data_obj_dict = defaultdict(list)
         for obj in self.exporter.objects:
-            data = obj.data
-            if data in data_obj_dict:
-                data_obj_dict[data].append(obj)
-            else:
-                data_obj_dict[data] = [obj]
+            data_obj_dict[obj.data].append(obj)
         return data_obj_dict
 
     def initialize_block(self, name):
