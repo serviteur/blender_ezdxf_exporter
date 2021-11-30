@@ -12,6 +12,9 @@ from ezdxf_exporter.data.layer.prop import GlobalLayerSettings
 from ezdxf_exporter.data.transform.prop import TransformSettings
 from ezdxf_exporter.data.filter.prop import FilterSettings, ExportObjects, ExcludedObject
 from ezdxf_exporter.data.text.prop import TextSettings
+
+from ezdxf_exporter.core.preferences.helper import get_preferences
+
 from .ui import draw
 
 
@@ -34,7 +37,7 @@ class EntityProperties(bpy.types.PropertyGroup):
     )
 
     def set_default(self, context):
-        prefs = context.preferences.addons["ezdxf_exporter"].preferences.layer_preferences
+        prefs = get_preferences(context).layer_preferences
         self.layer.entity_layer_preferences_prefix_suffix = prefs.use_prefix_suffix_prefs
 
 

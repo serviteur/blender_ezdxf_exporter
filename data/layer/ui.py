@@ -1,3 +1,5 @@
+from ezdxf_exporter.core.preferences.helper import get_preferences
+
 from .constants import EntityLayer
 
 
@@ -14,8 +16,7 @@ def draw_global(self, layout):
     mat_layer_link.active = self.material_layer_export
 
 
-def draw_local(self, layout, context, obj_name=None):
-    prefs = context.preferences.addons["ezdxf_exporter"].preferences.layer_preferences
+    prefs = get_preferences(context).layer_preferences
     if obj_name is None:
         obj_name = "Default Object"
     layout.label(text=obj_name + " Layer")

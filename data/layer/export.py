@@ -4,7 +4,9 @@ import ezdxf
 import bpy
 from ezdxf_exporter.data.filter.constants import ExcludedObject
 from ezdxf_exporter.data.layer.constants import EntityLayer
+
 from ezdxf_exporter.core.export.prop import DataExporter
+from ezdxf_exporter.core.preferences.helper import get_preferences
 
 
 def get_layer_collection(parent_col, search_name):
@@ -64,9 +66,7 @@ class LayerExporter(DataExporter):
         layer_to = layer_settings.entity_layer_to
         prefix = layer_settings.entity_layer_prefix
         suffix = (
-            bpy.context.preferences.addons["ezdxf_exporter"].preferences.layer_preferences.get_sub_layer_suffix(
-                entity_type
-            )
+            get_preferences(exp.context).layer_preferences.get_sub_layer_suffix(entity_type)
             if layer_settings.entity_layer_separate
             else ""
         )

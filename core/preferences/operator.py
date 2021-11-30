@@ -1,5 +1,6 @@
 import bpy
 from ezdxf_exporter.data.color.constants import ACI_RGB_MAPPING
+from ezdxf_exporter.core.preferences.helper import get_preferences
 
 
 class DXFEXPORTER_OT_generate_aci_palette(bpy.types.Operator):
@@ -7,8 +8,7 @@ class DXFEXPORTER_OT_generate_aci_palette(bpy.types.Operator):
     bl_label = "Generate ACI Palette"
 
     def execute(self, context):
-        prefs = context.preferences.addons["ezdxf_exporter"].preferences
-        palette = prefs.aci_palette
+        palette = get_preferences(context).aci_palette
         palette.clear()
         for c in ACI_RGB_MAPPING:
             new_color = palette.add()
