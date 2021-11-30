@@ -31,23 +31,28 @@ class LayerExporter(DataExporter):
         self, obj: bpy.types.Object, dxfattribs: Dict[str, any], entity_type: Enum, override: bool = True
     ) -> bool:
         "Populates the 'Layer' key of dxfattribs dict, returns False if no layer should be created"
-        dxfattribs["layer"] = self.get_or_create_layer(obj, entity_type, override)
+        dxfattribs["layer"] = self.get_or_create_layer_from_obj(obj, entity_type, override)
         return dxfattribs["layer"] is not None
 
     def sanitize_name(self, name):
-        for char in ("/", "<", ">", "\\", "“", ":", ";", "?", "*", "|", "=", "‘"):
+        for char in ("/", "<", ">", "\\", "“", '"', ":", ";", "?", "*", "|", "=", "‘"):
             name = name.replace(char, "_")
         return name
 
     def create_layer(
-        self, name: str, rgb=None, color=None, transparency: float = None, freeze: bool = False
+        self, name: str, rgb=None, color=None, transparency: float = None, freeze: bool = False, override: bool = True
     ) -> ezdxf.entities.layer.Layer:
         "Create Layer and set properties if passed as parameters"
         layers = self.exporter.doc.layers
+
+        name = self.sanitize_name(name)
         if name in layers:
             layer = layers.get(name)
+            if not override:
+                return layer
         else:
             layer = self.exporter.doc.layers.new(name)
+
         if rgb is not None:
             layer.rgb = rgb
         elif color is not None:
@@ -58,7 +63,17 @@ class LayerExporter(DataExporter):
             layer.freeze()
         return layer
 
+    def get_or_create_layer_from_mat(self, mat: bpy.types.Material, override=True):
         rgb, a = get_material_color(mat)
+        name = get_preferences(self.exporter.context).layer_preferences.material_prefix + mat.name
+        return self.create_layer(
+            name,
+            rgb,
+            1 - a if self.exporter.settings.default_layer.entity_layer_transparency else 0,
+            override=override,
+        )
+
+    def get_or_create_layer_from_obj(self, obj: bpy.types.Object, entity_type: Enum, override: bool = True) -> str:
         "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
         exp = self.exporter
         context = exp.context
@@ -91,13 +106,12 @@ class LayerExporter(DataExporter):
             coll = obj.users_collection[0]
             if coll is None:
                 return None
-            layer_name = coll.name
-            layer_coll = get_layer_collection(context.view_layer.layer_collection, layer_name)
+            layer_coll = get_layer_collection(context.view_layer.layer_collection, coll.name)
             excluded_from_view_layer = layer_coll.exclude if layer_coll is not None else False
             col_exclude_state = exp_settings.filter.export_excluded
             if excluded_from_view_layer and col_exclude_state == ExcludedObject.NONE.value:
                 return None
-            settings[self.KW_NAME] = layer_name
+            settings[self.KW_NAME] = coll.name
             if layer_settings.entity_layer_color == "0":
                 settings[self.KW_RGB] = exp.color_exporter._get_collection_color(coll)[0]
             elif layer_settings.entity_layer_color == "1":
@@ -150,14 +164,12 @@ class LayerExporter(DataExporter):
             if layer_settings.entity_layer_color == "1":
                 update_settings_with_custom_props(context.scene)
 
-        layers = exp.doc.layers
-        layer_name = self.sanitize_name(prefix + settings.get(self.KW_NAME, "0") + suffix)
-        if override or layer_name not in layers:
-            self.create_layer(
-                name=layer_name,
-                rgb=settings.get(self.KW_RGB),
-                color=settings.get(self.KW_COLOR),
-                transparency=settings.get(self.KW_TRANSPARENCY),
-                freeze=settings.get(self.KW_FREEZE),
-            )
-        return layer_name
+        layer = self.create_layer(
+            name=prefix + settings.get(self.KW_NAME, "0") + suffix,
+            rgb=settings.get(self.KW_RGB),
+            color=settings.get(self.KW_COLOR),
+            transparency=settings.get(self.KW_TRANSPARENCY),
+            freeze=settings.get(self.KW_FREEZE),
+            override=override,
+        )
+        return layer.dxf.name

@@ -113,6 +113,7 @@ class PreferencesSettings(bpy.types.PropertyGroup):
     camera_suffix: bpy.props.StringProperty(default="VIEW", name="Cameras Suffix")
     curve_suffix: bpy.props.StringProperty(default="CURVES", name="Curves Suffix")
     dimension_suffix: bpy.props.StringProperty(default="DIMENSIONS", name="Dimensions Suffix")
+    material_prefix: bpy.props.StringProperty(default="MATERIAL", name="Material Prefix")
     
     sub_layers_suffixes_attrs = {
         FaceType: "face_suffix",

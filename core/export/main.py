@@ -274,9 +274,7 @@ class DXFExporter:
         mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects
         for mats in [o.data.materials for o in mat_objects if o.data and hasattr(o.data, "materials") and o.data.materials]:
             for mat in mats:
-                rgb, a = self.color_exporter._get_material_color(mat)
-                self.layer_exporter.create_layer(name="MATERIAL_" + mat.name, rgb=rgb,
-                                            transparency=1 - a if self.settings.default_layer.entity_layer_transparency else 0)
+                self.layer_exporter.get_or_create_layer_from_mat(mat)
 
     def export_file(self, path):
         self.doc.entitydb.purge()
