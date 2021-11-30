@@ -17,7 +17,7 @@ def draw_global(self, layout):
 
 
 def draw_local(layer_settings, layout, context, obj_name=None):
-    prefs = get_preferences(context).layer_preferences
+    prefs = get_preferences(context).settings.layer
     if obj_name is None:
         obj_name = "Default Object"
     layout.label(text=obj_name + " Layer")

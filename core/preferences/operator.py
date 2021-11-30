@@ -8,7 +8,7 @@ class DXFEXPORTER_OT_generate_aci_palette(bpy.types.Operator):
     bl_label = "Generate ACI Palette"
 
     def execute(self, context):
-        palette = get_preferences(context).aci_palette
+        palette = get_preferences(context).settings.aci_palette
         palette.clear()
         for c in ACI_RGB_MAPPING:
             new_color = palette.add()

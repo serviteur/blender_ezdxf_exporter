@@ -65,7 +65,7 @@ class LayerExporter(DataExporter):
 
     def get_or_create_layer_from_mat(self, mat: bpy.types.Material, override=True):
         rgb, a = get_material_color(mat)
-        name = get_preferences(self.exporter.context).layer_preferences.material_prefix + mat.name
+        name = get_preferences(self.exporter.context).settings.layer.material_prefix + mat.name
         return self.create_layer(
             name,
             rgb,
@@ -82,7 +82,7 @@ class LayerExporter(DataExporter):
         layer_to = layer_settings.entity_layer_to
         prefix = layer_settings.entity_layer_prefix
         suffix = (
-            get_preferences(exp.context).layer_preferences.get_sub_layer_suffix(entity_type)
+            get_preferences(exp.context).settings.layer.get_sub_layer_suffix(entity_type)
             if layer_settings.entity_layer_separate
             else ""
         )

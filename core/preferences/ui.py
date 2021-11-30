@@ -1,10 +1,9 @@
 import bpy
 
-from ezdxf_exporter.data.color.prop import ColorPropertyGroup
 from ezdxf_exporter.data.color.ui import draw_preferences as draw_palette
-
-from ezdxf_exporter.data.layer.prop import PreferencesSettings as LayerSettings
 from ezdxf_exporter.data.layer.ui import draw_preferences as draw_layer
+
+from .prop import Settings
 
 
 class DXFEXPORTERAddonPreferences(bpy.types.AddonPreferences):
@@ -16,9 +15,8 @@ class DXFEXPORTERAddonPreferences(bpy.types.AddonPreferences):
             ("Layers",) * 3,
         )
     )
-    aci_palette: bpy.props.CollectionProperty(type=ColorPropertyGroup)
     show_palette: bpy.props.BoolProperty(default=False, name="Show Palette")
-    layer_preferences: bpy.props.PointerProperty(type=LayerSettings)
+    settings: bpy.props.PointerProperty(type=Settings)
 
     def draw(self, context):
         layout = self.layout
@@ -27,4 +25,4 @@ class DXFEXPORTERAddonPreferences(bpy.types.AddonPreferences):
         if self.category == "ACI Palette":
             draw_palette(self, layout.box())
         elif self.category == "Layers":
-            draw_layer(self.layer_preferences, layout.box())
+            draw_layer(self.settings.layer, layout.box())

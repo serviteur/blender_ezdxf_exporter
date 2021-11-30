@@ -37,7 +37,7 @@ def draw(self, layout, obj_name=None):
 
 
 def draw_preferences(preferences, layout):
-    if preferences.aci_palette:
+    if preferences.settings.aci_palette:
         layout.prop(
             preferences,
             "show_palette",
@@ -47,7 +47,7 @@ def draw_preferences(preferences, layout):
         if preferences.show_palette:
             grid_even = layout.grid_flow(row_major=True, align=True, columns=10)
             grid_odd = layout.grid_flow(row_major=True, align=True, columns=10)
-            for i, pg in enumerate(preferences.aci_palette):
+            for i, pg in enumerate(preferences.settings.aci_palette):
                 if i > 10 and i % 2:
                     grid_odd.prop(pg, "value", text=str(i))
                 else:
