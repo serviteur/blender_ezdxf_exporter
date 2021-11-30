@@ -1,9 +1,11 @@
-from ezdxf_exporter.core.shared_maths import (
-    get_256_rgb_a,
-    rgb_to_hex,
-)
 from ezdxf_exporter.core.export.prop import DataExporter
 from .constants import EntityColor
+from .helper import (
+    get_256_rgb_a,
+    rgb_to_hex,
+    get_material_color,
+    get_object_color,
+)
 
 
 class ColorExporter(DataExporter):
@@ -35,7 +37,7 @@ class ColorExporter(DataExporter):
         if color_settings.entity_color_to == EntityColor.COLLECTION.value:
             return self._get_collection_color(obj.users_collection[0])
         elif color_settings.entity_color_to == EntityColor.OBJECT.value:
-            return self._get_object_color(obj)
+            return get_object_color(obj)
         elif color_settings.entity_color_to == EntityColor.CUSTOM.value:
             return get_256_rgb_a(color_settings.entity_color_custom)
         elif (
@@ -43,7 +45,7 @@ class ColorExporter(DataExporter):
             and obj.data.materials
             and obj.data.materials[0] is not None
         ):
-            return self._get_material_color(obj.data.materials[0])
+            return get_material_color(obj.data.materials[0])
         return None, None
 
     def get_color_from_custom_prop(self, obj, prop_name):
@@ -76,13 +78,3 @@ class ColorExporter(DataExporter):
                         return get_256_rgb_a(coll_colors[int(parent.color_tag[-2:]) - 1].color)
                     parent = exp.coll_parents.get(parent)
         return None, None
-
-    @classmethod
-    def _get_object_color(cls, obj):
-        "Returns the object color as a 0-255 rgb color + alpha"
-        return get_256_rgb_a(obj.color)
-
-    @classmethod
-    def _get_material_color(cls, mat):
-        "Returns the material color as a 0-255 rgb color + alpha"
-        return get_256_rgb_a(mat.diffuse_color)

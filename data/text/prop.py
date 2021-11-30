@@ -7,7 +7,7 @@ from bpy.props import (
 )
 
 from ezdxf_exporter.data.color.constants import ACIColor
-from ezdxf_exporter.core.shared_maths import get_256_rgb_a
+from ezdxf_exporter.data.color.helper import get_256_rgb_a
 from .constants import FillColor, FONTS_TTF
 from .ui import draw
 

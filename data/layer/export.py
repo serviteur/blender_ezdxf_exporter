@@ -4,6 +4,7 @@ import ezdxf
 import bpy
 from ezdxf_exporter.data.filter.constants import ExcludedObject
 from ezdxf_exporter.data.layer.constants import EntityLayer
+from ezdxf_exporter.data.color.helper import get_material_color, get_object_color
 
 from ezdxf_exporter.core.export.prop import DataExporter
 from ezdxf_exporter.core.preferences.helper import get_preferences
@@ -57,7 +58,7 @@ class LayerExporter(DataExporter):
             layer.freeze()
         return layer
 
-    def get_or_create_layer(self, obj: bpy.types.Object, entity_type: Enum, override: bool = True):
+        rgb, a = get_material_color(mat)
         "Create the layer if needed and returns its name. Depends on the type of obj passed as parameter"
         exp = self.exporter
         context = exp.context
@@ -113,7 +114,7 @@ class LayerExporter(DataExporter):
                 return None
 
             if layer_settings.entity_layer_color == "0":
-                rgb, a = exp.color_exporter._get_object_color(obj)
+                rgb, a = get_object_color(obj)
 
                 settings.update(
                     {
@@ -132,7 +133,7 @@ class LayerExporter(DataExporter):
                 return None
 
             if layer_settings.entity_layer_color == "0":
-                rgb, a = exp.color_exporter._get_material_color(mat)
+                rgb, a = get_material_color(mat)
 
                 settings.update(
                     {
