@@ -5,7 +5,7 @@ from ezdxf_exporter.data.unit.ui import draw_settings as draw_units
 def draw(self, layout, context):
     self.filter.draw(layout)
     draw_choice_settings(self, layout, context)
-    layer_box = draw_local_layer(self.default_layer, layout, context)
+    layer_box = draw_local_layer(self.default_layer, layout)
     self.layer_global.draw(layer_box)
     self.default_color.draw(layout)
     draw_units(self.unit, layout, use_box=True)

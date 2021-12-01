@@ -1,5 +1,3 @@
-from ezdxf_exporter.core.preferences.helper import get_preferences
-
 from .constants import EntityLayer
 
 
@@ -16,29 +14,15 @@ def draw_global(self, layout):
     mat_layer_link.active = self.material_layer_export
 
 
-def draw_local(layer_settings, layout, context, obj_name=None):
-    prefs = get_preferences(context).settings.layer
+def draw_local(layer_settings, layout, obj_name=None):
     if obj_name is None:
         obj_name = "Default Object"
     layout.label(text=obj_name + " Layer")
     layer_box = layout.box()
     layer_box.prop(layer_settings, "entity_layer_to", text="")
     row = layer_box.row()
-    use_prefs_prefix_suffix = layer_settings.entity_layer_preferences_prefix_suffix
-    if use_prefs_prefix_suffix:
-        sub_row = row.row()
-        sub_row.prop(prefs, "layer_prefix", text="Prefix")
-        sub_row.prop(prefs, "layer_suffix", text="Suffix")
-        sub_row.enabled = False
-    else:
-        row.prop(layer_settings, "entity_layer_prefix", text="Prefix")
-        row.prop(layer_settings, "entity_layer_suffix", text="Suffix")
-    row.prop(
-        layer_settings,
-        "entity_layer_preferences_prefix_suffix",
-        icon="LINKED" if use_prefs_prefix_suffix else "UNLINKED",
-        text="",
-    )
+    row.prop(layer_settings, "entity_layer_prefix", text="Prefix")
+    row.prop(layer_settings, "entity_layer_suffix", text="Suffix")
     layer_color_split = layer_box.split(factor=0.5)
     layer_color_split.prop(layer_settings, "entity_layer_color")
     layer_setting = layer_color_split.row()
@@ -53,7 +37,8 @@ def draw_local(layer_settings, layout, context, obj_name=None):
     ) or layer_settings.entity_layer_color == "1"
     if layer_settings.entity_layer_color == "1":
         layer_box.prop(layer_settings, "entity_layer_color_custom_prop_name")
-    layer_box.prop(layer_settings, "entity_layer_separate")
+    if layer_settings.is_default_layer:
+        layer_box.prop(layer_settings, "entity_layer_separate")
 
     return layer_box
 
@@ -62,7 +47,6 @@ def draw_preferences(settings, layout):
     layer_settings = settings.layer
     layout.prop(layer_settings, "layer_prefix")
     layout.prop(layer_settings, "layer_suffix")
-    layout.prop(layer_settings, "use_prefix_suffix_prefs")
     layout.label(text="Sub-layer suffixes :")
     for attr in layer_settings.sub_layers_suffixes_attrs.values():
         layout.prop(layer_settings, attr)

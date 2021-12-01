@@ -5,6 +5,8 @@ from bpy.props import (
     StringProperty,
 )
 
+from ezdxf_exporter.core.preferences.helper import get_preferences
+
 from ezdxf_exporter.data.text.constants import TextType
 from ezdxf_exporter.data.mesh.constants import (
     FaceType,
@@ -16,8 +18,10 @@ from ezdxf_exporter.data.camera.constants import CameraType
 from ezdxf_exporter.data.curve.constants import CurveType
 from ezdxf_exporter.data.dimension.constants import DimensionType
 
+
 from .ui import draw_global
 from .constants import EntityLayer
+
 
 class GlobalLayerSettings(bpy.types.PropertyGroup):
     material_layer_export: BoolProperty(
@@ -49,12 +53,6 @@ class LayerSettings(bpy.types.PropertyGroup):
         description="Suffix layer with this",
     )
 
-    entity_layer_preferences_prefix_suffix: BoolProperty(
-        name="Use Preferences Values",
-        description="Enable this to use Preferences Prefix and Suffix",
-        default=False,
-    )
-
     entity_layer_to: EnumProperty(
         name="Object Layer",
         default=EntityLayer.COLLECTION.value,
@@ -67,6 +65,8 @@ class LayerSettings(bpy.types.PropertyGroup):
         description="Different Entity Types (MESH, POINT, MTEXT...) are drawn on separate sub-layers",
         default=False,
     )
+
+    is_default_layer: BoolProperty(default=True)
 
     entity_layer_color: EnumProperty(
         name="Color",
@@ -100,11 +100,6 @@ class LayerSettings(bpy.types.PropertyGroup):
 class PreferencesSettings(bpy.types.PropertyGroup):
     layer_prefix: bpy.props.StringProperty(name="Default Layer Prefix")
     layer_suffix: bpy.props.StringProperty(name="Default Layer Suffix")
-    use_prefix_suffix_prefs: BoolProperty(
-        name="Use Default Layer Prefix and Suffix",
-        description="If enabled, this option will automatically add the preferences Prefix and Suffix in layer names",
-        default=False,
-    )
     face_suffix: bpy.props.StringProperty(default="FACES", name="Faces Suffix")
     line_suffix: bpy.props.StringProperty(default="EDGES", name="Edges Suffix")
     point_suffix: bpy.props.StringProperty(default="VERTICES", name="Vertices Suffix")
@@ -114,7 +109,7 @@ class PreferencesSettings(bpy.types.PropertyGroup):
     curve_suffix: bpy.props.StringProperty(default="CURVES", name="Curves Suffix")
     dimension_suffix: bpy.props.StringProperty(default="DIMENSIONS", name="Dimensions Suffix")
     material_prefix: bpy.props.StringProperty(default="MATERIAL", name="Material Prefix")
-    
+
     sub_layers_suffixes_attrs = {
         FaceType: "face_suffix",
         LineType: "line_suffix",
@@ -132,5 +127,3 @@ class PreferencesSettings(bpy.types.PropertyGroup):
             return ""
         else:
             return getattr(self, attr)
-
-

@@ -39,7 +39,8 @@ class EntityProperties(bpy.types.PropertyGroup):
 
     def set_default(self, context):
         prefs = get_preferences(context).settings.layer
-        self.layer.entity_layer_preferences_prefix_suffix = prefs.use_prefix_suffix_prefs
+        self.layer.entity_layer_prefix = prefs.layer_prefix
+        self.layer.entity_layer_suffix = prefs.layer_suffix
 
 
 class Settings(bpy.types.PropertyGroup):

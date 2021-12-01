@@ -66,7 +66,7 @@ def draw_choice_settings(settings, layout, context):
             split.label(text="")
             box = split.box()
             if settings:
-                draw_local_layer(settings.layer, box, context, obj_name=name)
+                draw_local_layer(settings.layer, box, obj_name=name)
                 settings.color.draw(box, obj_name=name)
 
     # TODO Add custom settings for dimensions

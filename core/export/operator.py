@@ -40,7 +40,9 @@ class DXFEXPORTER_OT_Export(bpy.types.Operator, ExportHelper):
     def invoke(self, context, event):
         self.settings.entities.add()  # First one will be the "Default" properties
         for customizable_entity_prop in PreferencesSettings.sub_layers_suffixes_attrs:
-            self.settings.entities.add().id = customizable_entity_prop.__name__
+            new = self.settings.entities.add()
+            new.id = customizable_entity_prop.__name__
+            new.layer.is_default_layer = False
         for entity_settings in self.settings.entities:
             entity_settings.set_default(context)
         self.settings.unit.set_default(context)
