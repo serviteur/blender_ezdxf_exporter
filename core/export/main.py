@@ -19,6 +19,7 @@ from ezdxf_exporter.data.text.export import TextExporter
 from ezdxf_exporter.data.camera.export import CameraExporter
 from ezdxf_exporter.data.curve.export import SplineExporter
 from ezdxf_exporter.data.layer.export import LayerExporter
+from ezdxf_exporter.data.unit.export import UnitExporter
 from ezdxf.math import Vec3
 
 
@@ -29,9 +30,7 @@ class DXFExporter:
     def __init__(self, context, settings, objects, coll_parents):
         # Create new document
         self.doc = ezdxf.new(dxfversion="R2010")
-        self.doc.header['$INSUNITS'] = 6  # Insertion units : Meters
-        self.doc.header['$MEASUREMENT'] = 1  # Metric system
-        # See https://ezdxf.readthedocs.io/en/stable/concepts/units.html
+
         self.msp = self.doc.modelspace()  # Access to dxf Modelspace
 
         self.context = context

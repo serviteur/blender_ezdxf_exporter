@@ -2,6 +2,7 @@ import bpy
 
 from ezdxf_exporter.data.color.ui import draw_preferences as draw_palette
 from ezdxf_exporter.data.layer.ui import draw_preferences as draw_layer
+from ezdxf_exporter.data.unit.ui import draw_preferences as draw_unit
 
 from .prop import Settings
 
