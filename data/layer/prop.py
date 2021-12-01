@@ -66,8 +66,6 @@ class LayerSettings(bpy.types.PropertyGroup):
         default=False,
     )
 
-    is_default_layer: BoolProperty(default=True)
-
     entity_layer_color: EnumProperty(
         name="Color",
         description="Set layer color",

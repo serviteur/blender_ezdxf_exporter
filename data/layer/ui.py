@@ -14,7 +14,7 @@ def draw_global(self, layout):
     mat_layer_link.active = self.material_layer_export
 
 
-def draw_local(layer_settings, layout, obj_name=None):
+def draw_local(layer_settings, layout, obj_name=None, is_default_layer=True):
     if obj_name is None:
         obj_name = "Default Object"
     layout.label(text=obj_name + " Layer")
@@ -37,7 +37,7 @@ def draw_local(layer_settings, layout, obj_name=None):
     ) or layer_settings.entity_layer_color == "1"
     if layer_settings.entity_layer_color == "1":
         layer_box.prop(layer_settings, "entity_layer_color_custom_prop_name")
-    if layer_settings.is_default_layer:
+    if is_default_layer:
         layer_box.prop(layer_settings, "entity_layer_separate")
 
     return layer_box
