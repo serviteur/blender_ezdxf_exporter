@@ -27,6 +27,27 @@ class PreferencesSettings(bpy.types.PropertyGroup):
         default="None",
         name="Multiple",
     )
+    display_numbers: bpy.props.EnumProperty(
+        items=(
+            ("1", "Scientific", "Scientific notation (eg 2.35e10^5)"),
+            ("2", "Decimal", "Decimal notation"),
+            ("3", "Engineering", "Engineering notation"),
+            ("4", "Architectural", "Architectural notation"),
+            ("5", "Fractional", "Fractional notation"),
+        ),
+        default="2",
+        name="Display numbers",
+    )
+    display_angles: bpy.props.EnumProperty(
+        items=(
+            ("0", "Decimal degrees", ""),
+            ("1", "Degrees/minutes/seconds", ""),
+            ("2", "Grad", ""),
+            ("3", "Radians", ""),
+        ),
+        default="0",
+        name="Display angles",
+    )
 
     @property
     def use_imperial(self):

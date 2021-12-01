@@ -14,3 +14,5 @@ class UnitExporter(DataExporter):
             self.exporter.log.append("Unit multiple is not valid. Using unit without multiple")
         self.exporter.doc.header["$INSUNITS"] = index
         self.exporter.doc.header["$MEASUREMENT"] = units_prefs.use_imperial - 1  # 0 : Imperial, 1 : Metric
+        self.exporter.doc.header["$LUNITS"] = units_prefs.display_numbers
+        self.exporter.doc.header["$AUNITS"] = units_prefs.display_angles
