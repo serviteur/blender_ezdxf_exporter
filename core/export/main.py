@@ -1,5 +1,6 @@
 from typing import Dict
 import ezdxf
+
 from ezdxf_exporter.data.choice.prop import (
     CurveType,
     FaceType,
@@ -8,7 +9,7 @@ from ezdxf_exporter.data.choice.prop import (
     EmptyType,
     TextType,
     CameraType,
-    NO_EXPORT
+    NO_EXPORT,
 )
 from ezdxf_exporter.data.block.export import BlockExporter
 from ezdxf_exporter.data.color.export import ColorExporter
@@ -24,10 +25,13 @@ from ezdxf.math import Vec3
 
 
 class DXFExporter:
-    supported_types = {'MESH', 'CURVE', 'META',
-                       'SURFACE', 'FONT', 'EMPTY', 'CAMERA'}
+    supported_types = {"MESH", "CURVE", "META", "SURFACE", "FONT", "EMPTY", "CAMERA"}
 
     def __init__(self, context, settings, objects, coll_parents):
+        self.debug_mode = False  # TODO implement debug mode
+        self.log = []
+        self.exported_objects = 0
+
         # Create new document
         self.doc = ezdxf.new(dxfversion="R2010")
 
@@ -45,6 +49,7 @@ class DXFExporter:
         self.text_exporter = TextExporter(self)
         self.camera_exporter = CameraExporter(self)
         self.spline_exporter = SplineExporter(self)
+        self.unit_exporter = UnitExporter(self)
 
         self.update_supported_types()
         self.objects = [o for o in objects if o.type in self.supported_types]
@@ -56,17 +61,13 @@ class DXFExporter:
 
         self.coll_parents = coll_parents
 
-        self.debug_mode = False  # TODO implement debug mode
-        self.log = []
-        self.exported_objects = 0
-
     def update_supported_types(self):
         "Dynamically update supported object types. Use before filtering them"
         for attr, _type in (
-            ("empties_export", 'EMPTY'),
-            ("texts_export", 'FONT'),
-            ("cameras_export", 'CAMERA'),
-            ("curves_export", 'CURVE'),
+            ("empties_export", "EMPTY"),
+            ("texts_export", "FONT"),
+            ("cameras_export", "CAMERA"),
+            ("curves_export", "CURVE"),
         ):
             if getattr(self.settings.choice, attr, NO_EXPORT) == NO_EXPORT:
                 self.supported_types.discard(_type)
@@ -84,11 +85,10 @@ class DXFExporter:
     def filter_objects(self):
         "Pops objects from the objects container and populate respective pools if they aren't exported as Mesh"
         for attr, value, _type, container in (
-            ("texts_export", TextType.MESH.value, 'FONT', self.objects_text),
-            ("empties_export", EmptyType.POINT.value,
-             'EMPTY', self.objects_empty_blocks),
-            ("cameras_export", CameraType.NONE.value, 'CAMERA', self.objects_camera),
-            ("curves_export", CurveType.MESH.value, 'CURVE', self.objects_curve),
+            ("texts_export", TextType.MESH.value, "FONT", self.objects_text),
+            ("empties_export", EmptyType.POINT.value, "EMPTY", self.objects_empty_blocks),
+            ("cameras_export", CameraType.NONE.value, "CAMERA", self.objects_camera),
+            ("curves_export", CurveType.MESH.value, "CURVE", self.objects_curve),
         ):
             export_as = getattr(self.settings.choice, attr) == value
             for i in range(len(self.objects) - 1, -1, -1):
@@ -128,7 +128,8 @@ class DXFExporter:
                 # TODO : like texts, derive raa from matrix_world
                 self.transform_exporter.get_rotation_axis_angle(curve),
                 dxfattribs,
-                callback=lambda e: self.on_entity_created(curve, e, dxfattribs))
+                callback=lambda e: self.on_entity_created(curve, e, dxfattribs),
+            )
 
     def export_texts(self):
         "Export FONT Objects as MTEXT or TEXT entities"
@@ -159,8 +160,7 @@ class DXFExporter:
         [self.write_mesh_object(obj) for obj in not_blocks]
         for obj, (block, _) in blocks_dic.items():
             # Create the BLOCK def which all linked objects will instantiate
-            self.write_mesh_object(
-                obj=obj, layout=block, is_block=True)
+            self.write_mesh_object(obj=obj, layout=block, is_block=True)
         for block, objs in blocks_dic.values():
             # Instantiate all linked objects from block definition
             [self.write_block(block, obj) for obj in objs]
@@ -195,20 +195,16 @@ class DXFExporter:
         settings = self.settings
         data_settings = settings.choice
 
-        if obj.type == 'EMPTY':
+        if obj.type == "EMPTY":
             dxfattribs = self.get_dxf_attribs(obj, EmptyType)
             if not dxfattribs:
                 return
             self.mesh_exporter.create_mesh_point(
-                self.msp,
-                obj.location,
-                dxfattribs,
-                callback=lambda e: self.on_entity_created(obj, e, dxfattribs))
+                self.msp, obj.location, dxfattribs, callback=lambda e: self.on_entity_created(obj, e, dxfattribs)
+            )
         else:
-            evaluated_mesh = self.mesh_exporter.get_evaluated_mesh(
-                obj, self.context)
-            evaluated_mesh.transform(
-                self.transform_exporter.get_matrix(obj, is_block))
+            evaluated_mesh = self.mesh_exporter.get_evaluated_mesh(obj, self.context)
+            evaluated_mesh.transform(self.transform_exporter.get_matrix(obj, is_block))
             # Since Mesh Objects can be exported as Faces, Edges and Vertices
             # We loop through all three of these options
             i = -1
@@ -222,21 +218,17 @@ class DXFExporter:
                 if mesh_method is None:
                     continue
                 self.color_exporter.populate_dxfattribs(obj, dxfattribs, mesh_type)
-                if not self.layer_exporter.populate_dxfattribs(
-                        obj,
-                        dxfattribs,
-                        entity_type=mesh_type,
-                        override=True):
+                if not self.layer_exporter.populate_dxfattribs(obj, dxfattribs, entity_type=mesh_type, override=True):
                     continue
                 if i == 2:
                     # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
-                    self.mesh_exporter.triangulate_if_needed(
-                        evaluated_mesh, obj.type)
+                    self.mesh_exporter.triangulate_if_needed(evaluated_mesh, obj.type)
                 mesh_method(
                     self.msp if layout is None else layout,
                     evaluated_mesh,
                     dxfattribs.copy(),
-                    callback=lambda e: self.on_entity_created(obj, e, dxfattribs, is_block=is_block))
+                    callback=lambda e: self.on_entity_created(obj, e, dxfattribs, is_block=is_block),
+                )
         if self.debug_mode:
             self.log.append(f"{obj.name} WAS exported.")
             self.exported_objects += 1
@@ -250,7 +242,8 @@ class DXFExporter:
             self.transform_exporter.get_matrix(obj),
             self.transform_exporter.get_rotation_axis_angle(obj),
             dxfattribs,
-            callback=lambda e: self.on_entity_created(obj, e, dxfattribs))
+            callback=lambda e: self.on_entity_created(obj, e, dxfattribs),
+        )
 
         if self.debug_mode:
             self.log.append(f"{obj.name} was added as a Block")
@@ -261,17 +254,16 @@ class DXFExporter:
             # TODO : Angle dimensions
             if len(s.points) != 2:
                 continue
-            self.dimension_exporter.add_aligned_dim(
-                s.points[0].co,
-                s.points[1].co,
-                5)
+            self.dimension_exporter.add_aligned_dim(s.points[0].co, s.points[1].co, 5)
 
     def export_materials_as_layers(self):
         layer_settings = self.settings.layer_global
         if not layer_settings.material_layer_export:
             return
         mat_objects = self.objects if layer_settings.material_layer_export_only_selected else self.context.scene.objects
-        for mats in [o.data.materials for o in mat_objects if o.data and hasattr(o.data, "materials") and o.data.materials]:
+        for mats in [
+            o.data.materials for o in mat_objects if o.data and hasattr(o.data, "materials") and o.data.materials
+        ]:
             for mat in mats:
                 self.layer_exporter.get_or_create_layer_from_mat(mat)
 
