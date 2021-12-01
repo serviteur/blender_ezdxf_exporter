@@ -1,5 +1,7 @@
 import bpy
 
+from ezdxf_exporter.core.preferences.helper import get_preferences
+
 
 class PreferencesSettings(bpy.types.PropertyGroup):
     unit: bpy.props.EnumProperty(
@@ -52,3 +54,12 @@ class PreferencesSettings(bpy.types.PropertyGroup):
     @property
     def use_imperial(self):
         return self.unit != "Metre"
+    
+    def set_default(self, context):
+        unit_prefs = get_preferences(context).settings.unit
+        self.unit = unit_prefs.unit
+        self.multiple = unit_prefs.multiple
+        self.display_numbers = unit_prefs.display_numbers
+        self.display_angles = unit_prefs.display_angles
+
+

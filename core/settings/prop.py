@@ -12,6 +12,7 @@ from ezdxf_exporter.data.layer.prop import GlobalLayerSettings
 from ezdxf_exporter.data.transform.prop import TransformSettings
 from ezdxf_exporter.data.filter.prop import FilterSettings, ExportObjects, ExcludedObject
 from ezdxf_exporter.data.text.prop import TextSettings
+from ezdxf_exporter.data.unit.prop import PreferencesSettings as UnitSettings
 
 from ezdxf_exporter.core.preferences.helper import get_preferences
 
@@ -49,6 +50,7 @@ class Settings(bpy.types.PropertyGroup):
     # Note : The 1st element is the default settings if no entity overrides it
     entities: CollectionProperty(type=EntityProperties)
     text: PointerProperty(type=TextSettings)
+    unit: PointerProperty(type=UnitSettings)
 
     def get_objects(self, context):
         export_setting = self.filter.export_objects
