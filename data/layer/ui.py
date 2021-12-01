@@ -59,9 +59,10 @@ def draw_local(layer_settings, layout, context, obj_name=None):
 
 
 def draw_preferences(settings, layout):
-    layout.prop(settings, "layer_prefix")
-    layout.prop(settings, "layer_suffix")
-    layout.prop(settings, "use_prefix_suffix_prefs")
+    layer_settings = settings.layer
+    layout.prop(layer_settings, "layer_prefix")
+    layout.prop(layer_settings, "layer_suffix")
+    layout.prop(layer_settings, "use_prefix_suffix_prefs")
     layout.label(text="Sub-layer suffixes :")
-    for attr in settings.sub_layers_suffixes_attrs.values():
-        layout.prop(settings, attr)
+    for attr in layer_settings.sub_layers_suffixes_attrs.values():
+        layout.prop(layer_settings, attr)
