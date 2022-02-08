@@ -11,7 +11,7 @@ bl_info = {
     "author": "Gorgious",
     "description": """Multifunction DXf exporter""",
     "blender": (2, 93, 0),
-    "version": (0, 0, 4),
+    "version": (0, 0, 5),
     "location": "",
     "warning": "",
     "category": "Import-Export",
