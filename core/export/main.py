@@ -1,5 +1,6 @@
 from typing import Dict
 import ezdxf
+from ezdxf.math import Vec3
 
 from ezdxf_exporter.data.choice.prop import (
     CurveType,
@@ -21,7 +22,6 @@ from ezdxf_exporter.data.camera.export import CameraExporter
 from ezdxf_exporter.data.curve.export import SplineExporter
 from ezdxf_exporter.data.layer.export import LayerExporter
 from ezdxf_exporter.data.unit.export import UnitExporter
-from ezdxf.math import Vec3
 
 
 class DXFExporter:
