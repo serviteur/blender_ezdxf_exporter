@@ -48,11 +48,11 @@ def draw_choice_settings(settings, layout, context):
         geom_split = geom_split.split(factor=0.9, align=True)
         geom_split.prop(self, prop, text="")
 
-        settings = entities_settings_dic.get(entity_type.__name__)
-        if not settings:
+        entities_settings = entities_settings_dic.get(entity_type.__name__)
+        if not entities_settings:
             continue
         link_row = geom_split.row(align=True)
-        link_row.prop(settings, "use_default", text="", icon="LINKED" if settings.use_default else "UNLINKED")
+        link_row.prop(entities_settings, "use_default", text="", icon="LINKED" if entities_settings.use_default else "UNLINKED")
         # NO_EXPORT is the same for all entity enums
         is_export = getattr(self, prop) != NO_EXPORT
         link_row.active = is_export
@@ -61,13 +61,13 @@ def draw_choice_settings(settings, layout, context):
         if prop == "texts_export" and getattr(self, prop) == TextType.MTEXT.value:
             settings.text.draw(col)
 
-        if is_export and not settings.use_default:
+        if is_export and not entities_settings.use_default:
             split = col.split(factor=0.02)
             split.label(text="")
             box = split.box()
-            if settings:
-                draw_local_layer(settings.layer, box, obj_name=name, is_default_layer=False)
-                settings.color.draw(box, obj_name=name)
+            if entities_settings:
+                draw_local_layer(entities_settings.layer, box, obj_name=name, is_default_layer=False)
+                entities_settings.color.draw(box, obj_name=name)
 
     # TODO Add custom settings for dimensions
     self.use_dimensions = (
