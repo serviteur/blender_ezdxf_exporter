@@ -58,16 +58,24 @@ class MeshExporter(DataExporter):
                 callback(line)
 
     def _create_mesh_polylines(self, layout, mesh, dxfattribs, callback=None):
-        for e in mesh.edges:
-            polyline = layout.add_polyline3d(
-                (
-                    mesh.vertices[e.vertices[0]].co,
-                    mesh.vertices[e.vertices[1]].co,
-                ),
-                dxfattribs=dxfattribs,
-            )
-            if callback is not None:
-                callback(polyline)
+        vertices = mesh.vertices
+        if mesh.polygons:  # We assume if there are polygons we don't want to export edges as lines
+            for p in mesh.polygons:
+                polyline = layout.add_polyline3d([vertices[v_idx].co for v_idx in p.vertices], dxfattribs=dxfattribs)
+                polyline.dxf.flags += 1  # Ensure the polyline is closed
+                if callback is not None:
+                    callback(polyline)
+        else:
+            for e in mesh.edges:
+                polyline = layout.add_polyline3d(
+                    (
+                        vertices[e.vertices[0]].co,
+                        vertices[e.vertices[1]].co,
+                    ),
+                    dxfattribs=dxfattribs,
+                )
+                if callback is not None:
+                    callback(polyline)
 
     def _create_mesh_polyface(self, layout, mesh, dxfattribs, callback=None):
         if len(mesh.polygons) > 0:
