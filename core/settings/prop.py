@@ -58,6 +58,8 @@ class Settings(bpy.types.PropertyGroup):
         exclude_setting = self.filter.export_excluded
         if export_setting == ExportObjects.SELECTED.value:
             return context.selected_objects
+        elif export_setting == ExportObjects.VISIBLE.value:
+            return context.visible_objects
         elif export_setting == ExportObjects.SCENE.value:
             if exclude_setting == ExcludedObject.NONE:
                 return [

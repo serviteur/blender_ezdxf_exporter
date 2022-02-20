@@ -11,4 +11,7 @@ def draw(self, layout):
     split = col.split(factor=0.3)
     split.label(text="Excluded as")
     split.prop(self, "export_excluded", text="")
-    split.active = self.export_objects != ExportObjects.SELECTED.value
+    split.active = self.export_objects not in (
+        ExportObjects.SELECTED.value,
+        ExportObjects.VISIBLE.value,
+    )

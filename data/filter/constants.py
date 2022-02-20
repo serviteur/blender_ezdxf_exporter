@@ -10,6 +10,7 @@ class ExcludedObject(Enum):
 
 class ExportObjects(Enum):
     SELECTED = "Only Selected"
+    VISIBLE = "Only Visible"
     SCENE = "Current Scene"
     # VIEW_LAYER = "Current View Layer"
     ALL = "All Objects in file"
