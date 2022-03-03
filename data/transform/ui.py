@@ -11,6 +11,9 @@ def draw(self, layout):
     scale_box_z.prop(self, "export_scale", index=2, text="Z")
     scale_box_z.enabled = not self.uniform_export_scale
 
+    layout.label(text="Coordinate System")
+    layout.prop(self, "ucs")
+
     layout.label(text="Delta XYZ")
     col = layout.box().column(align=True)
     col.prop(self, "delta_xyz", index=0, text="X")

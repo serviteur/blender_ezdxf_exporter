@@ -2,9 +2,11 @@ from bpy.types import PropertyGroup
 from bpy.props import (
     FloatVectorProperty,
     BoolProperty,
+    EnumProperty,
 )
 from .helper import update_export_scale
 from .ui import draw
+from .constants import UCS, UCS_DESCRIPTIONS
 
 
 class TransformSettings(PropertyGroup):
@@ -29,6 +31,13 @@ class TransformSettings(PropertyGroup):
         description="This parameter will scale every entity globally, starting at the center of the world (0, 0, 0)",
         default=(1, 1, 1),
         update=update_export_scale,
+    )
+
+    ucs: EnumProperty(
+        name="UCS",
+        description="User Coordinate System",
+        items=((ucs_item.value, ucs_item.value.title(), UCS_DESCRIPTIONS.get(ucs_item.value, "")) for ucs_item in UCS),
+        default="GLOBAL",
     )
 
     def draw(self, layout):
