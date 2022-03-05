@@ -1,7 +1,7 @@
 from mathutils import Matrix
 from bpy.types import Object
 from ezdxf_exporter.core.export.prop import DataExporter
-from ezdxf_exporter.data.transform.constants import UCS
+from ezdxf_exporter.data.transform.helper import get_ucs_matrix
 
 
 class TransformExporter(DataExporter):
@@ -10,13 +10,7 @@ class TransformExporter(DataExporter):
             return Matrix()
         else:
             settings = self.exporter.settings.transform
-            if settings.ucs == UCS.GLOBAL.value:
-                ucs_matrix = Matrix.Identity(4)
-            elif settings.ucs == UCS.CAMERA.value:
-                active_camera = self.exporter.context.scene.camera
-                ucs_matrix = active_camera.matrix_world.inverted()
-            else:
-                ucs_matrix = Matrix.Identity(4)
+            ucs_matrix = get_ucs_matrix(settings.ucs, self.exporter.context)
             matrix = ucs_matrix @ obj.matrix_world
             if settings.export_scale != (1, 1, 1):
                 mx = Matrix.Scale(settings.export_scale[0], 4, (1, 0, 0))
