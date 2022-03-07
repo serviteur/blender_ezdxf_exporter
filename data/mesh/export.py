@@ -61,12 +61,19 @@ class MeshExporter(DataExporter):
         vertices = mesh.vertices
         z_scale_export = self.exporter.settings.transform.export_scale[2]
         polyline_func = layout.add_lwpolyline if z_scale_export == 0 else layout.add_polyline3d
-        if mesh.polygons:  # We assume if there are polygons we don't want to export edges as lines
+        if mesh.polygons:
+            edges = set(e.vertices for e in mesh.edges)
             for p in mesh.polygons:
+                edges.difference_update(p.edge_keys)
                 polyline = polyline_func([vertices[v_idx].co for v_idx in p.vertices], dxfattribs=dxfattribs)
                 polyline.dxf.flags += 1  # Ensure the polyline is closed
                 if callback is not None:
                     callback(polyline)
+            for v1, v2 in edges:
+                polyline = polyline_func((vertices[v1].co, vertices[v2].co), dxfattribs=dxfattribs)
+                if callback is not None:
+                    callback(polyline)
+
         else:
             for e in mesh.edges:
                 polyline = polyline_func(
