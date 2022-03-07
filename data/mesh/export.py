@@ -61,26 +61,29 @@ class MeshExporter(DataExporter):
         vertices = mesh.vertices
         z_scale_export = self.exporter.settings.transform.export_scale[2]
         polyline_func = layout.add_lwpolyline if z_scale_export == 0 else layout.add_polyline3d
+        new_entities = []
         if mesh.polygons:
             edges_not_part_of_a_polygon = set(tuple(sorted((e.vertices[0], e.vertices[1]))) for e in mesh.edges)
             edges_part_of_a_polygon = set()
             for p in mesh.polygons:
                 edges_part_of_a_polygon.update(tuple(sorted((k[0], k[1]))) for k in p.edge_keys)
                 polyline = polyline_func([vertices[v_idx].co for v_idx in p.vertices], dxfattribs=dxfattribs)
+                polyline.dxf.flags += 1  # Close Polyline
+                new_entities.append(polyline)
             edges_not_part_of_a_polygon.difference_update(edges_part_of_a_polygon)
             for v1, v2 in edges_not_part_of_a_polygon:
                 polyline = polyline_func((vertices[v1].co, vertices[v2].co), dxfattribs=dxfattribs)
-                if callback is not None:
-                    callback(polyline)
-
+                new_entities.append(polyline)
         else:
             for e in mesh.edges:
                 polyline = polyline_func(
                     (vertices[e.vertices[0]].co, vertices[e.vertices[1]].co),
                     dxfattribs=dxfattribs,
                 )
-                if callback is not None:
-                    callback(polyline)
+                new_entities.append(polyline)
+        if callback is not None:
+            for entity in new_entities:
+                callback(entity)
 
     def _create_mesh_polyface(self, layout, mesh, dxfattribs, callback=None):
         if len(mesh.polygons) > 0:
