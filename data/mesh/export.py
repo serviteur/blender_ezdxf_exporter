@@ -59,9 +59,9 @@ class MeshExporter(DataExporter):
 
     def _create_mesh_polylines(self, layout, mesh, dxfattribs, callback=None):
         vertices = mesh.vertices
+        z_scale_export = self.exporter.settings.transform.export_scale[2]
+        polyline_func = layout.add_lwpolyline if z_scale_export == 0 else layout.add_polyline3d
         if mesh.polygons:  # We assume if there are polygons we don't want to export edges as lines
-            z_scale_export = self.exporter.settings.transform.export_scale[2]
-            polyline_func = layout.add_lwpolyline if z_scale_export == 0 else layout.add_polyline3d
             for p in mesh.polygons:
                 polyline = polyline_func([vertices[v_idx].co for v_idx in p.vertices], dxfattribs=dxfattribs)
                 polyline.dxf.flags += 1  # Ensure the polyline is closed
@@ -69,11 +69,8 @@ class MeshExporter(DataExporter):
                     callback(polyline)
         else:
             for e in mesh.edges:
-                polyline = layout.add_polyline3d(
-                    (
-                        vertices[e.vertices[0]].co,
-                        vertices[e.vertices[1]].co,
-                    ),
+                polyline = polyline_func(
+                    (vertices[e.vertices[0]].co, vertices[e.vertices[1]].co),
                     dxfattribs=dxfattribs,
                 )
                 if callback is not None:
