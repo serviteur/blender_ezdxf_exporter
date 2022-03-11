@@ -31,4 +31,5 @@ Features:
 - Set Length Display units
 - Set Angle Display units
 - Scale from 0, 0, 0
+- Project along the scene camera, front, back, left, right, bottom or top coordinates
 - Transform along X, Y, Z
