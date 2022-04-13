@@ -3,10 +3,31 @@ from bpy.props import (
     FloatVectorProperty,
     BoolProperty,
     EnumProperty,
+    PointerProperty,
 )
+from ezdxf_exporter.data.camera.helper import get_all_camera_names
 from .helper import update_export_scale
 from .ui import draw
 from .constants import UCS, UCS_DESCRIPTIONS
+
+
+class UCSSettings(PropertyGroup):
+    type: EnumProperty(
+        name="UCS",
+        description="User Coordinate System",
+        items=((ucs_item.value, ucs_item.value.title(), UCS_DESCRIPTIONS.get(ucs_item.value, "")) for ucs_item in UCS),
+    )
+
+    camera_type: EnumProperty(
+        name="Chosen Camera",
+        items=(
+            ("ACTIVE",) * 3,
+            ("CUSTOM",) * 3,
+        ),
+    )
+    camera_custom: EnumProperty(
+        name="Custom Camera", items=lambda self, context: [(n,) * 3 for n in get_all_camera_names(context)]
+    )
 
 
 class TransformSettings(PropertyGroup):
@@ -33,11 +54,7 @@ class TransformSettings(PropertyGroup):
         update=update_export_scale,
     )
 
-    ucs: EnumProperty(
-        name="UCS",
-        description="User Coordinate System",
-        items=((ucs_item.value, ucs_item.value.title(), UCS_DESCRIPTIONS.get(ucs_item.value, "")) for ucs_item in UCS),
-    )
+    ucs: PointerProperty(type=UCSSettings)
 
     def draw(self, layout):
         draw(self, layout)

@@ -11,5 +11,5 @@ class UCS(Enum):
 
 UCS_DESCRIPTIONS = {
     UCS.GLOBAL.value: "Global Coordinate System (Default)",
-    UCS.CAMERA.value: "Set the active camera transform as UCS"
+    UCS.CAMERA.value: "Set the camera transform as UCS"
 }

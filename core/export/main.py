@@ -222,7 +222,7 @@ class DXFExporter:
                     if mesh_type in (FaceType, PointType):
                         continue
                     mesh_method = lambda layout, evaluated_obj, dxfattribs, callback: self.grease_pencil_exporter.write_gpencil_object(
-                        layout, evaluated_obj, dxfattribs, callback, obj.matrix_world
+                        layout, evaluated_obj, dxfattribs, callback, self.transform_exporter.get_matrix(obj, is_block)
                     )
                     evaluated_mesh = evaluated_object
                 else:

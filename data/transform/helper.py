@@ -3,12 +3,16 @@ from mathutils import Matrix, Euler
 from ezdxf_exporter.data.transform.constants import UCS
 
 
-def get_ucs_matrix(ucs_enum, context):
+def get_ucs_matrix(ucs_settings, context):
+    ucs_enum = ucs_settings.type
     if ucs_enum == UCS.GLOBAL.value:
         return Matrix.Identity(4)
     elif ucs_enum == UCS.CAMERA.value:
-        active_camera = context.scene.camera
-        return active_camera.matrix_world.inverted()
+        if ucs_settings.camera_type == "ACTIVE":
+            camera = context.scene.camera
+        else:
+            camera = context.scene.objects.get(ucs_settings.camera_custom)
+        return camera.matrix_world.inverted()
     elif ucs_enum == UCS.FRONT.value:
         return Matrix.Rotation(-pi / 2, 4, "X")
     elif ucs_enum == UCS.BACK.value:

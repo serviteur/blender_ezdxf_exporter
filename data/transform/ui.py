@@ -12,7 +12,12 @@ def draw(self, layout):
     scale_box_z.enabled = not self.uniform_export_scale
 
     layout.label(text="Coordinate System")
-    layout.prop(self, "ucs")
+    layout.prop(self.ucs, "type")
+    if self.ucs.type == "CAMERA":
+        row = layout.row(align=True)
+        row.prop(self.ucs, "camera_type", text="")
+        if self.ucs.camera_type == "CUSTOM":
+            row.prop(self.ucs, "camera_custom", text="")
 
     layout.label(text="Delta XYZ")
     col = layout.box().column(align=True)
