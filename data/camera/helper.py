@@ -9,4 +9,4 @@ def get_all_cameras(context=None):
 
 
 def get_all_camera_names(context=None):
-    return [c.name for c in get_all_cameras(context)]
+    return sorted([c.name for c in get_all_cameras(context)])
