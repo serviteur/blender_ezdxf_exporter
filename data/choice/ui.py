@@ -9,6 +9,7 @@ from ezdxf_exporter.data.mesh.constants import (
 from ezdxf_exporter.data.empty.constants import EmptyType
 from ezdxf_exporter.data.camera.constants import CameraType
 from ezdxf_exporter.data.curve.constants import CurveType
+from ezdxf_exporter.data.grease_pencil.constants import GreasePencilType
 
 from ezdxf_exporter.data.layer.ui import draw_local as draw_local_layer
 
@@ -27,20 +28,21 @@ def draw_choice_settings(settings, layout, context):
     i = -1
     for prop, name, _types, entity_type in (
         ("faces_export", "Faces", ("MESH", "CURVE", "FONT"), FaceType),
-        ("lines_export", "Edges", ("MESH", "CURVE", "FONT"), LineType),
-        ("points_export", "Vertices", ("MESH", "CURVE", "FONT"), PointType),
+        ("lines_export", "Edges", ("MESH", "CURVE", "FONT", "GPENCIL"), LineType),
+        ("points_export", "Vertices", ("MESH", "CURVE", "FONT", "GPENCIL"), PointType),
         ("curves_export", "Curves", ("CURVE",), CurveType),
+        ("gpencil_export", "Gr.Pencils", ("GPENCIL",), GreasePencilType),
         ("texts_export", "Texts", ("FONT",), TextType),
         ("empties_export", "Empties", ("EMPTY",), EmptyType),
         ("cameras_export", "Cameras", ("CAMERA",), CameraType),
     ):
         i += 1
-        mesh_type_supported = False
+        type_supported = False
         for _type in _types:
             if lookup_type_dic.get(_type) is not None:
-                mesh_type_supported = True
+                type_supported = True
                 break
-        if not mesh_type_supported:
+        if not type_supported:
             continue
 
         geom_split = col.split(factor=0.3, align=True)

@@ -14,6 +14,7 @@ from ezdxf_exporter.data.empty.constants import EmptyType
 from ezdxf_exporter.data.camera.constants import CameraType
 from ezdxf_exporter.data.curve.constants import CurveType
 from ezdxf_exporter.data.dimension.constants import DimensionType
+from ezdxf_exporter.data.grease_pencil.constants import GreasePencilType
 
 
 class DataSettings(bpy.types.PropertyGroup):
@@ -35,6 +36,12 @@ class DataSettings(bpy.types.PropertyGroup):
 
     texts_export: EnumProperty(
         name="Export Texts", default=TextType.MTEXT.value, items=[(t_t.value,) * 3 for t_t in TextType]
+    )
+
+    gpencil_export: EnumProperty(
+        name="Export Grease Pencils",
+        default=GreasePencilType.NONE.value,
+        items=[(gp_t.value,) * 3 for gp_t in GreasePencilType],
     )
 
     empties_export: EnumProperty(

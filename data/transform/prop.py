@@ -37,7 +37,6 @@ class TransformSettings(PropertyGroup):
         name="UCS",
         description="User Coordinate System",
         items=((ucs_item.value, ucs_item.value.title(), UCS_DESCRIPTIONS.get(ucs_item.value, "")) for ucs_item in UCS),
-        default="GLOBAL",
     )
 
     def draw(self, layout):

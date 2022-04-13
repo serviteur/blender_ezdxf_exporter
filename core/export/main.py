@@ -15,6 +15,7 @@ from ezdxf_exporter.data.choice.prop import (
 from ezdxf_exporter.data.block.export import BlockExporter
 from ezdxf_exporter.data.color.export import ColorExporter
 from ezdxf_exporter.data.dimension.export import DimensionExporter
+from ezdxf_exporter.data.grease_pencil.export import GreasePencilExporter
 from ezdxf_exporter.data.mesh.export import MeshExporter
 from ezdxf_exporter.data.transform.export import TransformExporter
 from ezdxf_exporter.data.text.export import TextExporter
@@ -25,7 +26,7 @@ from ezdxf_exporter.data.unit.export import UnitExporter
 
 
 class DXFExporter:
-    supported_types = {"MESH", "CURVE", "META", "SURFACE", "FONT", "EMPTY", "CAMERA"}
+    supported_types = {"MESH", "CURVE", "META", "SURFACE", "FONT", "EMPTY", "CAMERA", "GPENCIL"}
 
     def __init__(self, context, settings, objects, coll_parents):
         self.debug_mode = False  # TODO implement debug mode
@@ -49,8 +50,8 @@ class DXFExporter:
         self.text_exporter = TextExporter(self)
         self.camera_exporter = CameraExporter(self)
         self.spline_exporter = SplineExporter(self)
+        self.grease_pencil_exporter = GreasePencilExporter(self)
         self.unit_exporter = UnitExporter(self)
-
         self.update_supported_types()
         self.objects = [o for o in objects if o.type in self.supported_types]
 
@@ -58,6 +59,7 @@ class DXFExporter:
         self.objects_empty_blocks = []
         self.objects_camera = []
         self.objects_curve = []
+        self.objects_grease_pencil = []
 
         self.coll_parents = coll_parents
 
@@ -68,6 +70,7 @@ class DXFExporter:
             ("texts_export", "FONT"),
             ("cameras_export", "CAMERA"),
             ("curves_export", "CURVE"),
+            ("gpencil_export", "GPENCIL"),
         ):
             if getattr(self.settings.choice, attr, NO_EXPORT) == NO_EXPORT:
                 self.supported_types.discard(_type)
@@ -92,8 +95,23 @@ class DXFExporter:
         ):
             export_as = getattr(self.settings.choice, attr) == value
             for i in range(len(self.objects) - 1, -1, -1):
-                if self.objects[i].type == _type and not export_as:
+                if not export_as and self.objects[i].type == _type:
                     container.append(self.objects.pop(i))
+
+    def write_objects(self):
+        self.export_curves()
+        self.export_texts()
+        self.export_empty_blocks()
+
+        if self.settings.choice.use_blocks:
+            self.export_linked_objects()
+        else:
+            # Export objects as MESH and/or LINES and/or POINTS
+            [self.write_mesh_object(obj) for obj in self.objects]
+        self.export_cameras()
+
+        if self.debug_mode:
+            self.log.append(f"Exported {self.exported_objects} Objects")
 
     def get_dxf_attribs(self, obj, entity_type=None) -> Dict[str, any]:
         """Populate dxfattribs used by most Drawing entity factor methods
@@ -173,27 +191,13 @@ class DXFExporter:
                 self.settings.transform.delta_xyz,
             )
 
-    def write_objects(self):
-        self.export_curves()
-        self.export_texts()
-        self.export_empty_blocks()
-
-        if self.settings.choice.use_blocks:
-            self.export_linked_objects()
-        else:
-            # Export objects as MESH and/or LINES and/or POINTS
-            [self.write_mesh_object(obj) for obj in self.objects]
-        self.export_cameras()
-
-        if self.debug_mode:
-            self.log.append(f"Exported {self.exported_objects} Objects")
-
     def write_mesh_object(self, obj, layout=None, is_block=False):
         if layout is None:
             layout = self.msp
         dxfattribs = {}
         settings = self.settings
         data_settings = settings.choice
+        depsgraph = self.context.evaluated_depsgraph_get()
 
         if obj.type == "EMPTY":
             dxfattribs = self.get_dxf_attribs(obj, EmptyType)
@@ -203,8 +207,8 @@ class DXFExporter:
                 self.msp, obj.location, dxfattribs, callback=lambda e: self.on_entity_created(obj, e, dxfattribs)
             )
         else:
-            evaluated_mesh = self.mesh_exporter.get_evaluated_mesh(obj, self.context)
-            evaluated_mesh.transform(self.transform_exporter.get_matrix(obj, is_block))
+            evaluated_object = obj.evaluated_get(depsgraph)
+
             # Since Mesh Objects can be exported as Faces, Edges and Vertices
             # We loop through all three of these options
             i = -1
@@ -214,7 +218,17 @@ class DXFExporter:
                 (FaceType, data_settings.faces_export),
             ):
                 i += 1
-                mesh_method = self.mesh_exporter.get_mesh_method(mesh_setting, evaluated_mesh)
+                if obj.type == "GPENCIL":
+                    if mesh_type in (FaceType, PointType):
+                        continue
+                    mesh_method = lambda layout, evaluated_obj, dxfattribs, callback: self.grease_pencil_exporter.write_gpencil_object(
+                        layout, evaluated_obj, dxfattribs, callback, obj.matrix_world
+                    )
+                    evaluated_mesh = evaluated_object
+                else:
+                    evaluated_mesh = self.mesh_exporter.get_evaluated_mesh(obj, self.context)
+                    evaluated_mesh.transform(self.transform_exporter.get_matrix(obj, is_block))
+                    mesh_method = self.mesh_exporter.get_mesh_method(mesh_setting, evaluated_mesh)
                 if mesh_method is None:
                     continue
                 self.color_exporter.populate_dxfattribs(obj, dxfattribs, mesh_type)
@@ -224,7 +238,7 @@ class DXFExporter:
                     # Triangulate to prevent N-Gons. Do it last to preserve geometry for lines
                     self.mesh_exporter.triangulate_if_needed(evaluated_mesh, obj.type)
                 mesh_method(
-                    self.msp if layout is None else layout,
+                    layout,
                     evaluated_mesh,
                     dxfattribs.copy(),
                     callback=lambda e: self.on_entity_created(obj, e, dxfattribs, is_block=is_block),
