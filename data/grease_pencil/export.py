@@ -10,7 +10,6 @@ class GreasePencilExporter(DataExporter):
         polyline_func = layout.add_lwpolyline if z_scale_export == 0 else layout.add_polyline3d
         for layer in gp.layers:
             for stroke in layer.frames[0].strokes:
-                print(stroke)
                 polyline = polyline_func([matrix @ point.co for point in stroke.points], dxfattribs=dxfattribs)
                 callback(polyline)
                 

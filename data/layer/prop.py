@@ -60,6 +60,8 @@ class LayerSettings(bpy.types.PropertyGroup):
         items=[(e_l.value,) * 3 for e_l in EntityLayer],
     )
 
+    entity_layer_to_custom_prop: StringProperty(name="Custom Property Name", default="layer")
+
     entity_layer_separate: BoolProperty(
         name="Export Entities on Sub-Layer",
         description="Different Entity Types (MESH, POINT, MTEXT...) are drawn on separate sub-layers",
