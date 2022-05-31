@@ -165,7 +165,10 @@ class LayerExporter(DataExporter):
                 update_settings_with_custom_props(context.scene)
 
         elif layer_to == EntityLayer.CUSTOM_PROP.value:
-            settings[self.KW_NAME] = str(obj.get(layer_settings.entity_layer_to_custom_prop, 0))
+            settings[self.KW_NAME] = str(obj.get(layer_settings.entity_layer_to_custom, 0))
+            
+        elif layer_to == EntityLayer.CUSTOM.value:
+            settings[self.KW_NAME] = layer_settings.entity_layer_to_custom
 
         layer = self.create_layer(
             name=prefix + settings.get(self.KW_NAME, "0") + suffix,

@@ -21,8 +21,8 @@ def draw_local(layer_settings, layout, obj_name=None, is_default_layer=True):
     layer_box = layout.box()
     row = layer_box.row(align=True)
     row.prop(layer_settings, "entity_layer_to", text="")
-    if layer_settings.entity_layer_to == EntityLayer.CUSTOM_PROP.value:
-        row.prop(layer_settings, "entity_layer_to_custom_prop", text="")
+    if layer_settings.entity_layer_to in (EntityLayer.CUSTOM_PROP.value, EntityLayer.CUSTOM.value):
+        row.prop(layer_settings, "entity_layer_to_custom", text="")
     row = layer_box.row()
     row.prop(layer_settings, "entity_layer_prefix", text="Prefix")
     row.prop(layer_settings, "entity_layer_suffix", text="Suffix")

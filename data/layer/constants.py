@@ -8,4 +8,5 @@ class EntityLayer(Enum):
     DATA_NAME = "Data/Mesh Name"
     SCENE_NAME = "Current Scene Name"
     MATERIAL = "Object 1st Material"
+    CUSTOM = "User Defined"
     CUSTOM_PROP = "Custom Property"
